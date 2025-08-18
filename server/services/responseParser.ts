@@ -48,24 +48,9 @@ export function parseIntelligenceResponse(response: string, provider: string): P
     }
   }
   
-  // Clean the response - remove any dimension garbage
-  let cleanedReport = response;
-  
-  // Remove any mention of the garbage dimensions
-  const garbageTerms = [
-    /Semantic Compression[^]*?Assessment.*?\d+\.?\d*\/10/gi,
-    /Inferential Control[^]*?Assessment.*?\d+\.?\d*\/10/gi,
-    /Cognitive Risk[^]*?Assessment.*?\d+\.?\d*\/10/gi,
-    /Meta-Theoretical Awareness[^]*?Assessment.*?\d+\.?\d*\/10/gi,
-    /Conceptual Innovation[^]*?Assessment.*?\d+\.?\d*\/10/gi,
-    /Epistemic Resistance[^]*?Assessment.*?\d+\.?\d*\/10/gi,
-    /Cognitive Dimension Assessment/gi,
-    /\d+\.?\d*\/10\s*Score/gi
-  ];
-  
-  for (const garbagePattern of garbageTerms) {
-    cleanedReport = cleanedReport.replace(garbagePattern, '');
-  }
+  // DO NOT clean the response - pass through the raw evaluation
+  // The 3-phase protocol already provides clean evaluation without dimension garbage
+  const cleanedReport = response;
   
   // Create fake dimension scores based on overall score (required by frontend)
   const baseDimensions = {
