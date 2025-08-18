@@ -52,14 +52,24 @@ const IntelligentRewriteModal: React.FC<IntelligentRewriteModalProps> = ({
     try {
       console.log(`Starting intelligent rewrite with ${provider}`);
       
-      const response = await apiRequest('/api/intelligent-rewrite', 'POST', {
-        text: originalText,
-        customInstructions: customInstructions.trim() || undefined,
-        provider
+      const response = await fetch('/api/intelligent-rewrite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          text: originalText,
+          customInstructions: customInstructions.trim() || undefined,
+          provider
+        })
       });
 
-      console.log('Intelligent rewrite completed:', response);
-      const rewriteResult = response as IntelligentRewriteResult;
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const rewriteResult = await response.json() as IntelligentRewriteResult;
+      console.log('Intelligent rewrite completed:', rewriteResult);
       setResult(rewriteResult);
 
       toast({
