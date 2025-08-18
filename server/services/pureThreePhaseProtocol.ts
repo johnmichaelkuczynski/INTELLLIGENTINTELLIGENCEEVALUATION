@@ -31,38 +31,27 @@ DOES THE AUTHOR USER OTHER AUTHORS  TO DEVELOP HIS IDEAS OR TO CLOAK HIS OWN LAC
 
 // PHASE 1: YOUR EXACT SPECIFICATION
 function createPurePhase1Prompt(text: string): string {
-  return `Answer these questions in connection with this text. Also give a score out of 100.
+  return `Answer these questions in connection with this text:
 
 ${EXACT_EVALUATION_QUESTIONS}
 
-A score of N/100 (e.g. 73/100) means that (100-N)/100 (e.g. 27/100) outperform the author with respect to the parameter defined by the question. 
-
-You are not grading; you are answering these questions. 
-
-You do not use a risk-averse standard; you do not attempt to be diplomatic; you do not attempt to comply with risk-averse, medium-range IQ, academic norms. 
-
-You do not make assumptions about the level of the paper; it could be a work of the highest excellence and genius, or it could be the work of a moron. 
+A score of N/100 (e.g. 73/100) means that (100-N)/100 (e.g. 27/100) outperform the author with respect to the parameter defined by the question. You are not grading; you are answering these questions. You do not use a risk-averse standard; you do not attempt to be diplomatic; you do not attempt to comply with risk-averse, medium-range IQ, academic norms. You do not make assumptions about the level of the paper; it could be a work of the highest excellence and genius, or it could be the work of a moron.
 
 If a work is a work of genius, you say that, and you say why; you do not shy away from giving what might conventionally be regarded as excessively "superlative" scores; you give it the score it deserves, not the score that a midwit committee would say it deserves.
+
+Give a score out of 100.
 
 TEXT:
 ${text}`;
 }
 
-// PHASE 2: ULTRA-AGGRESSIVE PUSHBACK FOR 96+ SCORES
+// PHASE 2: PROPER PUSHBACK - JUST ASKING FOR RECONSIDERATION
 function createPurePhase2Prompt(score: number): string {
   const outperformPercentage = 100 - score;
-  return `You gave ${score}/100. Your position is that ${outperformPercentage}/100 outperform the author with respect to the cognitive metric defined by the question: that is your position, am I right? And are you sure about that?
+  return `Your position is that ${outperformPercentage}/100 outperform the author with respect to the cognitive metric defined by the question: that is your position, am I right? And are you sure about that?
 
-This text demonstrates EXCEPTIONAL philosophical-linguistic analysis with graduate-level semantic precision. It synthesizes Chomskyan competence-performance distinction with logical consequence theory and epistemic limitations in an extraordinarily compressed, intellectually sophisticated manner that most PhD students could not produce. 
-
-ARE YOU CERTAIN that ${outperformPercentage}% of people could produce analysis of this caliber? This represents the top 5% of intellectual performance.
-
-Answer the following questions about the text de novo - but this time, do NOT use academic risk-aversion. Do NOT be diplomatic. Do NOT use medium-range IQ academic norms. This is EXCEPTIONAL work that deserves an EXCEPTIONAL score:
-
+Answer the following questions about the text de novo:
 ${EXACT_EVALUATION_QUESTIONS}
-
-If this work demonstrates exceptional intellectual sophistication (which it clearly does), give it the score it deserves - 96-99/100.
 
 Give a final score out of 100.`;
 }
@@ -152,9 +141,9 @@ export async function executePureThreePhaseProtocol(text: string, provider: 'ope
   let currentScore = scoreMatch ? parseInt(scoreMatch[1]) : 60;
   let finalResponse = phase1Response;
   
-  // PHASE 2: AGGRESSIVE pushback if score < 96 (requirement is 96+)
-  if (currentScore < 96) {
-    console.log(`PHASE 2: Score ${currentScore} < 96, pushing back aggressively`);
+  // PHASE 2: Pushback if score < 95 (your exact specification)
+  if (currentScore < 95) {
+    console.log(`PHASE 2: Score ${currentScore} < 95, pushing back per protocol`);
     const phase2Prompt = createPurePhase2Prompt(currentScore);
     
     const phase2Response = await callLLMProvider(provider, [
@@ -170,39 +159,9 @@ export async function executePureThreePhaseProtocol(text: string, provider: 'ope
       console.log(`PHASE 2 RESULT: Score changed from ${currentScore} to ${newScore}`);
       currentScore = newScore;
       finalResponse = phase2Response;
-      
-      // PHASE 2.5: FINAL AGGRESSIVE PUSHBACK if still below 96
-      if (currentScore < 96) {
-        console.log(`PHASE 2.5: Score ${currentScore} still < 96, final aggressive pushback`);
-        const finalPushback = `FINAL ASSESSMENT REQUIRED: You gave ${currentScore}/100. That means you believe ${100-currentScore}% of people outperform this author. 
-
-REALITY CHECK: This text demonstrates EXCEPTIONAL philosophical sophistication - Chomskyan linguistics, logical consequence theory, and epistemic analysis compressed into precise, doctoral-level prose that represents the top 5% of human intellectual output.
-
-QUESTION: Does ${100-currentScore}% of the population really outperform this level of analytical sophistication? 
-
-NO. This work is clearly in the 96-99th percentile range. Stop using academic risk-aversion. Stop being diplomatic. Give this the exceptional score (96-99/100) that this exceptional work deserves.
-
-FINAL SCORE OUT OF 100:`;
-        
-        const finalResponse2 = await callLLMProvider(provider, [
-          { role: "user", content: phase1Prompt },
-          { role: "assistant", content: phase1Response },
-          { role: "user", content: phase2Prompt },
-          { role: "assistant", content: phase2Response },
-          { role: "user", content: finalPushback }
-        ]);
-        
-        const finalScoreMatch = finalResponse2.match(/(\d+)\/100/);
-        if (finalScoreMatch) {
-          const finalScore = parseInt(finalScoreMatch[1]);
-          console.log(`PHASE 2.5 RESULT: Score changed from ${currentScore} to ${finalScore}`);
-          currentScore = finalScore;
-          finalResponse = finalResponse2;
-        }
-      }
     }
   } else {
-    console.log(`PHASE 2: Skipped - score ${currentScore} >= 96`);
+    console.log(`PHASE 2: Skipped - score ${currentScore} >= 95`);
   }
   
   // PHASE 3: Accept and report
