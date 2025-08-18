@@ -5,7 +5,7 @@ import path from "path";
 import { extractTextFromFile } from "./api/documentParser";
 import { sendSimpleEmail } from "./api/simpleEmailService";
 import { upload as speechUpload, processSpeechToText } from "./api/simpleSpeechToText";
-import { StructuralEvaluator } from "./services/structuralEvaluator";
+
 
 // Configure multer for file uploads
 const upload = multer({ 
@@ -63,10 +63,10 @@ export async function registerRoutes(app: Express): Promise<Express> {
     });
   });
 
-  // Cognitive evaluation endpoint with tiered analysis
+  // PURE cognitive evaluation using exact 3-phase protocol - DEEPSEEK DEFAULT
   app.post("/api/cognitive-evaluate", async (req: Request, res: Response) => {
     try {
-      const { content, tier = 'standard', overrides = {} } = req.body;
+      const { content, provider = 'deepseek' } = req.body;
 
       if (!content || typeof content !== 'string') {
         return res.status(400).json({ 
@@ -74,30 +74,32 @@ export async function registerRoutes(app: Express): Promise<Express> {
         });
       }
 
-      // Use structural evaluator instead of broken statistical proxies
-      const evaluator = new StructuralEvaluator();
+      // Import PURE 3-phase protocol - NO GARBAGE EVALUATORS
+      const { pureDeepSeekAnalyze } = await import('./services/pureThreePhaseProtocol');
 
-      console.log(`STRUCTURAL EVALUATION: Analyzing ${content.length} characters with structural logic (not statistical proxies)`);
+      console.log(`PURE 3-PHASE COGNITIVE EVALUATION: Analyzing ${content.length} characters with exact protocol`);
       
-      const evaluation = await evaluator.evaluate(content);
+      const evaluation = await pureDeepSeekAnalyze(content);
 
       res.json({
         success: true,
         evaluation: {
-          ...evaluation,
+          formattedReport: evaluation.formattedReport,
+          overallScore: evaluation.overallScore,
+          provider: evaluation.provider,
           metadata: {
             contentLength: content.length,
-            evaluationType: 'structural',
+            evaluationType: 'pure-3-phase',
             timestamp: new Date().toISOString()
           }
         }
       });
 
     } catch (error: any) {
-      console.error("Error in cognitive evaluation:", error);
+      console.error("Error in pure cognitive evaluation:", error);
       res.status(500).json({
         success: false,
-        error: "Cognitive evaluation failed",
+        error: "Pure cognitive evaluation failed",
         details: error.message
       });
     }
@@ -173,58 +175,57 @@ export async function registerRoutes(app: Express): Promise<Express> {
       
       // If the user requests a specific single provider
       if (provider.toLowerCase() !== 'all') {
-        // Import the direct analysis methods and response parser
+        // Import the PURE analysis methods using exact 3-phase protocol
         const { 
-          directOpenAIAnalyze, 
-          directAnthropicAnalyze, 
-          directPerplexityAnalyze,
-          directDeepSeekAnalyze 
-        } = await import('./services/directLLM');
-        const { parseIntelligenceResponse } = await import('./services/responseParser');
+          pureOpenAIAnalyze, 
+          pureAnthropicAnalyze, 
+          purePerplexityAnalyze,
+          pureDeepSeekAnalyze 
+        } = await import('./services/pureThreePhaseProtocol');
         
-        // Perform direct analysis with the specified provider
-        console.log(`DIRECT ${provider.toUpperCase()} PASSTHROUGH FOR ANALYSIS`);
+        // Perform PURE analysis with exact 3-phase protocol - NO GARBAGE DIMENSIONS
+        console.log(`PURE ${provider.toUpperCase()} ANALYSIS WITH EXACT 3-PHASE PROTOCOL`);
         
-        let directResult;
+        let pureResult;
         
         try {
           switch (provider.toLowerCase()) {
             case 'anthropic':
-              directResult = await directAnthropicAnalyze(content);
+              pureResult = await pureAnthropicAnalyze(content);
               break;
             case 'perplexity':
-              directResult = await directPerplexityAnalyze(content);
-              break;
-            case 'deepseek':
-              directResult = await directDeepSeekAnalyze(content);
+              pureResult = await purePerplexityAnalyze(content);
               break;
             case 'openai':
+              pureResult = await pureOpenAIAnalyze(content);
+              break;
+            case 'deepseek':
             default:
-              directResult = await directOpenAIAnalyze(content);
+              pureResult = await pureDeepSeekAnalyze(content);
               break;
           }
           
-          // Use direct result - NO PARSING - pass through the complete evaluation
+          // Use PURE result - NO FILTERING - pass through complete unfiltered evaluation
           const result = {
             id: 0,
             documentId: 0,
-            provider: directResult.provider || provider,
-            formattedReport: directResult.formattedReport || "Analysis not available",
-            overallScore: directResult.overallScore || 60,
+            provider: pureResult.provider || provider,
+            formattedReport: pureResult.formattedReport || "Analysis not available",
+            overallScore: pureResult.overallScore || 60,
             surface: {
-              grammar: Math.max(0, (directResult.overallScore || 60) - 15),
-              structure: Math.max(0, (directResult.overallScore || 60) - 10),
-              jargonUsage: Math.min(100, (directResult.overallScore || 60) + 5),
-              surfaceFluency: directResult.overallScore || 60
+              grammar: pureResult.overallScore || 60,
+              structure: pureResult.overallScore || 60,
+              jargonUsage: pureResult.overallScore || 60,
+              surfaceFluency: pureResult.overallScore || 60
             },
             deep: {
-              conceptualDepth: directResult.overallScore || 60,
-              inferentialContinuity: directResult.overallScore || 60,
-              semanticCompression: directResult.overallScore || 60,
-              logicalLaddering: directResult.overallScore || 60,
-              originality: directResult.overallScore || 60
+              conceptualDepth: pureResult.overallScore || 60,
+              inferentialContinuity: pureResult.overallScore || 60,
+              semanticCompression: pureResult.overallScore || 60,
+              logicalLaddering: pureResult.overallScore || 60,
+              originality: pureResult.overallScore || 60
             },
-            analysis: directResult.formattedReport || "Analysis not available"
+            analysis: pureResult.formattedReport || "Analysis not available"
           };
           
           return res.json(result);
@@ -234,7 +235,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
             id: 0,
             documentId: 0, 
             provider: `${provider} (Error)`,
-            formattedReport: `Error analyzing document with direct ${provider} passthrough: ${error.message || "Unknown error"}`
+            formattedReport: `Error analyzing document with pure ${provider} protocol: ${error.message || "Unknown error"}`
           });
         }
       } else {
@@ -300,27 +301,27 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
-  // Intelligence comparison for two documents
+  // PURE intelligence comparison for two documents using exact 3-phase protocol
   app.post("/api/intelligence-compare", async (req: Request, res: Response) => {
     try {
-      const { documentA, documentB, provider = "openai" } = req.body;
+      const { documentA, documentB, provider = "deepseek" } = req.body;
       
       if (!documentA || !documentB) {
         return res.status(400).json({ error: "Both documents are required for intelligence comparison" });
       }
       
-      // Import the intelligence comparison service
-      const { performIntelligenceComparison } = await import('./services/intelligenceComparison');
+      // Import the PURE comparison service - NO GARBAGE DIMENSIONS
+      const { performPureIntelligenceComparison } = await import('./services/pureComparison');
       
-      // Compare intelligence levels using the selected provider
-      console.log(`COMPARING INTELLIGENCE WITH ${provider.toUpperCase()}`);
-      const result = await performIntelligenceComparison(documentA.content || documentA, documentB.content || documentB, provider);
+      // Compare intelligence using PURE 3-phase protocol - DEEPSEEK DEFAULT
+      console.log(`PURE INTELLIGENCE COMPARISON WITH EXACT 3-PHASE PROTOCOL USING ${provider.toUpperCase()}`);
+      const result = await performPureIntelligenceComparison(documentA.content || documentA, documentB.content || documentB, provider);
       return res.json(result);
     } catch (error: any) {
-      console.error("Error comparing intelligence:", error);
+      console.error("Error in pure intelligence comparison:", error);
       return res.status(500).json({ 
         error: true, 
-        message: error.message || "Failed to compare intelligence" 
+        message: error.message || "Failed to perform pure intelligence comparison" 
       });
     }
   });
