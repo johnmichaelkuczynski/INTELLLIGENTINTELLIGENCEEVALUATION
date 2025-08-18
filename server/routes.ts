@@ -466,9 +466,8 @@ export async function registerRoutes(app: Express): Promise<Express> {
         return res.status(400).json({ error: "Original text is required" });
       }
       
-      if (!instructions) {
-        return res.status(400).json({ error: "Instructions are required" });
-      }
+      // If no instructions provided, the rewrite service will use the default instruction
+      const finalInstructions = instructions || "";
       
       // Set up Server-Sent Events
       res.writeHead(200, {
@@ -483,7 +482,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
       const { streamRewriteDocument } = await import('./services/documentRewrite');
       
       const enhancedOptions = {
-        instruction: instructions,
+        instruction: finalInstructions,
         targetLevel: "advanced",
         mode: mode
       };
@@ -515,10 +514,8 @@ export async function registerRoutes(app: Express): Promise<Express> {
       }
       
       // Support both old 'options.instruction' and new 'instructions' format
-      const instruction = instructions || (options && options.instruction);
-      if (!instruction) {
-        return res.status(400).json({ error: "Rewrite instruction is required" });
-      }
+      // If no instruction provided, the rewrite service will use the default instruction
+      const instruction = instructions || (options && options.instruction) || "";
       
       // Import the document rewrite service
       const { rewriteDocument } = await import('./services/documentRewrite');

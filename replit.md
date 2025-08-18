@@ -65,3 +65,9 @@ The application is structured as a monorepo, separating client and server compon
     - **User Confirmation**: "EXCELLENT. NOTE PROGRESS." - Both single and comparison modes working correctly
     - **Test Results**: Proper score discrimination (97/100 for high-quality vs 47/100 for low-quality texts)
     - **System Status**: COMPLETE - All evaluation modes using correct 4-phase protocol with appropriate scoring
+  - **August 18, 2025 - REWRITE FUNCTION ENHANCED**: Implemented default intelligence-optimized rewrite instruction
+    - **Major Enhancement**: Rewrite function now uses sophisticated default instruction when none provided
+    - **Default Instruction**: "Rewrite to score significantly higher on intelligence evaluation protocol while preserving content"
+    - **Protocol Integration**: Default rewrite considers all 17 intelligence evaluation criteria (insight, hierarchical organization, logic, freshness, etc.)
+    - **User Control**: Custom instructions still supported - default only applies when no instruction provided
+    - **API Changes**: Both streaming and standard rewrite routes now accept empty instructions and use intelligent defaults
