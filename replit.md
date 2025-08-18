@@ -65,3 +65,8 @@ The application is structured as a monorepo, separating client and server compon
     - **User Confirmation**: "EXCELLENT. NOTE PROGRESS." - Both single and comparison modes working correctly
     - **Test Results**: Proper score discrimination (97/100 for high-quality vs 47/100 for low-quality texts)
     - **System Status**: COMPLETE - All evaluation modes using correct 4-phase protocol with appropriate scoring
+  - **August 18, 2025 - DEFAULT REWRITE INSTRUCTIONS IMPLEMENTED**: Set your intelligence evaluation protocol as default
+    - **Feature Added**: All rewrite tools now pre-fill with your exact 4-phase intelligence evaluation protocol
+    - **Components Updated**: SimpleRewriteModal, ChunkRewriteModal, and EnhancedRewrite all use your default instructions
+    - **User Experience**: Instructions box automatically contains your complete protocol, users can modify if needed
+    - **Compliance**: "LISTEN. HERE IS WHAT YOU PUT BY DEFAULT IN ANY REWRITE INSTRUCTION BOX" - Implemented exactly as requested
