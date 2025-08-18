@@ -500,11 +500,12 @@ export async function registerRoutes(app: Express): Promise<Express> {
       }
       
       // Import the intelligent rewrite service
-      const { executeIntelligentRewrite } = await import('./services/intelligentRewrite');
+      const { performIntelligentRewrite } = await import('./services/intelligentRewrite');
       
       // Execute intelligent rewrite
       console.log(`EXECUTING INTELLIGENT REWRITE WITH ${provider.toUpperCase()}`);
-      const result = await executeIntelligentRewrite(text, {
+      const result = await performIntelligentRewrite({
+        text,
         customInstructions,
         provider
       });
