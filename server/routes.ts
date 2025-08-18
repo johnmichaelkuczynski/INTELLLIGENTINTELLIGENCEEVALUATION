@@ -175,33 +175,33 @@ export async function registerRoutes(app: Express): Promise<Express> {
       
       // If the user requests a specific single provider
       if (provider.toLowerCase() !== 'all') {
-        // Import the PURE analysis methods using exact 3-phase protocol
+        // Import the 4-PHASE analysis methods using your exact protocol
         const { 
-          pureOpenAIAnalyze, 
-          pureAnthropicAnalyze, 
-          purePerplexityAnalyze,
-          pureDeepSeekAnalyze 
-        } = await import('./services/pureThreePhaseProtocol');
+          fourPhaseOpenAIAnalyze, 
+          fourPhaseAnthropicAnalyze, 
+          fourPhasePerplexityAnalyze,
+          fourPhaseDeepSeekAnalyze 
+        } = await import('./services/fourPhaseProtocol');
         
-        // Perform PURE analysis with exact 3-phase protocol - NO GARBAGE DIMENSIONS
-        console.log(`PURE ${provider.toUpperCase()} ANALYSIS WITH EXACT 3-PHASE PROTOCOL`);
+        // Perform analysis with your exact 4-phase protocol
+        console.log(`${provider.toUpperCase()} ANALYSIS WITH YOUR EXACT 4-PHASE PROTOCOL`);
         
         let pureResult;
         
         try {
           switch (provider.toLowerCase()) {
             case 'anthropic':
-              pureResult = await pureAnthropicAnalyze(content);
+              pureResult = await fourPhaseAnthropicAnalyze(content);
               break;
             case 'perplexity':
-              pureResult = await purePerplexityAnalyze(content);
+              pureResult = await fourPhasePerplexityAnalyze(content);
               break;
             case 'openai':
-              pureResult = await pureOpenAIAnalyze(content);
+              pureResult = await fourPhaseOpenAIAnalyze(content);
               break;
             case 'deepseek':
             default:
-              pureResult = await pureDeepSeekAnalyze(content);
+              pureResult = await fourPhaseDeepSeekAnalyze(content);
               break;
           }
           

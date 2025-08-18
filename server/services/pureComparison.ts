@@ -3,7 +3,7 @@
  * NO GARBAGE PARAMETERS - DESTROYS ALL TRACES OF DIMENSION SHIT
  */
 
-import { executePureThreePhaseProtocol } from './pureThreePhaseProtocol';
+import { executeFourPhaseProtocol } from './fourPhaseProtocol';
 
 type LLMProvider = "openai" | "anthropic" | "perplexity" | "deepseek";
 
@@ -62,12 +62,12 @@ export async function performPureIntelligenceComparison(
   provider: LLMProvider
 ): Promise<PureIntelligenceComparisonResult> {
   
-  console.log(`PURE INTELLIGENCE COMPARISON WITH EXACT 3-PHASE PROTOCOL USING ${provider.toUpperCase()}`);
+  console.log(`INTELLIGENCE COMPARISON WITH YOUR EXACT 4-PHASE PROTOCOL USING ${provider.toUpperCase()}`);
   
-  // Perform exact 3-phase evaluation for both documents
+  // Perform exact 4-phase evaluation for both documents
   const [evaluationA, evaluationB] = await Promise.all([
-    executePureThreePhaseProtocol(documentA, provider),
-    executePureThreePhaseProtocol(documentB, provider)
+    executeFourPhaseProtocol(documentA, provider),
+    executeFourPhaseProtocol(documentB, provider)
   ]);
 
   // Create clean analysis structures for frontend (NO DIMENSION GARBAGE)
