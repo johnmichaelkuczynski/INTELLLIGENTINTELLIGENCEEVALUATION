@@ -65,9 +65,11 @@ The application is structured as a monorepo, separating client and server compon
     - **User Confirmation**: "EXCELLENT. NOTE PROGRESS." - Both single and comparison modes working correctly
     - **Test Results**: Proper score discrimination (97/100 for high-quality vs 47/100 for low-quality texts)
     - **System Status**: COMPLETE - All evaluation modes using correct 4-phase protocol with appropriate scoring
-  - **August 18, 2025 - REWRITE FUNCTION ENHANCED**: Implemented default intelligence-optimized rewrite instruction
-    - **Major Enhancement**: Rewrite function now uses sophisticated default instruction when none provided
-    - **Default Instruction**: "Rewrite to score significantly higher on intelligence evaluation protocol while preserving content"
-    - **Protocol Integration**: Default rewrite considers all 17 intelligence evaluation criteria (insight, hierarchical organization, logic, freshness, etc.)
-    - **User Control**: Custom instructions still supported - default only applies when no instruction provided
-    - **API Changes**: Both streaming and standard rewrite routes now accept empty instructions and use intelligent defaults
+  - **August 18, 2025 - REWRITE FUNCTION ENHANCED**: Implemented sophisticated dual-mode rewrite logic
+    - **No Instructions Mode**: When user provides no instructions, uses pure intelligence-optimized protocol (conditions A & B)
+    - **Custom Instructions Mode**: When user provides instructions, balances both intelligence criteria AND custom instructions
+    - **Priority Weighting**: Custom instructions weighted more heavily if conflict exists, but system strikes balance
+    - **Condition A**: Rightsize passage with respect to operative evaluation logic for higher intelligence scores
+    - **Condition B**: Preserve existing content as much as condition A allows, only changing what's necessary
+    - **Intelligence Integration**: All rewrites optimize for 17 evaluation criteria (insight, hierarchical organization, freshness, logic, etc.)
+    - **Flexible Implementation**: System adapts instruction complexity based on whether user provides custom guidance
