@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FileInput } from "@/components/ui/file-input";
-import { X, Upload, Bot, FileText, Mic } from "lucide-react";
+import { X, Upload, Bot, FileText, Mic, Trash2 } from "lucide-react";
 import { extractTextFromFile } from "@/lib/analysis";
 import { DocumentInput as DocumentInputType } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
@@ -106,9 +106,10 @@ const DocumentInput: React.FC<DocumentInputProps> = ({
             variant="outline"
             size="sm"
             onClick={handleClearText}
-            className="px-3 py-1 bg-gray-200 text-gray-700 hover:bg-gray-300 flex items-center"
+            className="px-2 py-1 bg-red-50 text-red-600 hover:bg-red-100 flex items-center"
+            title="Clear text"
           >
-            <X className="h-4 w-4 mr-1" /> Clear Text
+            <Trash2 className="h-4 w-4" />
           </Button>
           <Button
             variant="outline"
