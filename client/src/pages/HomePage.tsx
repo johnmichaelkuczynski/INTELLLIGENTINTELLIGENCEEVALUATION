@@ -15,7 +15,7 @@ import { FictionComparisonModal } from "@/components/FictionComparisonModal";
 import IntelligentRewriteModal from "@/components/IntelligentRewriteModal";
 
 import { Button } from "@/components/ui/button";
-import { Brain, Trash2, FileEdit, BrainCircuit } from "lucide-react";
+import { Brain, Trash2, FileEdit, BrainCircuit, Loader2 } from "lucide-react";
 import { analyzeDocument, compareDocuments, checkForAI } from "@/lib/analysis";
 import { AnalysisMode, DocumentInput as DocumentInputType, AIDetectionResult, DocumentAnalysis, DocumentComparison } from "@/lib/types";
 
@@ -482,7 +482,11 @@ const HomePage: React.FC = () => {
               className="px-6 py-3 bg-orange-600 text-white rounded-md font-semibold hover:bg-orange-700 flex items-center"
               disabled={!documentA.content.trim() || isFictionAssessmentLoading}
             >
-              <FileEdit className="h-5 w-5 mr-2" />
+              {isFictionAssessmentLoading ? (
+                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+              ) : (
+                <FileEdit className="h-5 w-5 mr-2" />
+              )}
               <span>
                 {isFictionAssessmentLoading ? "Assessing Fiction..." : "Assess Fiction"}
               </span>
