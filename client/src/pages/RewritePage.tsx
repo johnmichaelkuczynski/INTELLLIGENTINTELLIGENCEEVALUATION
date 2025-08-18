@@ -95,7 +95,7 @@ THE OPERATIVE EVALUATION LOGIC CONSIDERS THESE CRITICAL FACTORS:
 - Does progression develop according to what entails/confirms what vs. who said what?
 - Does the author use other authors to develop ideas vs. cloak lack of ideas?`;
 
-  const [customInstruction, setCustomInstruction] = useState(DEFAULT_REWRITE_INSTRUCTION);
+  const [customInstruction, setCustomInstruction] = useState("");
   const [isRewriting, setIsRewriting] = useState(false);
   const [rewriteStats, setRewriteStats] = useState<RewriteResult["stats"] | null>(null);
   

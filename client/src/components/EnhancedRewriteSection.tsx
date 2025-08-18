@@ -90,7 +90,7 @@ THE OPERATIVE EVALUATION LOGIC CONSIDERS THESE CRITICAL FACTORS:
 - Does the author use other authors to develop ideas vs. cloak lack of ideas?`;
 
   // State for rewrite instructions
-  const [customInstruction, setCustomInstruction] = useState<string>(DEFAULT_REWRITE_INSTRUCTION);
+  const [customInstruction, setCustomInstruction] = useState<string>("");
   const [selectedPreset, setSelectedPreset] = useState<string>("");
   const [searchInstructions, setSearchInstructions] = useState<string>("");
   const [selectedProvider, setSelectedProvider] = useState<string>("deepseek");
@@ -446,7 +446,7 @@ THE OPERATIVE EVALUATION LOGIC CONSIDERS THESE CRITICAL FACTORS:
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="rewrite-instruction" className="text-sm font-medium">
-                Rewrite Instructions <span className="text-gray-500 font-normal">(Default: Intelligence-optimized)</span>
+                Rewrite Instructions <span className="text-gray-500 font-normal">(Leave empty for default intelligence-optimized)</span>
               </Label>
               <Select 
                 value={selectedPreset}
@@ -469,7 +469,7 @@ THE OPERATIVE EVALUATION LOGIC CONSIDERS THESE CRITICAL FACTORS:
               id="rewrite-instruction"
               value={customInstruction}
               onChange={(e) => setCustomInstruction(e.target.value)}
-              placeholder="The text below shows the default intelligence-optimized rewrite instruction. You can modify it or replace it with custom instructions."
+              placeholder="Leave empty to use default intelligence-optimized instructions, or enter custom instructions here..."
               className="min-h-[120px]"
             />
             {selectedPreset && (

@@ -65,7 +65,7 @@ THE OPERATIVE EVALUATION LOGIC CONSIDERS THESE CRITICAL FACTORS:
 - Does progression develop according to what entails/confirms what vs. who said what?
 - Does the author use other authors to develop ideas vs. cloak lack of ideas?`;
 
-  const [instructions, setInstructions] = useState<string>(DEFAULT_REWRITE_INSTRUCTION);
+  const [instructions, setInstructions] = useState<string>("");
   const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("openai");
   const [isRewriting, setIsRewriting] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
