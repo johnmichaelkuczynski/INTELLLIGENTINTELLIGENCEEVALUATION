@@ -332,27 +332,36 @@ export async function executeFourPhaseProtocol(
     console.log(`PHASE 4 RESULT: Final score ${finalScore}/100`);
   }
   
-  const fullReport = `### **4-Phase Intelligence Evaluation Protocol**
+  // Clean up response formatting
+  const cleanResponse = (text: string) => {
+    return text
+      .replace(/\*{1,3}/g, '') // Remove asterisks
+      .replace(/#{1,6}\s*/g, '') // Remove hashtags
+      .replace(/\-{3,}/g, '') // Remove horizontal lines
+      .replace(/\_{3,}/g, '') // Remove underscores
+      .replace(/\n{3,}/g, '\n\n') // Reduce multiple newlines
+      .trim();
+  };
 
-**PHASE 1 - Initial Questions and Assessment:**
+  const fullReport = `4-Phase Intelligence Evaluation Protocol
+
+PHASE 1 - Initial Questions and Assessment
 Score: ${phase1Score}/100
-${phase1Response}
+${cleanResponse(phase1Response)}
 
-**PHASE 2 - Pushback Analysis:**
+PHASE 2 - Pushback Analysis  
 Score: ${phase2Score}/100
-${phase2Response}
+${cleanResponse(phase2Response)}
 
-**PHASE 3 - Walmart Metric Consistency Check:**
+PHASE 3 - Walmart Metric Consistency Check
 Score: ${phase3Score}/100
-${phase3Response}
+${cleanResponse(phase3Response)}
 
-**PHASE 4 - Final Validation:**
+PHASE 4 - Final Validation
 Score: ${finalScore}/100
-${phase4Response}
+${cleanResponse(phase4Response)}
 
----
-## **FINAL ASSESSMENT SCORE: ${finalScore}/100**
----`;
+FINAL ASSESSMENT SCORE: ${finalScore}/100`;
 
   return {
     formattedReport: fullReport,

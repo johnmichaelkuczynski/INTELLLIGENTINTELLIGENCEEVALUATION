@@ -43,17 +43,31 @@ const ReportDownloadButton: React.FC<ReportDownloadButtonProps> = ({
     try {
       if (format === 'txt') {
         // Generate plain text document
-        const content = `
-INTELLIGENCE ANALYSIS REPORT
+        // Clean the formatted report from markup
+        const cleanText = (text: string) => {
+          if (!text) return '';
+          return text
+            .replace(/\*{1,3}/g, '') // Remove asterisks
+            .replace(/#{1,6}\s*/g, '') // Remove hashtags
+            .replace(/\-{3,}/g, '') // Remove horizontal lines
+            .replace(/\_{3,}/g, '') // Remove underscores
+            .replace(/\n{3,}/g, '\n\n') // Reduce multiple newlines
+            .trim();
+        };
+
+        const content = `INTELLIGENCE ANALYSIS REPORT
 ============================
 Analysis Provider: ${analysisA.provider || 'Unknown'}
 Overall Intelligence Score: ${analysisA.overallScore}/100
 
+DETAILED ANALYSIS:
+${cleanText(analysisA.formattedReport || '')}
+
 SUMMARY:
-${analysisA.summary || ''}
+${cleanText(analysisA.summary || '')}
 
 ASSESSMENT:
-${analysisA.overallAssessment || ''}
+${cleanText(analysisA.overallAssessment || '')}
 `;
         // Create and download text file
         const txtBlob = new Blob([content], {type: 'text/plain'});
