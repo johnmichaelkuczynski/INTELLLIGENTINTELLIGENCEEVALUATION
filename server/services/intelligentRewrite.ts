@@ -1,6 +1,6 @@
-import { LLMProvider } from '../types';
-import { callOpenAI, callAnthropic, callPerplexity, callDeepSeek } from './llmProviders';
 import { executeFourPhaseProtocol } from './fourPhaseProtocol';
+
+type LLMProvider = 'openai' | 'anthropic' | 'perplexity' | 'deepseek';
 
 interface IntelligentRewriteRequest {
   text: string;
@@ -26,7 +26,7 @@ export async function performIntelligentRewrite(request: IntelligentRewriteReque
   // Step 1: Get baseline score using 4-phase protocol
   console.log('Step 1: Evaluating original text...');
   const originalEvaluation = await executeFourPhaseProtocol(text, provider);
-  const originalScore = originalEvaluation.finalScore;
+  const originalScore = originalEvaluation.overallScore;
   
   console.log(`Original score: ${originalScore}/100`);
   
@@ -65,21 +65,65 @@ REWRITTEN TEXT:`;
 
   let rewrittenText: string;
   try {
-    switch (provider) {
-      case 'openai':
-        rewrittenText = await callOpenAI(rewritePrompt);
-        break;
-      case 'anthropic':
-        rewrittenText = await callAnthropic(rewritePrompt);
-        break;
-      case 'perplexity':
-        rewrittenText = await callPerplexity(rewritePrompt);
-        break;
-      case 'deepseek':
-        rewrittenText = await callDeepSeek(rewritePrompt);
-        break;
-      default:
-        throw new Error(`Unsupported provider: ${provider}`);
+    // Use the same LLM call pattern as other services
+    if (provider === 'openai') {
+      const OpenAI = (await import('openai')).default;
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "user", content: rewritePrompt }],
+        temperature: 0.1
+      });
+      
+      rewrittenText = completion.choices[0]?.message?.content || '';
+    } else if (provider === 'anthropic') {
+      const Anthropic = (await import('@anthropic-ai/sdk')).default;
+      const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+      
+      const completion = await anthropic.messages.create({
+        model: "claude-3-5-sonnet-20241022",
+        max_tokens: 4000,
+        messages: [{ role: "user", content: rewritePrompt }],
+        temperature: 0.1
+      });
+      
+      rewrittenText = completion.content[0]?.type === 'text' ? completion.content[0].text : '';
+    } else if (provider === 'perplexity') {
+      const response = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: "sonar",
+          messages: [{ role: "user", content: rewritePrompt }],
+          temperature: 0.1
+        })
+      });
+      
+      const data = await response.json();
+      rewrittenText = data.choices[0]?.message?.content || '';
+    } else if (provider === 'deepseek') {
+      const response = await fetch('https://api.deepseek.com/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: "deepseek-chat",
+          messages: [{ role: "user", content: rewritePrompt }],
+          temperature: 0.1,
+          max_tokens: 4000
+        })
+      });
+      
+      const data = await response.json();
+      rewrittenText = data.choices[0]?.message?.content || '';
+    } else {
+      throw new Error(`Unsupported provider: ${provider}`);
     }
   } catch (error) {
     console.error(`Error during rewrite with ${provider}:`, error);
@@ -89,7 +133,7 @@ REWRITTEN TEXT:`;
   // Step 4: Evaluate the rewritten text
   console.log('Step 3: Evaluating rewritten text...');
   const rewrittenEvaluation = await executeFourPhaseProtocol(rewrittenText, provider);
-  const rewrittenScore = rewrittenEvaluation.finalScore;
+  const rewrittenScore = rewrittenEvaluation.overallScore;
   
   console.log(`Rewritten score: ${rewrittenScore}/100`);
   console.log(`Score improvement: ${rewrittenScore - originalScore} points`);
