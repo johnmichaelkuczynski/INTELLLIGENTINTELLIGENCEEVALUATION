@@ -66,11 +66,9 @@ function splitIntoChunks(text: string, maxChunkSize: number = 2000): string[] {
 export async function streamRewriteDocument(
   documentText: string, 
   options: RewriteOptions, 
-  provider: string = 'deepseek',
+  provider: string = 'openai',
   onChunk: (chunk: string, index: number, total: number) => void
 ): Promise<{ content: string }> {
-  // Create final instruction using enhanced logic
-  const finalInstruction = createFinalInstruction(options.instruction || "");
   const chunks = splitIntoChunks(documentText, 2000);
   let fullRewrite = '';
   
@@ -106,72 +104,26 @@ export async function streamRewriteDocument(
  * @param provider AI provider to use (openai, anthropic, perplexity)
  * @returns Rewritten text
  */
-// Core intelligence evaluation criteria that always apply
-const CORE_INTELLIGENCE_CRITERIA = `REWRITE IN SUCH A WAY THAT (A) THE REWRITE SCORES SIGNIFICANTLY HIGHER RELATIVE TO THE OPERATIVE INTELLIGENCE EVALUATION PROTOCOL (BELOW) WHILE (B) PRESERVING EXISTING CONTENT AS MUCH AS CONDITION (A) ALLOWS.
-
-CONDITION (A) MEANS: RIGHTSIZE THE PASSAGE WITH RESPECT TO THE OPERATIVE EVALUATION LOGIC.
-CONDITION (B) MEANS: IF YOU CAN RIGHTSIZE THE PASSAGE WITHOUT CHANGING THE CONTENT, THEN DO THAT; AND IF YOU HAVE TO CHANGE OR SUPPLEMENT THE PASSAGE TO GET THE REWRITE TO BE ON THE RIGHT SIZE OF THE EVALUATION LOGIC, THEN MAKE THOSE CHANGES--AS LONG AS THEY DO NOT TOTALLY ALTER THE MEANING OF THE PASSAGE.
-
-OPERATIVE EVALUATION LOGIC - THE REWRITE MUST OPTIMIZE FOR THESE FACTORS:
-- Is it insightful and does it develop points organically?
-- Are ideas arranged hierarchically, not just sequentially?
-- Does it operate skillfully with canons of logic/reasoning?
-- Are the points fresh rather than clichés?
-- Does it use technical jargon to render more precise (not obfuscate)?
-- Do points develop organically and naturally?
-- Does it open up new domains of inquiry?
-- Is it actually intelligent vs. presumed intelligent by subject matter?
-- Is it real vs. phony?
-- Do sentences exhibit complex and coherent internal logic?
-- Is the passage governed by a strong concept vs. purely expository norms?
-- Is there system-level control over ideas with integration of earlier points?
-- Are the points real and fresh vs. institutional orthodoxy?
-- Is the writing direct vs. evasive?
-- Are statements unambiguous?
-- Does progression develop according to what entails/confirms what vs. who said what?
-- Does the author use other authors to develop ideas vs. cloak lack of ideas?`;
-
-// Function to create final instruction based on user input
-function createFinalInstruction(userInstruction: string): string {
-  const trimmedInstruction = userInstruction?.trim() || "";
-  
-  if (!trimmedInstruction) {
-    // No user instruction - use default intelligence optimization only
-    return CORE_INTELLIGENCE_CRITERIA;
-  } else {
-    // User provided instruction - combine with intelligence criteria, weighting user instruction more heavily
-    return `${CORE_INTELLIGENCE_CRITERIA}
-
-ADDITIONAL CUSTOM INSTRUCTIONS (WEIGHT THESE MORE HEAVILY IF THERE IS CONFLICT):
-${trimmedInstruction}
-
-INSTRUCTION PRIORITY: If it is difficult to both follow the custom instructions and fulfill conditions A and B above, weight the custom instructions more heavily, but in all cases try to strike a balance between the intelligence optimization criteria and the custom instructions.`;
-  }
-}
-
 export async function rewriteDocument(
   originalText: string, 
   options: RewriteOptions, 
-  provider: string = "deepseek"
+  provider: string = "openai"
 ): Promise<RewriteResult> {
-  // Create final instruction using enhanced logic
-  const finalInstruction = createFinalInstruction(options.instruction || "");
-    
-  const { preserveIntelligence = true, documentType = "document" } = options;
+  const { instruction, preserveIntelligence = true, documentType = "document" } = options;
   
   // Check if the instruction involves solving math problems
-  const isMathSolving = finalInstruction.toLowerCase().includes('math') || 
-                       finalInstruction.toLowerCase().includes('solve') ||
-                       finalInstruction.toLowerCase().includes('calculate') ||
-                       finalInstruction.toLowerCase().includes('derivative') ||
-                       finalInstruction.toLowerCase().includes('limit') ||
-                       finalInstruction.toLowerCase().includes('integral');
+  const isMathSolving = instruction.toLowerCase().includes('math') || 
+                       instruction.toLowerCase().includes('solve') ||
+                       instruction.toLowerCase().includes('calculate') ||
+                       instruction.toLowerCase().includes('derivative') ||
+                       instruction.toLowerCase().includes('limit') ||
+                       instruction.toLowerCase().includes('integral');
 
   const rewritePrompt = `
     I need you to rewrite the following ${documentType}. 
 
     YOUR INSTRUCTIONS:
-    ${finalInstruction}
+    ${instruction}
 
     CRITICAL REQUIREMENTS:
     - OUTPUT MUST BE COMPLETELY CLEAN TEXT WITH NO FORMATTING SYMBOLS WHATSOEVER

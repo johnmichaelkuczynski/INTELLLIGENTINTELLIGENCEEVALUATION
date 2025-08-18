@@ -460,14 +460,15 @@ export async function registerRoutes(app: Express): Promise<Express> {
   // Streaming rewrite endpoint
   app.post("/api/rewrite-stream", async (req: Request, res: Response) => {
     try {
-      const { originalText, instructions, provider = "deepseek", mode = "hybrid" } = req.body;
+      const { originalText, instructions, provider = "openai", mode = "hybrid" } = req.body;
       
       if (!originalText) {
         return res.status(400).json({ error: "Original text is required" });
       }
       
-      // If no instructions provided, the rewrite service will use the default instruction
-      const finalInstructions = instructions || "";
+      if (!instructions) {
+        return res.status(400).json({ error: "Instructions are required" });
+      }
       
       // Set up Server-Sent Events
       res.writeHead(200, {
@@ -482,7 +483,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
       const { streamRewriteDocument } = await import('./services/documentRewrite');
       
       const enhancedOptions = {
-        instruction: finalInstructions,
+        instruction: instructions,
         targetLevel: "advanced",
         mode: mode
       };
@@ -507,15 +508,17 @@ export async function registerRoutes(app: Express): Promise<Express> {
   // Rewrite document
   app.post("/api/rewrite", async (req: Request, res: Response) => {
     try {
-      const { originalText, instructions, options, provider = "deepseek", mode = "rewrite_existing" } = req.body;
+      const { originalText, instructions, options, provider = "openai", mode = "rewrite_existing" } = req.body;
       
       if (!originalText) {
         return res.status(400).json({ error: "Original text is required" });
       }
       
       // Support both old 'options.instruction' and new 'instructions' format
-      // If no instruction provided, the rewrite service will use the default instruction
-      const instruction = instructions || (options && options.instruction) || "";
+      const instruction = instructions || (options && options.instruction);
+      if (!instruction) {
+        return res.status(400).json({ error: "Rewrite instruction is required" });
+      }
       
       // Import the document rewrite service
       const { rewriteDocument } = await import('./services/documentRewrite');
@@ -553,7 +556,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
   // Translate document
   app.post("/api/translate", async (req: Request, res: Response) => {
     try {
-      const { text, options, provider = "deepseek" } = req.body;
+      const { text, options, provider = "openai" } = req.body;
       
       if (!text) {
         return res.status(400).json({ error: "Text is required" });
@@ -634,7 +637,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
 
   app.post("/api/direct-model-request", async (req: Request, res: Response) => {
     try {
-      const { instruction, provider = "deepseek" } = req.body;
+      const { instruction, provider = "openai" } = req.body;
       
       if (!instruction) {
         return res.status(400).json({ error: "Instruction is required" });
@@ -713,7 +716,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
   // Case assessment endpoint
   app.post("/api/case-assessment", async (req: Request, res: Response) => {
     try {
-      const { text, provider = "deepseek", documentId } = req.body;
+      const { text, provider = "openai", documentId } = req.body;
       
       if (!text || typeof text !== 'string') {
         return res.status(400).json({ error: "Text content is required for case assessment" });

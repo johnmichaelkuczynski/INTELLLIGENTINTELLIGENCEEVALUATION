@@ -64,31 +64,6 @@ const EnhancedRewriteSection: React.FC<EnhancedRewriteSectionProps> = ({
 }) => {
   const { toast } = useToast();
   
-  // Default instruction from backend
-  const DEFAULT_REWRITE_INSTRUCTION = `REWRITE IN SUCH A WAY THAT (A) THE REWRITE SCORES SIGNIFICANTLY HIGHER RELATIVE TO THE OPERATIVE INTELLIGENCE EVALUATION PROTOCOL WHILE (B) PRESERVING EXISTING CONTENT AS MUCH AS CONDITION (A) ALLOWS. 
-
-CONDITION (A) MEANS: RIGHTSIZE THE PASSAGE WITH RESPECT TO THE OPERATIVE EVALUATION LOGIC. 
-CONDITION (B) MEANS: IF YOU CAN RIGHTSIZE THE PASSAGE WITHOUT CHANGING THE CONTENT, THEN DO THAT; AND IF YOU HAVE TO CHANGE OR SUPPLEMENT THE PASSAGE TO GET THE REWRITE TO BE ON THE RIGHT SIZE OF THE EVALUATION LOGIC, THEN MAKE THOSE CHANGES--AS LONG AS THEY DO NOT TOTALLY ALTER THE MEANING OF THE PASSAGE.
-
-THE OPERATIVE EVALUATION LOGIC CONSIDERS THESE CRITICAL FACTORS:
-- Is it insightful and does it develop points organically?
-- Are ideas arranged hierarchically, not just sequentially?
-- Does it operate skillfully with canons of logic/reasoning?
-- Are the points fresh rather than clichés?
-- Does it use technical jargon to render more precise (not obfuscate)?
-- Do points develop organically and naturally?
-- Does it open up new domains of inquiry?
-- Is it actually intelligent vs. presumed intelligent by subject matter?
-- Is it real vs. phony?
-- Do sentences exhibit complex and coherent internal logic?
-- Is the passage governed by a strong concept vs. purely expository norms?
-- Is there system-level control over ideas with integration of earlier points?
-- Are the points real and fresh vs. institutional orthodoxy?
-- Is the writing direct vs. evasive?
-- Are statements unambiguous?
-- Does progression develop according to what entails/confirms what vs. who said what?
-- Does the author use other authors to develop ideas vs. cloak lack of ideas?`;
-
   // State for rewrite instructions
   const [customInstruction, setCustomInstruction] = useState<string>("");
   const [selectedPreset, setSelectedPreset] = useState<string>("");
@@ -346,7 +321,10 @@ THE OPERATIVE EVALUATION LOGIC CONSIDERS THESE CRITICAL FACTORS:
       });
     }
     
-    // Let backend handle default instructions if none provided
+    // If no instructions provided, add a default
+    if (!finalInstruction.trim()) {
+      finalInstruction = "Improve the clarity and precision of the text while maintaining the original meaning. Enhance logical flow and conceptual precision.";
+    }
     
     // Set up the rewrite options
     const options: RewriteOptions = {
@@ -443,7 +421,7 @@ THE OPERATIVE EVALUATION LOGIC CONSIDERS THESE CRITICAL FACTORS:
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="rewrite-instruction" className="text-sm font-medium">
-                Rewrite Instructions <span className="text-gray-500 font-normal">(Leave empty for default intelligence-optimized)</span>
+                Custom Rewrite Instructions
               </Label>
               <Select 
                 value={selectedPreset}
@@ -466,7 +444,7 @@ THE OPERATIVE EVALUATION LOGIC CONSIDERS THESE CRITICAL FACTORS:
               id="rewrite-instruction"
               value={customInstruction}
               onChange={(e) => setCustomInstruction(e.target.value)}
-              placeholder="Leave empty to use default intelligence-optimized instructions, or enter custom instructions here..."
+              placeholder="Provide detailed instructions for rewriting. Example: 'Replace vague terms with precise ones while maintaining original structure' or 'Enhance logical reasoning chains without changing length'"
               className="min-h-[120px]"
             />
             {selectedPreset && (

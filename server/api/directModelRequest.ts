@@ -177,7 +177,7 @@ export async function directDeepSeekRequest(instructions: string): Promise<any> 
  */
 export async function directMultiModelRequest(
   instructions: string, 
-  models: string[] = ['deepseek', 'openai', 'claude', 'perplexity']
+  models: string[] = ['openai', 'claude', 'perplexity', 'deepseek']
 ): Promise<Record<string, any>> {
   console.log(`Direct multi-model request to: ${models.join(', ')}`);
   console.log(`Instructions: ${instructions.substring(0, 100)}...`);

@@ -70,7 +70,7 @@ const HomePage: React.FC = () => {
   const [currentFictionDocument, setCurrentFictionDocument] = useState<"A" | "B">("A");
   
   // State for LLM provider
-  const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("deepseek");
+  const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("openai");
   const [apiStatus, setApiStatus] = useState<{
     openai: boolean;
     anthropic: boolean;

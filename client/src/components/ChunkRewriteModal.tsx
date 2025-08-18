@@ -31,33 +31,8 @@ const ChunkRewriteModal: React.FC<ChunkRewriteModalProps> = ({
   onRewriteUpdate
 }) => {
   const { toast } = useToast();
-  // Default instruction from backend
-  const DEFAULT_REWRITE_INSTRUCTION = `REWRITE IN SUCH A WAY THAT (A) THE REWRITE SCORES SIGNIFICANTLY HIGHER RELATIVE TO THE OPERATIVE INTELLIGENCE EVALUATION PROTOCOL WHILE (B) PRESERVING EXISTING CONTENT AS MUCH AS CONDITION (A) ALLOWS. 
-
-CONDITION (A) MEANS: RIGHTSIZE THE PASSAGE WITH RESPECT TO THE OPERATIVE EVALUATION LOGIC. 
-CONDITION (B) MEANS: IF YOU CAN RIGHTSIZE THE PASSAGE WITHOUT CHANGING THE CONTENT, THEN DO THAT; AND IF YOU HAVE TO CHANGE OR SUPPLEMENT THE PASSAGE TO GET THE REWRITE TO BE ON THE RIGHT SIZE OF THE EVALUATION LOGIC, THEN MAKE THOSE CHANGES--AS LONG AS THEY DO NOT TOTALLY ALTER THE MEANING OF THE PASSAGE.
-
-THE OPERATIVE EVALUATION LOGIC CONSIDERS THESE CRITICAL FACTORS:
-- Is it insightful and does it develop points organically?
-- Are ideas arranged hierarchically, not just sequentially?
-- Does it operate skillfully with canons of logic/reasoning?
-- Are the points fresh rather than clichés?
-- Does it use technical jargon to render more precise (not obfuscate)?
-- Do points develop organically and naturally?
-- Does it open up new domains of inquiry?
-- Is it actually intelligent vs. presumed intelligent by subject matter?
-- Is it real vs. phony?
-- Do sentences exhibit complex and coherent internal logic?
-- Is the passage governed by a strong concept vs. purely expository norms?
-- Is there system-level control over ideas with integration of earlier points?
-- Are the points real and fresh vs. institutional orthodoxy?
-- Is the writing direct vs. evasive?
-- Are statements unambiguous?
-- Does progression develop according to what entails/confirms what vs. who said what?
-- Does the author use other authors to develop ideas vs. cloak lack of ideas?`;
-
   const [instructions, setInstructions] = useState<string>("");
-  const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("deepseek");
+  const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("openai");
   const [isRewriting, setIsRewriting] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
   const [currentChunk, setCurrentChunk] = useState<number>(0);
@@ -100,7 +75,15 @@ THE OPERATIVE EVALUATION LOGIC CONSIDERS THESE CRITICAL FACTORS:
   };
 
   const handleChunkRewrite = async () => {
-    // Instructions are optional - backend will use default if empty
+    if (!instructions.trim()) {
+      toast({
+        title: "Instructions required",
+        description: "Please enter rewrite instructions",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsRewriting(true);
     setProgress(0);
     setRewrittenChunks([]);
@@ -123,7 +106,7 @@ THE OPERATIVE EVALUATION LOGIC CONSIDERS THESE CRITICAL FACTORS:
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             originalText: chunks[i],
-            instructions: instructions.trim() || "",
+            instructions: instructions,
             provider: selectedProvider
           })
         });
@@ -282,20 +265,14 @@ THE OPERATIVE EVALUATION LOGIC CONSIDERS THESE CRITICAL FACTORS:
               <Textarea
                 value={instructions}
                 onChange={(e) => setInstructions(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && e.ctrlKey && !isRewriting) {
-                    e.preventDefault();
-                    handleChunkRewrite();
-                  }
-                }}
-                placeholder="Leave empty to use default intelligence-optimized instructions"
+                placeholder="Enter rewrite instructions for all chunks..."
                 className="min-h-32"
               />
             </div>
 
             <Button 
               onClick={handleChunkRewrite} 
-              disabled={isRewriting}
+              disabled={isRewriting || !instructions.trim()}
               className="w-full"
             >
               {isRewriting ? `Processing Chunk ${currentChunk}/${totalChunks}...` : "Start Chunk Rewrite"}
