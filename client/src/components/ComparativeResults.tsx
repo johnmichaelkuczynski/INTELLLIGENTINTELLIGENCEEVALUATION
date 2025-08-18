@@ -170,10 +170,38 @@ const ComparativeResults: React.FC<ComparativeResultsProps> = ({
         </div>
       </div>
 
+      {/* Detailed Analysis Reports */}
+      <div className="mb-6">
+        <h3 className="font-semibold text-gray-800 mb-3">Detailed Analysis Reports</h3>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-gray-50 p-4 rounded-md">
+            <h4 className="font-medium text-gray-800 mb-3">Document A Analysis</h4>
+            <div className="prose prose-sm max-w-none">
+              <div className="whitespace-pre-wrap text-gray-700 text-sm">
+                {analysisA.formattedReport || analysisA.analysis || "Analysis not available"}
+              </div>
+            </div>
+          </div>
+          <div className="bg-gray-50 p-4 rounded-md">
+            <h4 className="font-medium text-gray-800 mb-3">Document B Analysis</h4>
+            <div className="prose prose-sm max-w-none">
+              <div className="whitespace-pre-wrap text-gray-700 text-sm">
+                {analysisB.formattedReport || analysisB.analysis || "Analysis not available"}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Final Judgment */}
       <div className="bg-blue-50 p-4 rounded-md">
-        <h3 className="font-semibold text-gray-800 mb-2">Final Judgment</h3>
-        <p className="text-gray-700">{comparison.finalJudgment}</p>
+        <h3 className="font-semibold text-gray-800 mb-2">Final Assessment</h3>
+        <div className="text-gray-700">
+          <p className="mb-2"><strong>Comprehensive evaluation of cognitive architecture and intelligence type</strong></p>
+          <div className="whitespace-pre-wrap">
+            {comparison.finalJudgment}
+          </div>
+        </div>
       </div>
       
       {/* Share via Email Modal */}

@@ -31,13 +31,15 @@ DOES THE AUTHOR USER OTHER AUTHORS  TO DEVELOP HIS IDEAS OR TO CLOAK HIS OWN LAC
 
 // PHASE 1: YOUR EXACT SPECIFICATION
 function createPurePhase1Prompt(text: string): string {
-  return `Answer these questions in connection with this text:
+  return `Answer these questions in connection with this text (be direct and specific in your answers):
 
 ${EXACT_EVALUATION_QUESTIONS}
 
 A score of N/100 (e.g. 73/100) means that (100-N)/100 (e.g. 27/100) outperform the author with respect to the parameter defined by the question. You are not grading; you are answering these questions. You do not use a risk-averse standard; you do not attempt to be diplomatic; you do not attempt to comply with risk-averse, medium-range IQ, academic norms. You do not make assumptions about the level of the paper; it could be a work of the highest excellence and genius, or it could be the work of a moron.
 
 If a work is a work of genius, you say that, and you say why; you do not shy away from giving what might conventionally be regarded as excessively "superlative" scores; you give it the score it deserves, not the score that a midwit committee would say it deserves.
+
+Be especially careful to distinguish genuine intellectual sophistication from superficial academic mimicry. Look for authentic insight vs. canned reasoning.
 
 Give a score out of 100.
 
@@ -49,6 +51,8 @@ ${text}`;
 function createPurePhase2Prompt(score: number): string {
   const outperformPercentage = 100 - score;
   return `Your position is that ${outperformPercentage}/100 outperform the author with respect to the cognitive metric defined by the question: that is your position, am I right? And are you sure about that?
+
+Reconsider carefully: Are you perhaps being overly conservative or applying academic risk-aversion? Remember you should give the score the work actually deserves, not what a cautious committee would give.
 
 Answer the following questions about the text de novo:
 ${EXACT_EVALUATION_QUESTIONS}
