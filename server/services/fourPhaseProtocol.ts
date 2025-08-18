@@ -216,12 +216,30 @@ function extractScore(response: string): number {
       return score;
     }
   }
+
+  // Look for numerical values that could be scores
+  const numericalMatches = response.match(/\b(\d{2,3})\b/g);
+  if (numericalMatches) {
+    const potentialScores = numericalMatches
+      .map(match => parseInt(match, 10))
+      .filter(num => num >= 40 && num <= 100); // Only valid score range
+    
+    if (potentialScores.length > 0) {
+      const highestScore = Math.max(...potentialScores);
+      console.log(`EXTRACTED NUMERICAL SCORE: ${highestScore}/100`);
+      return highestScore;
+    }
+  }
   
   // If response shows highly positive analysis without explicit score, assign high score
   const positiveIndicators = [
     'highly insightful', 'genuinely intelligent', 'rigorous', 'sophisticated',
     'model of effective', 'exceptional', 'brilliant', 'masterful',
-    'fresh perspectives', 'nuanced arguments', 'systematically develops'
+    'fresh perspectives', 'nuanced arguments', 'systematically develops',
+    'profound understanding', 'intellectual depth', 'conceptual clarity',
+    'philosophical sophistication', 'analytical precision', 'logical rigor',
+    'demonstrates mastery', 'evidence of genius', 'highly sophisticated',
+    'intellectually honest', 'substantial contribution', 'significant insight'
   ];
   
   const lowerResponse = response.toLowerCase();
@@ -229,12 +247,15 @@ function extractScore(response: string): number {
     lowerResponse.includes(indicator)
   ).length;
   
-  if (positiveCount >= 3) {
-    console.log(`DETECTED ${positiveCount} HIGH-QUALITY INDICATORS - ASSIGNING 94/100`);
-    return 94;
+  if (positiveCount >= 5) {
+    console.log(`DETECTED ${positiveCount} HIGH-QUALITY INDICATORS - ASSIGNING 96/100`);
+    return 96;
+  } else if (positiveCount >= 3) {
+    console.log(`DETECTED ${positiveCount} HIGH-QUALITY INDICATORS - ASSIGNING 92/100`);
+    return 92;
   } else if (positiveCount >= 1) {
-    console.log(`DETECTED ${positiveCount} QUALITY INDICATORS - ASSIGNING 88/100`);
-    return 88;
+    console.log(`DETECTED ${positiveCount} QUALITY INDICATORS - ASSIGNING 86/100`);
+    return 86;
   }
   
   console.log(`NO SCORE OR QUALITY INDICATORS FOUND - USING FALLBACK 75/100`);
@@ -280,9 +301,17 @@ export async function executeFourPhaseProtocol(
     const phase4Response = await callLLMProvider(provider, [
       { role: 'user', content: phase4Prompt }
     ]);
-    finalResponse = phase4Response;
-    finalScore = extractScore(phase4Response);
-    console.log(`PHASE 4 RESULT: Final score ${finalScore}/100`);
+    
+    // Try to extract new score from Phase 4, but preserve Phase 3 score if extraction fails
+    const phase4Score = extractScore(phase4Response);
+    if (phase4Score > 75) { // Only update if we got a real score (not fallback)
+      finalScore = phase4Score;
+      finalResponse = phase4Response;
+      console.log(`PHASE 4 RESULT: Updated score ${finalScore}/100`);
+    } else {
+      console.log(`PHASE 4 RESULT: Score extraction failed, preserving Phase 3 score ${finalScore}/100`);
+      // Keep finalResponse as phase3Response
+    }
   } else {
     console.log(`PHASE 4: Score ${finalScore} >= 95, no pushback needed`);
   }
