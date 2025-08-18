@@ -70,7 +70,32 @@ const RewritePage: React.FC = () => {
   const [originalText, setOriginalText] = useState("");
   const [rewrittenText, setRewrittenText] = useState("");
   const [instruction, setInstruction] = useState<string>("");
-  const [customInstruction, setCustomInstruction] = useState("");
+  // Default instruction from backend
+  const DEFAULT_REWRITE_INSTRUCTION = `REWRITE IN SUCH A WAY THAT (A) THE REWRITE SCORES SIGNIFICANTLY HIGHER RELATIVE TO THE OPERATIVE INTELLIGENCE EVALUATION PROTOCOL WHILE (B) PRESERVING EXISTING CONTENT AS MUCH AS CONDITION (A) ALLOWS. 
+
+CONDITION (A) MEANS: RIGHTSIZE THE PASSAGE WITH RESPECT TO THE OPERATIVE EVALUATION LOGIC. 
+CONDITION (B) MEANS: IF YOU CAN RIGHTSIZE THE PASSAGE WITHOUT CHANGING THE CONTENT, THEN DO THAT; AND IF YOU HAVE TO CHANGE OR SUPPLEMENT THE PASSAGE TO GET THE REWRITE TO BE ON THE RIGHT SIZE OF THE EVALUATION LOGIC, THEN MAKE THOSE CHANGES--AS LONG AS THEY DO NOT TOTALLY ALTER THE MEANING OF THE PASSAGE.
+
+THE OPERATIVE EVALUATION LOGIC CONSIDERS THESE CRITICAL FACTORS:
+- Is it insightful and does it develop points organically?
+- Are ideas arranged hierarchically, not just sequentially?
+- Does it operate skillfully with canons of logic/reasoning?
+- Are the points fresh rather than clichés?
+- Does it use technical jargon to render more precise (not obfuscate)?
+- Do points develop organically and naturally?
+- Does it open up new domains of inquiry?
+- Is it actually intelligent vs. presumed intelligent by subject matter?
+- Is it real vs. phony?
+- Do sentences exhibit complex and coherent internal logic?
+- Is the passage governed by a strong concept vs. purely expository norms?
+- Is there system-level control over ideas with integration of earlier points?
+- Are the points real and fresh vs. institutional orthodoxy?
+- Is the writing direct vs. evasive?
+- Are statements unambiguous?
+- Does progression develop according to what entails/confirms what vs. who said what?
+- Does the author use other authors to develop ideas vs. cloak lack of ideas?`;
+
+  const [customInstruction, setCustomInstruction] = useState(DEFAULT_REWRITE_INSTRUCTION);
   const [isRewriting, setIsRewriting] = useState(false);
   const [rewriteStats, setRewriteStats] = useState<RewriteResult["stats"] | null>(null);
   
@@ -352,7 +377,7 @@ const RewritePage: React.FC = () => {
             {instruction === "custom" && (
               <div className="w-full">
                 <Label htmlFor="custom-instruction" className="mb-2 block">
-                  Custom Rewrite Instruction
+                  Rewrite Instruction <span className="text-gray-500 font-normal">(Default: Intelligence-optimized)</span>
                 </Label>
                 <Input
                   id="custom-instruction"
