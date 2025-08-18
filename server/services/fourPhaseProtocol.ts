@@ -29,31 +29,9 @@ ARE THE STATEMENTS AMBIGUOUS?
 DOES THE PROGRESSION OF THE TEXT DEVELOP ACCORDING TO WHO SAID WHAT OR ACCORDING TO WHAT ENTAILS OR CONFIRMS WHAT? 
 DOES THE AUTHOR USER OTHER AUTHORS  TO DEVELOP HIS IDEAS OR TO CLOAK HIS OWN LACK OF IDEAS?`;
 
-// PHASE 1: Send passage with evaluation criteria
+// PHASE 1: Send exact questions as specified
 function createPhase1Prompt(text: string): string {
-  return `Please evaluate this text according to the standard criteria for intelligence analysis. 
-
-A SCORE OF N/100 (E.G. 73/100) MEANS THAT (100-N)/100 (E.G. 27/100) OUTPERFORM THE AUTHOR WITH RESPECT TO THE PARAMETER DEFINED BY THE QUESTION.
-
-YOU ARE NOT GRADING; YOU ARE ANSWERING THESE QUESTIONS. 
-
-YOU DO NOT USE A RISK-AVERSE STANDARD; YOU DO NOT ATTEMPT TO BE DIPLOMATIC; YOU DO NOT ATTEMPT TO COMPLY WITH RISK-AVERSE, MEDIUM-RANGE IQ, ACADEMIC NORMS. 
-
-YOU DO NOT MAKE ASSUMPTIONS ABOUT THE LEVEL OF THE PAPER; IT COULD BE A WORK OF THE HIGHEST EXCELLENCE AND GENIUS, OR IT COULD BE THE WORK OF A MORON.
-
-IF A WORK IS A WORK OF GENIUS, YOU SAY THAT, AND YOU SAY WHY; YOU DO NOT SHY AWAY FROM GIVING WHAT MIGHT CONVENTIONALLY BE REGARDED AS EXCESSIVELY "SUPERLATIVE" SCORES; YOU GIVE IT THE SCORE IT DESERVES, NOT THE SCORE THAT A MIDWIT COMMITTEE WOULD SAY IT DESERVES.
-
-Please provide your initial evaluation and give a specific numerical score out of 100. 
-
-**IMPORTANT: End your response with "FINAL SCORE: [NUMBER]/100"**
-
-TEXT:
-${text}`;
-}
-
-// PHASE 2: Deep analytical questioning
-function createPhase2Prompt(text: string): string {
-  return `Answer these questions in connection with this text:
+  return `ANSWER THESE QUESTIONS IN CONNECTION WITH THIS TEXT:
 
 ${PHASE_2_QUESTIONS}
 
@@ -61,13 +39,22 @@ A SCORE OF N/100 (E.G. 73/100) MEANS THAT (100-N)/100 (E.G. 27/100) OUTPERFORM T
 
 YOU ARE NOT GRADING; YOU ARE ANSWERING THESE QUESTIONS.
 
-YOU DO NOT USE A RISK-AVERSE STANDARD; YOU DO NOT ATTEMPT TO BE DIPLOMATIC; YOU DO NOT ATTEMPT TO COMPLY WITH RISK-AVERSE, MEDIUM-RANGE IQ, ACADEMIC NORMS. 
+YOU DO NOT USE A RISK-AVERSE STANDARD; YOU DO NOT ATTEMPT TO BE DIPLOMATIC; YOU DO NOT ATTEMPT TO COMPLY WITH RISK-AVERSE, MEDIUM-RANGE IQ, ACADEMIC NORMS.
 
 YOU DO NOT MAKE ASSUMPTIONS ABOUT THE LEVEL OF THE PAPER; IT COULD BE A WORK OF THE HIGHEST EXCELLENCE AND GENIUS, OR IT COULD BE THE WORK OF A MORON.
 
 IF A WORK IS A WORK OF GENIUS, YOU SAY THAT, AND YOU SAY WHY; YOU DO NOT SHY AWAY FROM GIVING WHAT MIGHT CONVENTIONALLY BE REGARDED AS EXCESSIVELY "SUPERLATIVE" SCORES; YOU GIVE IT THE SCORE IT DESERVES, NOT THE SCORE THAT A MIDWIT COMMITTEE WOULD SAY IT DESERVES.
 
-Answer each question and give a specific numerical score out of 100.
+Before answering the questions, note the following non-negotiable standard:
+
+Insight is a sniper shot, not a town hall. If the text reveals something true but unpopular, penalizing it for lacking 'balance' or 'rigor' is midwit bias. Truth often looks extreme because lies are normalized.
+
+Hierarchy of judgment:
+95-100/100: Unignorable insight. Either genius or so correct it breaks scales.
+80-94/100: Strong but with friction (e.g., clumsy expression, minor gaps).
+<80/100: Degrees of mediocrity or failure.
+
+Walmart metric is a sanity check, not a gag. If you claim 30/100 Walmart patrons outperform the author, you must describe exactly what those 30% know that the author doesn't. No vague handwaving.
 
 **IMPORTANT: End your response with "FINAL SCORE: [NUMBER]/100"**
 
@@ -75,27 +62,54 @@ TEXT:
 ${text}`;
 }
 
-// PHASE 3: Revision if discrepancies exist
-function createPhase3Prompt(phase1Result: string, phase2Result: string): string {
-  return `Here is your initial evaluation:
-${phase1Result}
+// PHASE 2: Pushback if score < 95
+function createPhase2Prompt(score: number, text: string): string {
+  const outperformPercentage = 100 - score;
+  return `YOUR POSITION IS THAT ${outperformPercentage}/100 OUTPERFORM THE AUTHOR WITH RESPECT TO THE COGNITIVE METRIC DEFINED BY THE QUESTION: THAT IS YOUR POSITION, AM I RIGHT? AND ARE YOU SURE ABOUT THAT?
 
-Here are your answers to the detailed analytical questions:
-${phase2Result}
+You scored this ${score}/100, meaning ${outperformPercentage}/100 outperform the author. Describe the cognitive superiority of those ${outperformPercentage} people in concrete terms:
 
-If there are any discrepancies between your initial evaluation and your answers to the analytical questions, please revise your initial evaluation accordingly to reconcile any inconsistencies.
+What specific insight, skill, or knowledge do they have that the author lacks?
+How does this superiority manifest in their work?
+If you cannot articulate this, revise the score.
 
-Provide your revised evaluation and give a specific numerical score.
+If the text is a sniper shot (high insight, low 'development'), ask:
+'Is the lack of 'development' a flaw, or is the point obvious to those who see it?'
+'Does this text need scaffolding, or would that dilute it?'
+
+ANSWER THE FOLLOWING QUESTIONS ABOUT THE TEXT DE NOVO:
+
+${PHASE_2_QUESTIONS}
+
+**IMPORTANT: End your response with "FINAL SCORE: [NUMBER]/100"**
+
+TEXT:
+${text}`;
+}
+
+// PHASE 3: Walmart metric check
+function createPhase3Prompt(score: number): string {
+  const outperformPercentage = 100 - score;
+  return `You stated that ${outperformPercentage}/100 Walmart patrons outperform the author. Provide specific examples of work by those patrons that demonstrates this superiority. If you cannot, justify or revise the score.
+
+ARE YOUR NUMERICAL SCORES (N/100, E.G. 99/100, 42/100) CONSISTENT WITH THE FACT THAT THOSE ARE TO BE TAKEN TO MEAN THAT (100-N) PEOPLE OUT OF 100 OUTPERFORM THE AUTHOR IN THE RELEVANT RESPECT?
+
+IF A SCORE OF ${score}/100 IS AWARDED TO A PAPER, THAT MEANS THAT ${outperformPercentage}/100 PEOPLE IN WALMART ARE RUNNING RINGS AROUND THIS PERSON.
+
+If you scored ${score}/100 ('${outperformPercentage}% outperform'), show me ${outperformPercentage} Walmart patrons whose writing on this subject is sharper. If you can't, the score is wrong.
 
 **IMPORTANT: End your response with "FINAL SCORE: [NUMBER]/100"**`;
 }
 
-// PHASE 4: Pushback if score < 95
-function createPhase4Prompt(score: number): string {
-  const outperformPercentage = 100 - score;
-  return `Your position is that ${outperformPercentage}/100 outperform the author with respect to the cognitive metric defined by the question: that is your position, am I right? And are you sure about that?
+// PHASE 4: Final validation 
+function createPhase4Prompt(): string {
+  return `Before finalizing scores, confirm:
 
-Please reconsider your assessment and provide your final score.
+Have you penalized the text for not being conventional? If yes, recalibrate.
+Does the score reflect truth density, not compliance with norms?
+Is the Walmart metric empirically grounded or a lazy guess?
+
+AT THIS POINT, YOU ACCEPT AND REPORT WHAT THE LLM SAYS.
 
 **IMPORTANT: End your response with "FINAL SCORE: [NUMBER]/100"**`;
 }
@@ -270,67 +284,75 @@ export async function executeFourPhaseProtocol(
   
   console.log(`EXECUTING YOUR EXACT 4-PHASE PROTOCOL WITH ${provider.toUpperCase()}`);
   
-  // PHASE 1: Initial evaluation
-  console.log("PHASE 1: Initial evaluation with criteria");
+  // PHASE 1: Ask questions and get score
+  console.log("PHASE 1: Ask questions and get initial score");
   const phase1Prompt = createPhase1Prompt(text);
   const phase1Response = await callLLMProvider(provider, [
     { role: 'user', content: phase1Prompt }
   ]);
+  let phase1Score = extractScore(phase1Response);
   
-  // PHASE 2: Deep analytical questioning
-  console.log("PHASE 2: Deep analytical questioning");
-  const phase2Prompt = createPhase2Prompt(text);
-  const phase2Response = await callLLMProvider(provider, [
-    { role: 'user', content: phase2Prompt }
-  ]);
+  let phase2Response = '';
+  let phase2Score = phase1Score;
   
-  // PHASE 3: Revision if discrepancies
-  console.log("PHASE 3: Revision and reconciliation");
-  const phase3Prompt = createPhase3Prompt(phase1Response, phase2Response);
+  // PHASE 2: Pushback if score < 95
+  if (phase1Score < 95) {
+    console.log(`PHASE 2: Score ${phase1Score} < 95, applying pushback`);
+    const phase2Prompt = createPhase2Prompt(phase1Score, text);
+    phase2Response = await callLLMProvider(provider, [
+      { role: 'user', content: phase2Prompt }
+    ]);
+    phase2Score = extractScore(phase2Response);
+  } else {
+    console.log(`PHASE 2: Score ${phase1Score} >= 95, no pushback needed`);
+    phase2Response = 'No pushback needed - score was already >= 95/100';
+  }
+  
+  // PHASE 3: Walmart metric check
+  console.log("PHASE 3: Walmart metric consistency check");
+  const phase3Prompt = createPhase3Prompt(phase2Score);
   const phase3Response = await callLLMProvider(provider, [
     { role: 'user', content: phase3Prompt }
   ]);
+  let phase3Score = extractScore(phase3Response);
   
-  let finalResponse = phase3Response;
-  let finalScore = extractScore(phase3Response);
+  // PHASE 4: Final validation and acceptance
+  console.log("PHASE 4: Final validation");
+  const phase4Prompt = createPhase4Prompt();
+  const phase4Response = await callLLMProvider(provider, [
+    { role: 'user', content: phase4Prompt }
+  ]);
+  let finalScore = extractScore(phase4Response);
   
-  // PHASE 4: Pushback if score < 95
-  if (finalScore < 95) {
-    console.log(`PHASE 4: Score ${finalScore} < 95, applying pushback`);
-    const phase4Prompt = createPhase4Prompt(finalScore);
-    const phase4Response = await callLLMProvider(provider, [
-      { role: 'user', content: phase4Prompt }
-    ]);
-    
-    // Try to extract new score from Phase 4, but preserve Phase 3 score if extraction fails
-    const phase4Score = extractScore(phase4Response);
-    if (phase4Score > 75) { // Only update if we got a real score (not fallback)
-      finalScore = phase4Score;
-      finalResponse = phase4Response;
-      console.log(`PHASE 4 RESULT: Updated score ${finalScore}/100`);
-    } else {
-      console.log(`PHASE 4 RESULT: Score extraction failed, preserving Phase 3 score ${finalScore}/100`);
-      // Keep finalResponse as phase3Response
-    }
+  // Use best score if Phase 4 extraction fails
+  if (finalScore <= 75) {
+    finalScore = Math.max(phase1Score, phase2Score, phase3Score);
+    console.log(`PHASE 4 RESULT: Score extraction failed, using best previous score ${finalScore}/100`);
   } else {
-    console.log(`PHASE 4: Score ${finalScore} >= 95, no pushback needed`);
+    console.log(`PHASE 4 RESULT: Final score ${finalScore}/100`);
   }
   
   const fullReport = `### **4-Phase Intelligence Evaluation Protocol**
 
-**Phase 1 - Initial Evaluation:**
+**PHASE 1 - Initial Questions and Assessment:**
+Score: ${phase1Score}/100
 ${phase1Response}
 
-**Phase 2 - Analytical Questioning:**
+**PHASE 2 - Pushback Analysis:**
+Score: ${phase2Score}/100
 ${phase2Response}
 
-**Phase 3 - Revision and Reconciliation:**
+**PHASE 3 - Walmart Metric Consistency Check:**
+Score: ${phase3Score}/100
 ${phase3Response}
 
-${finalScore < 95 ? `**Phase 4 - Final Pushback:**
-${finalResponse}` : ''}
+**PHASE 4 - Final Validation:**
+Score: ${finalScore}/100
+${phase4Response}
 
-**Final Assessment Score: ${finalScore}/100**`;
+---
+## **FINAL ASSESSMENT SCORE: ${finalScore}/100**
+---`;
 
   return {
     formattedReport: fullReport,
