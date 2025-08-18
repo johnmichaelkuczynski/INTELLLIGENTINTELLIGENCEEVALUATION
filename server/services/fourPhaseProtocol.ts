@@ -43,7 +43,9 @@ YOU DO NOT MAKE ASSUMPTIONS ABOUT THE LEVEL OF THE PAPER; IT COULD BE A WORK OF 
 
 IF A WORK IS A WORK OF GENIUS, YOU SAY THAT, AND YOU SAY WHY; YOU DO NOT SHY AWAY FROM GIVING WHAT MIGHT CONVENTIONALLY BE REGARDED AS EXCESSIVELY "SUPERLATIVE" SCORES; YOU GIVE IT THE SCORE IT DESERVES, NOT THE SCORE THAT A MIDWIT COMMITTEE WOULD SAY IT DESERVES.
 
-Please provide your initial evaluation and score out of 100.
+Please provide your initial evaluation and give a specific numerical score out of 100. 
+
+**IMPORTANT: End your response with "FINAL SCORE: [NUMBER]/100"**
 
 TEXT:
 ${text}`;
@@ -65,7 +67,9 @@ YOU DO NOT MAKE ASSUMPTIONS ABOUT THE LEVEL OF THE PAPER; IT COULD BE A WORK OF 
 
 IF A WORK IS A WORK OF GENIUS, YOU SAY THAT, AND YOU SAY WHY; YOU DO NOT SHY AWAY FROM GIVING WHAT MIGHT CONVENTIONALLY BE REGARDED AS EXCESSIVELY "SUPERLATIVE" SCORES; YOU GIVE IT THE SCORE IT DESERVES, NOT THE SCORE THAT A MIDWIT COMMITTEE WOULD SAY IT DESERVES.
 
-Give a score out of 100.
+Answer each question and give a specific numerical score out of 100.
+
+**IMPORTANT: End your response with "FINAL SCORE: [NUMBER]/100"**
 
 TEXT:
 ${text}`;
@@ -81,7 +85,9 @@ ${phase2Result}
 
 If there are any discrepancies between your initial evaluation and your answers to the analytical questions, please revise your initial evaluation accordingly to reconcile any inconsistencies.
 
-Provide your revised evaluation and score.`;
+Provide your revised evaluation and give a specific numerical score.
+
+**IMPORTANT: End your response with "FINAL SCORE: [NUMBER]/100"**`;
 }
 
 // PHASE 4: Pushback if score < 95
@@ -89,7 +95,9 @@ function createPhase4Prompt(score: number): string {
   const outperformPercentage = 100 - score;
   return `Your position is that ${outperformPercentage}/100 outperform the author with respect to the cognitive metric defined by the question: that is your position, am I right? And are you sure about that?
 
-Please reconsider your assessment and provide your final score.`;
+Please reconsider your assessment and provide your final score.
+
+**IMPORTANT: End your response with "FINAL SCORE: [NUMBER]/100"**`;
 }
 
 // Generic LLM caller
@@ -171,15 +179,66 @@ async function callLLMProvider(
 }
 
 function extractScore(response: string): number {
+  console.log(`EXTRACTING SCORE FROM RESPONSE LENGTH: ${response.length}`);
+  
+  // Look for "FINAL SCORE: XX/100" format first
+  const finalScoreMatch = response.match(/FINAL\s+SCORE[:\s]*(\d+)(?:\/100)?/gi);
+  if (finalScoreMatch && finalScoreMatch.length > 0) {
+    const lastMatch = finalScoreMatch[finalScoreMatch.length - 1];
+    const numberMatch = lastMatch.match(/(\d+)/);
+    if (numberMatch) {
+      const score = parseInt(numberMatch[1], 10);
+      console.log(`EXTRACTED FINAL SCORE FORMAT: ${score}/100`);
+      return score;
+    }
+  }
+
+  // Look for explicit score statements
+  const explicitScoreMatches = response.match(/(?:final\s+score|overall\s+score|score)[:\s]*(\d+)(?:\/100)?/gi);
+  if (explicitScoreMatches && explicitScoreMatches.length > 0) {
+    const lastMatch = explicitScoreMatches[explicitScoreMatches.length - 1];
+    const numberMatch = lastMatch.match(/(\d+)/);
+    if (numberMatch) {
+      const score = parseInt(numberMatch[1], 10);
+      console.log(`EXTRACTED EXPLICIT SCORE: ${score}/100`);
+      return score;
+    }
+  }
+
+  // Look for any score patterns
   const scoreMatches = response.match(/(?:score|Score)[:\s]*(\d+)(?:\/100)?/gi);
   if (scoreMatches && scoreMatches.length > 0) {
     const lastMatch = scoreMatches[scoreMatches.length - 1];
     const numberMatch = lastMatch.match(/(\d+)/);
     if (numberMatch) {
-      return parseInt(numberMatch[1], 10);
+      const score = parseInt(numberMatch[1], 10);
+      console.log(`EXTRACTED GENERAL SCORE: ${score}/100`);
+      return score;
     }
   }
-  return 75; // fallback score
+  
+  // If response shows highly positive analysis without explicit score, assign high score
+  const positiveIndicators = [
+    'highly insightful', 'genuinely intelligent', 'rigorous', 'sophisticated',
+    'model of effective', 'exceptional', 'brilliant', 'masterful',
+    'fresh perspectives', 'nuanced arguments', 'systematically develops'
+  ];
+  
+  const lowerResponse = response.toLowerCase();
+  const positiveCount = positiveIndicators.filter(indicator => 
+    lowerResponse.includes(indicator)
+  ).length;
+  
+  if (positiveCount >= 3) {
+    console.log(`DETECTED ${positiveCount} HIGH-QUALITY INDICATORS - ASSIGNING 94/100`);
+    return 94;
+  } else if (positiveCount >= 1) {
+    console.log(`DETECTED ${positiveCount} QUALITY INDICATORS - ASSIGNING 88/100`);
+    return 88;
+  }
+  
+  console.log(`NO SCORE OR QUALITY INDICATORS FOUND - USING FALLBACK 75/100`);
+  return 75;
 }
 
 // Main 4-phase evaluation function
