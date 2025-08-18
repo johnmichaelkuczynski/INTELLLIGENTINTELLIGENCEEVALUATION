@@ -488,6 +488,94 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
   
+  // Intelligent Rewrite with 4-Phase Protocol
+  app.post("/api/intelligent-rewrite", async (req: Request, res: Response) => {
+    try {
+      const { text, customInstructions, provider = 'deepseek', userEmail } = req.body;
+      
+      if (!text || typeof text !== 'string') {
+        return res.status(400).json({ 
+          error: "Text is required and must be a string" 
+        });
+      }
+      
+      // Import the intelligent rewrite service
+      const { executeIntelligentRewrite } = await import('./services/intelligentRewrite');
+      
+      // Execute intelligent rewrite
+      console.log(`EXECUTING INTELLIGENT REWRITE WITH ${provider.toUpperCase()}`);
+      const result = await executeIntelligentRewrite(text, {
+        customInstructions,
+        provider
+      });
+      
+      // Store the rewrite results in database if userEmail provided
+      if (userEmail) {
+        try {
+          // Store original document
+          const originalDoc = await storage.createDocument({
+            content: result.originalText,
+            userEmail,
+            complexity: 'medium'
+          });
+          
+          // Store rewritten document  
+          const rewrittenDoc = await storage.createDocument({
+            content: result.rewrittenText,
+            userEmail,
+            complexity: 'medium'
+          });
+          
+          // Store original analysis (we would need to create this)
+          const originalAnalysis = await storage.createAnalysis({
+            documentId: originalDoc.id,
+            userEmail,
+            summary: `Original text scored ${result.originalScore}/100`,
+            overallScore: result.originalScore,
+            overallAssessment: 'Original text evaluation',
+            dimensions: {}
+          });
+          
+          // Store rewritten analysis
+          const rewrittenAnalysis = await storage.createAnalysis({
+            documentId: rewrittenDoc.id,
+            userEmail,
+            summary: `Rewritten text scored ${result.rewrittenScore}/100`,
+            overallScore: result.rewrittenScore,
+            overallAssessment: 'Rewritten text evaluation',
+            dimensions: {}
+          });
+          
+          // Store rewrite record
+          await storage.createIntelligentRewrite({
+            originalDocumentId: originalDoc.id,
+            rewrittenDocumentId: rewrittenDoc.id,
+            originalAnalysisId: originalAnalysis.id,
+            rewrittenAnalysisId: rewrittenAnalysis.id,
+            userEmail,
+            provider: result.provider,
+            customInstructions: customInstructions || null,
+            originalScore: result.originalScore,
+            rewrittenScore: result.rewrittenScore,
+            scoreImprovement: result.rewrittenScore - result.originalScore,
+            rewriteReport: result.rewriteReport
+          });
+        } catch (dbError) {
+          console.error("Error storing rewrite to database:", dbError);
+          // Continue without storing - don't fail the rewrite
+        }
+      }
+      
+      return res.json(result);
+    } catch (error: any) {
+      console.error("Error executing intelligent rewrite:", error);
+      return res.status(500).json({ 
+        error: true, 
+        message: error.message || "Failed to execute intelligent rewrite" 
+      });
+    }
+  });
+
   // Send simple email
   app.post("/api/share-simple-email", async (req: Request, res: Response) => {
     try {

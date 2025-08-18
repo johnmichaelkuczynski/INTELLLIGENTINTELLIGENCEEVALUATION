@@ -1,4 +1,17 @@
-import { users, documents, analyses, userActivities, cognitiveProfiles, type User, type InsertUser, type InsertDocument, type Document, type InsertUserActivity, type InsertCognitiveProfile } from "@shared/schema";
+import { 
+  users, 
+  documents, 
+  analyses, 
+  userActivities, 
+  cognitiveProfiles, 
+  intelligentRewrites,
+  type User, 
+  type InsertUser, 
+  type InsertDocument, 
+  type Document, 
+  type InsertUserActivity, 
+  type InsertCognitiveProfile
+} from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 
@@ -11,14 +24,18 @@ export interface IStorage {
   createDocument(doc: InsertDocument): Promise<Document>;
   getDocumentsByUser(userEmail: string): Promise<Document[]>;
   
+  // Analysis operations
+  createAnalysis(analysis: any): Promise<any>;
+  
+  // Intelligent Rewrite operations
+  createIntelligentRewrite(rewrite: any): Promise<any>;
+  
   // Activity tracking
   logActivity(activity: InsertUserActivity): Promise<void>;
   
   // Cognitive profile operations
   getCognitiveProfile(userEmail: string): Promise<any>;
   updateCognitiveProfile(userEmail: string, profile: Partial<InsertCognitiveProfile>): Promise<void>;
-  
-
 }
 
 export class DatabaseStorage implements IStorage {
@@ -76,7 +93,21 @@ export class DatabaseStorage implements IStorage {
       });
   }
 
+  async createAnalysis(analysis: any): Promise<any> {
+    const [result] = await db
+      .insert(analyses)
+      .values(analysis)
+      .returning();
+    return result;
+  }
 
+  async createIntelligentRewrite(rewrite: any): Promise<any> {
+    const [result] = await db
+      .insert(intelligentRewrites)
+      .values(rewrite)
+      .returning();
+    return result;
+  }
 }
 
 export const storage = new DatabaseStorage();

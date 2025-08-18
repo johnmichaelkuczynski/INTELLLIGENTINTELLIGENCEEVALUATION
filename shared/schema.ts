@@ -66,6 +66,37 @@ export const insertAnalysisSchema = createInsertSchema(analyses).pick({
   writingStyle: true,
 });
 
+// Intelligent Rewrite model for storing rewrite results
+export const intelligentRewrites = pgTable("intelligent_rewrites", {
+  id: serial("id").primaryKey(),
+  originalDocumentId: integer("original_document_id").references(() => documents.id).notNull(),
+  rewrittenDocumentId: integer("rewritten_document_id").references(() => documents.id).notNull(),
+  originalAnalysisId: integer("original_analysis_id").references(() => analyses.id).notNull(),
+  rewrittenAnalysisId: integer("rewritten_analysis_id").references(() => analyses.id).notNull(),
+  userEmail: text("user_email").references(() => users.email),
+  provider: text("provider").notNull(),
+  customInstructions: text("custom_instructions"),
+  originalScore: integer("original_score").notNull(),
+  rewrittenScore: integer("rewritten_score").notNull(),
+  scoreImprovement: integer("score_improvement").notNull(),
+  rewriteReport: text("rewrite_report").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertIntelligentRewriteSchema = createInsertSchema(intelligentRewrites).pick({
+  originalDocumentId: true,
+  rewrittenDocumentId: true,
+  originalAnalysisId: true,
+  rewrittenAnalysisId: true,
+  userEmail: true,
+  provider: true,
+  customInstructions: true,
+  originalScore: true,
+  rewrittenScore: true,
+  scoreImprovement: true,
+  rewriteReport: true,
+});
+
 // Comparison model for storing comparison results between two documents
 export const comparisons = pgTable("comparisons", {
   id: serial("id").primaryKey(),
