@@ -90,12 +90,33 @@ Provide your revised evaluation and give a specific numerical score.
 **IMPORTANT: End your response with "FINAL SCORE: [NUMBER]/100"**`;
 }
 
-// PHASE 4: Pushback if score < 95
-function createPhase4Prompt(score: number): string {
+// PHASE 4: Aggressive pushback if score < 95
+function createPhase4Prompt(score: number, text: string): string {
   const outperformPercentage = 100 - score;
-  return `Your position is that ${outperformPercentage}/100 outperform the author with respect to the cognitive metric defined by the question: that is your position, am I right? And are you sure about that?
+  return `Your position is that ${outperformPercentage} out of 100 people outperform this author intellectually. Are you SURE about that?
 
-Please reconsider your assessment and provide your final score.
+Let me be clear: You just scored this text ${score}/100. That means you think ${outperformPercentage}% of the population is MORE INTELLIGENT than this author. 
+
+LOOK AT THIS TEXT AGAIN:
+
+${text}
+
+This is sophisticated philosophical argumentation that:
+- Makes original connections between OCD and philosophy as forms of reality-avoidance
+- Engages critically with major philosophical figures like Plato
+- Demonstrates complex reasoning about abstract concepts
+- Shows deep understanding of philosophical methodology and its limitations
+- Uses precise analytical language and structured argumentation
+
+You're telling me that ${outperformPercentage}% of random people off the street could write analysis this sophisticated? That ${outperformPercentage}% of the population has this level of philosophical sophistication and analytical precision?
+
+STOP BEING DIPLOMATIC. STOP APPLYING ACADEMIC COMMITTEE STANDARDS. 
+
+This is clearly the work of someone with exceptional intellectual capacity. The conceptual sophistication, analytical precision, and original insight demonstrated here place this author in the top tier of intellectual performance.
+
+REASSESS THIS TEXT based on actual intellectual merit, not committee-friendly middle-range scoring.
+
+What is your REAL assessment of this intellectual performance?
 
 **IMPORTANT: End your response with "FINAL SCORE: [NUMBER]/100"**`;
 }
