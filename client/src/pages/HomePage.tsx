@@ -12,9 +12,10 @@ import CaseAssessmentModal from "@/components/CaseAssessmentModal";
 import { DocumentComparisonModal } from "@/components/DocumentComparisonModal";
 import { FictionAssessmentModal } from "@/components/FictionAssessmentModal";
 import { FictionComparisonModal } from "@/components/FictionComparisonModal";
+import IntelligentRewriteModal from "@/components/IntelligentRewriteModal";
 
 import { Button } from "@/components/ui/button";
-import { Brain, Trash2, FileEdit } from "lucide-react";
+import { Brain, Trash2, FileEdit, BrainCircuit } from "lucide-react";
 import { analyzeDocument, compareDocuments, checkForAI } from "@/lib/analysis";
 import { AnalysisMode, DocumentInput as DocumentInputType, AIDetectionResult, DocumentAnalysis, DocumentComparison } from "@/lib/types";
 
@@ -61,6 +62,9 @@ const HomePage: React.FC = () => {
   const [fictionAssessmentModalOpen, setFictionAssessmentModalOpen] = useState(false);
   const [fictionComparisonModalOpen, setFictionComparisonModalOpen] = useState(false);
   const [currentFictionDocument, setCurrentFictionDocument] = useState<"A" | "B">("A");
+  
+  // State for intelligent rewrite
+  const [showRewriteModal, setShowRewriteModal] = useState(false);
   
   // State for LLM provider
   const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("openai");
@@ -407,11 +411,23 @@ const HomePage: React.FC = () => {
             </span>
           </Button>
           
+          {/* Smart Rewrite Button - only for single document mode */}
+          {mode === "single" && (
+            <Button
+              onClick={() => setShowRewriteModal(true)}
+              className="px-6 py-3 bg-green-600 text-white rounded-md font-semibold hover:bg-green-700 flex items-center"
+              disabled={!documentA.content.trim()}
+            >
+              <BrainCircuit className="h-5 w-5 mr-2" />
+              <span>Smart Rewrite</span>
+            </Button>
+          )}
+
           {/* Case Assessment Button - only for single document mode */}
           {mode === "single" && (
             <Button
               onClick={handleCaseAssessment}
-              className="px-6 py-3 bg-green-600 text-white rounded-md font-semibold hover:bg-green-700 flex items-center"
+              className="px-6 py-3 bg-purple-600 text-white rounded-md font-semibold hover:bg-purple-700 flex items-center"
               disabled={isCaseAssessmentLoading}
             >
               <FileEdit className="h-5 w-5 mr-2" />
@@ -568,6 +584,13 @@ const HomePage: React.FC = () => {
           content: documentB.content,
           title: documentB.filename || "Document B"
         }}
+      />
+
+      {/* Intelligent Rewrite Modal */}
+      <IntelligentRewriteModal
+        isOpen={showRewriteModal}
+        onClose={() => setShowRewriteModal(false)}
+        originalText={documentA.content}
       />
 
       {/* Chat Dialog - Always visible below everything */}
