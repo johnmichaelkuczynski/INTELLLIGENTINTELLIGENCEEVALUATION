@@ -24,33 +24,11 @@ interface FictionAssessmentModalProps {
   onClose: () => void;
   documentContent: string;
   documentTitle: string;
+  result: FictionAssessmentResult | null;
+  selectedProvider: string;
 }
 
-export function FictionAssessmentModal({ isOpen, onClose, documentContent, documentTitle }: FictionAssessmentModalProps) {
-  const [selectedProvider, setSelectedProvider] = useState<string>('openai');
-  const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<FictionAssessmentResult | null>(null);
-
-  const handleAssessment = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch('/api/fiction-assessment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: documentContent,
-          provider: selectedProvider
-        })
-      });
-      
-      const data = await response.json();
-      setResult(data.result);
-    } catch (error) {
-      console.error('Error performing fiction assessment:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+export function FictionAssessmentModal({ isOpen, onClose, documentContent, documentTitle, result, selectedProvider }: FictionAssessmentModalProps) {
 
   const downloadReport = (format: 'txt' | 'pdf') => {
     if (!result) return;
@@ -162,31 +140,14 @@ ${result.detailedAssessment}`;
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Fiction Assessment: {documentTitle}</DialogTitle>
+          <DialogTitle className="text-xl font-bold">Fiction Assessment - {documentTitle}</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-6">
-          <div className="flex items-center gap-4">
-            <Select value={selectedProvider} onValueChange={setSelectedProvider}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Select AI Provider" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="openai">OpenAI (GPT-4)</SelectItem>
-                <SelectItem value="anthropic">Anthropic (Claude)</SelectItem>
-                <SelectItem value="perplexity">Perplexity</SelectItem>
-                <SelectItem value="deepseek">DeepSeek</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <Button 
-              onClick={handleAssessment}
-              disabled={isLoading}
-              className="flex items-center gap-2"
-            >
-              {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-              {isLoading ? 'Analyzing Fiction...' : 'Assess Fiction'}
-            </Button>
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-600">
+              Analyzed with: <span className="font-medium capitalize">{selectedProvider}</span>
+            </div>
             
             {result && (
               <DropdownMenu>

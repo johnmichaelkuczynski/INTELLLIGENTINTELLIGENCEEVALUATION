@@ -62,6 +62,8 @@ const HomePage: React.FC = () => {
   const [fictionAssessmentModalOpen, setFictionAssessmentModalOpen] = useState(false);
   const [fictionComparisonModalOpen, setFictionComparisonModalOpen] = useState(false);
   const [currentFictionDocument, setCurrentFictionDocument] = useState<"A" | "B">("A");
+  const [isFictionAssessmentLoading, setIsFictionAssessmentLoading] = useState(false);
+  const [fictionAssessmentResult, setFictionAssessmentResult] = useState<any>(null);
   
   // State for intelligent rewrite
   const [showRewriteModal, setShowRewriteModal] = useState(false);
@@ -237,15 +239,51 @@ const HomePage: React.FC = () => {
   };
 
   // Handler for fiction assessment
-  const handleFictionAssessment = (documentId: "A" | "B") => {
+  const handleFictionAssessment = async (documentId: "A" | "B") => {
     const document = documentId === "A" ? documentA : documentB;
     if (!document.content.trim()) {
       alert(`Please enter some text in Document ${documentId}.`);
       return;
     }
 
-    setCurrentFictionDocument(documentId);
-    setFictionAssessmentModalOpen(true);
+    // Check if the selected provider is available
+    if (selectedProvider !== "all" && !apiStatus[selectedProvider as keyof typeof apiStatus]) {
+      alert(`The ${selectedProvider} API key is not configured or is invalid. Please select a different provider or ensure the API key is properly set.`);
+      return;
+    }
+
+    setIsFictionAssessmentLoading(true);
+    setFictionAssessmentResult(null);
+
+    try {
+      const provider = selectedProvider === "all" ? "deepseek" : selectedProvider;
+      
+      const response = await fetch('/api/fiction-assessment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: document.content,
+          provider: provider
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Fiction assessment failed: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setFictionAssessmentResult(data.result);
+      setCurrentFictionDocument(documentId);
+      setFictionAssessmentModalOpen(true);
+      
+    } catch (error) {
+      console.error("Error performing fiction assessment:", error);
+      alert(`Fiction assessment with ${selectedProvider} failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+    } finally {
+      setIsFictionAssessmentLoading(false);
+    }
   };
 
   // Handler for fiction comparison
@@ -442,10 +480,12 @@ const HomePage: React.FC = () => {
             <Button
               onClick={() => handleFictionAssessment("A")}
               className="px-6 py-3 bg-orange-600 text-white rounded-md font-semibold hover:bg-orange-700 flex items-center"
-              disabled={!documentA.content.trim()}
+              disabled={!documentA.content.trim() || isFictionAssessmentLoading}
             >
               <FileEdit className="h-5 w-5 mr-2" />
-              <span>Assess Fiction</span>
+              <span>
+                {isFictionAssessmentLoading ? "Assessing Fiction..." : "Assess Fiction"}
+              </span>
             </Button>
           )}
           
@@ -570,6 +610,8 @@ const HomePage: React.FC = () => {
         onClose={() => setFictionAssessmentModalOpen(false)}
         documentContent={currentFictionDocument === "A" ? documentA.content : documentB.content}
         documentTitle={currentFictionDocument === "A" ? (documentA.filename || "Document A") : (documentB.filename || "Document B")}
+        result={fictionAssessmentResult}
+        selectedProvider={selectedProvider === "all" ? "deepseek" : selectedProvider}
       />
 
       {/* Fiction Comparison Modal */}
