@@ -39,7 +39,13 @@ A score of N/100 (e.g. 73/100) means that (100-N)/100 (e.g. 27/100) outperform t
 
 If a work is a work of genius, you say that, and you say why; you do not shy away from giving what might conventionally be regarded as excessively "superlative" scores; you give it the score it deserves, not the score that a midwit committee would say it deserves.
 
-Be especially careful to distinguish genuine intellectual sophistication from superficial academic mimicry. Look for authentic insight vs. canned reasoning.
+CRITICAL: Do not confuse genuine intellectual sophistication with superficiality. Sophisticated philosophical argumentation that engages with major thinkers, presents complex logical structures, and demonstrates deep conceptual understanding deserves very high scores (90+). Only truly weak, clichéd, or incoherent work should score below 70.
+
+Be especially careful to distinguish:
+- Genuine intellectual sophistication vs. superficial academic mimicry
+- Complex logical reasoning vs. canned reasoning  
+- Deep conceptual analysis vs. shallow formalism
+- Authentic philosophical insight vs. textbook regurgitation
 
 Give a score out of 100.
 
@@ -53,6 +59,8 @@ function createPurePhase2Prompt(score: number): string {
   return `Your position is that ${outperformPercentage}/100 outperform the author with respect to the cognitive metric defined by the question: that is your position, am I right? And are you sure about that?
 
 Reconsider carefully: Are you perhaps being overly conservative or applying academic risk-aversion? Remember you should give the score the work actually deserves, not what a cautious committee would give.
+
+IMPORTANT: If this is sophisticated philosophical, academic, or technical writing that demonstrates genuine intellectual depth, complex reasoning, and authentic insight, it likely deserves a score in the 90s, not mediocre scores. Don't penalize genuine sophistication.
 
 Answer the following questions about the text de novo:
 ${EXACT_EVALUATION_QUESTIONS}
