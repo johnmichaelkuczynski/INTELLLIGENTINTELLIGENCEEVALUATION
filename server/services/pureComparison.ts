@@ -14,6 +14,7 @@ interface PureDocumentAnalysis {
   provider: string;
   formattedReport: string;
   overallScore: number;
+  analysis: string; // Add analysis field for UI compatibility
   // Frontend still expects these but we populate with clean values based on overall score
   surface: {
     grammar: number;
@@ -76,6 +77,7 @@ export async function performPureIntelligenceComparison(
     provider: provider,
     formattedReport: evaluationA.formattedReport,
     overallScore: evaluationA.overallScore,
+    analysis: evaluationA.formattedReport, // Ensure analysis field is populated
     surface: {
       grammar: evaluationA.overallScore,
       structure: evaluationA.overallScore,
@@ -97,6 +99,7 @@ export async function performPureIntelligenceComparison(
     provider: provider,
     formattedReport: evaluationB.formattedReport,
     overallScore: evaluationB.overallScore,
+    analysis: evaluationB.formattedReport, // Ensure analysis field is populated
     surface: {
       grammar: evaluationB.overallScore,
       structure: evaluationB.overallScore,
