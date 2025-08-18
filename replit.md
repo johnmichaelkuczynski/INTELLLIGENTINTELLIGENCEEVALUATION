@@ -1,7 +1,7 @@
 # Cognitive Analysis Platform
 
 ## Overview
-This platform analyzes written text to assess the intelligence and cognitive fingerprint of authors using multi-model AI evaluation. It offers document analysis, AI detection, text rewriting, translation, and comprehensive cognitive profiling. The project aims to provide deep insights into cognitive abilities and thought processes from written content.
+This platform analyzes written text to assess the intelligence and cognitive fingerprint of authors using multi-model AI evaluation. It offers document analysis, AI detection, translation, and comprehensive cognitive profiling. The project aims to provide deep insights into cognitive abilities and thought processes from written content. **MAJOR CHANGE**: All rewrite functionality has been completely removed from the platform as per user decision to focus purely on analysis capabilities.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -11,7 +11,7 @@ The application is structured as a monorepo, separating client and server compon
 - **Frontend**: React with TypeScript, TailwindCSS, shadcn/ui, wouter for routing, React Query for server state, and Chart.js for data visualization.
 - **Backend**: Express.js with TypeScript, integrating multiple LLMs (OpenAI, Anthropic, Perplexity AI, DeepSeek), document processing via Mathpix OCR, and speech-to-text with AssemblyAI. Email services are handled by SendGrid.
 - **Database**: PostgreSQL with Drizzle ORM, storing user, document, analysis, cognitive profile, and rewrite history data.
-- **Core Services**: Includes multi-model intelligence evaluation, document comparison, AI-powered text rewriting, multi-language translation, and OCR for mathematical notation.
+- **Core Services**: Includes multi-model intelligence evaluation, document comparison, multi-language translation, and OCR for mathematical notation.
 - **System Design**: Focuses on comprehensive cognitive assessment using a revolutionary 4-Phase Intelligence Evaluation System: Phase 1 (Initial Assessment with anti-diplomatic instructions), Phase 2 (Deep analytical questioning across 17 cognitive dimensions), Phase 3 (Revision and reconciliation of discrepancies), and Phase 4 (Final pushback for scores under 95/100). The system includes seven cognitive dimensions (Conceptual Depth, Inferential Control, Semantic Compression, Novel Abstraction, Cognitive Risk, Authenticity, Symbolic Manipulation), genre-aware assessment for various document types (philosophical, empirical, technical, fiction), and a robust system to differentiate genuine insight from superficial academic mimicry. The system supports detailed case assessment for arguments and comprehensive intelligence reports with percentile rankings and evidence-based analysis.
 - **UI/UX**: Utilizes shadcn/ui for components, TailwindCSS for styling, and provides detailed card-based layouts for analysis reports, supporting PDF and text downloads.
 
@@ -65,8 +65,13 @@ The application is structured as a monorepo, separating client and server compon
     - **User Confirmation**: "EXCELLENT. NOTE PROGRESS." - Both single and comparison modes working correctly
     - **Test Results**: Proper score discrimination (97/100 for high-quality vs 47/100 for low-quality texts)
     - **System Status**: COMPLETE - All evaluation modes using correct 4-phase protocol with appropriate scoring
-  - **August 18, 2025 - DEFAULT REWRITE INSTRUCTIONS IMPLEMENTED**: Set your intelligence evaluation protocol as default
-    - **Feature Added**: All rewrite tools now pre-fill with your exact 4-phase intelligence evaluation protocol
-    - **Components Updated**: SimpleRewriteModal, ChunkRewriteModal, EnhancedRewrite, and SelectiveChunkRewriter all use your default instructions
-    - **User Experience**: Instructions box automatically contains your complete protocol, users can modify if needed
-    - **Compliance**: "LISTEN. HERE IS WHAT YOU PUT BY DEFAULT IN ANY REWRITE INSTRUCTION BOX" - Implemented exactly as requested
+  - **August 18, 2025 - MAJOR ARCHITECTURAL CHANGE: COMPLETE REMOVAL OF REWRITE FUNCTIONALITY**
+    - **User Decision**: "RIP OUT THE EXISTING REWRITE LOGIC. RIP IT OUT." - All rewrite functionality completely eliminated
+    - **Components Removed**: SimpleRewriteModal, ChunkRewriteModal, EnhancedRewrite, SelectiveChunkRewriter, UnifiedRewriteSection, WebContentRewrite, all rewrite-related modals and sections
+    - **API Endpoints Removed**: /api/rewrite, /api/rewrite-stream - all server-side rewrite logic eliminated
+    - **Services Removed**: documentRewrite.ts, rewrite.ts - complete removal of rewrite service layer
+    - **Database Changes**: Removed rewriteHistory table, rewritePatterns from cognitive profiles, cleaned up all rewrite-related schema
+    - **Frontend Changes**: Removed all rewrite buttons, modals, and UI components from HomePage and other pages
+    - **Navigation Updated**: Removed "Direct AI Rewrite" page and navigation links
+    - **System Focus**: Platform now purely focused on cognitive analysis, assessment, and comparison capabilities
+    - **Status**: COMPLETE - Platform successfully converted from analysis + rewrite to analysis-only system

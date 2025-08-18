@@ -1,4 +1,4 @@
-import { users, documents, analyses, userActivities, cognitiveProfiles, rewriteHistory, type User, type InsertUser, type InsertDocument, type Document, type InsertUserActivity, type InsertCognitiveProfile, type InsertRewriteHistory } from "@shared/schema";
+import { users, documents, analyses, userActivities, cognitiveProfiles, type User, type InsertUser, type InsertDocument, type Document, type InsertUserActivity, type InsertCognitiveProfile } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 
@@ -18,8 +18,7 @@ export interface IStorage {
   getCognitiveProfile(userEmail: string): Promise<any>;
   updateCognitiveProfile(userEmail: string, profile: Partial<InsertCognitiveProfile>): Promise<void>;
   
-  // Rewrite history
-  logRewrite(rewrite: InsertRewriteHistory): Promise<void>;
+
 }
 
 export class DatabaseStorage implements IStorage {
@@ -77,9 +76,7 @@ export class DatabaseStorage implements IStorage {
       });
   }
 
-  async logRewrite(rewrite: InsertRewriteHistory): Promise<void> {
-    await db.insert(rewriteHistory).values(rewrite);
-  }
+
 }
 
 export const storage = new DatabaseStorage();

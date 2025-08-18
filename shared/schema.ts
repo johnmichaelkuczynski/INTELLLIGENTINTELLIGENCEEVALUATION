@@ -18,7 +18,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export const documents = pgTable("documents", {
   id: serial("id").primaryKey(),
   content: text("content").notNull(),
-  originalContent: text("original_content"), // Store original before rewrites
+  originalContent: text("original_content"), // Store original content
   filename: text("filename"),
   mimeType: text("mime_type"),
   userEmail: text("user_email").references(() => users.email),
@@ -120,7 +120,7 @@ export const insertCaseAssessmentSchema = createInsertSchema(caseAssessments).pi
 export const userActivities = pgTable("user_activities", {
   id: serial("id").primaryKey(),
   userEmail: text("user_email").references(() => users.email),
-  activityType: text("activity_type").notNull(), // upload, analyze, rewrite, compare, search
+  activityType: text("activity_type").notNull(), // upload, analyze, compare, search
   activityData: jsonb("activity_data"), // Detailed activity information
   documentId: integer("document_id").references(() => documents.id),
   sessionDuration: integer("session_duration"), // in seconds
@@ -145,7 +145,7 @@ export const cognitiveProfiles = pgTable("cognitive_profiles", {
   cognitiveStyle: jsonb("cognitive_style"), // Analytical vs intuitive, detail vs big picture
   learningBehavior: jsonb("learning_behavior"), // How user improves over time
   documentPreferences: jsonb("document_preferences"), // Types and formats preferred
-  rewritePatterns: jsonb("rewrite_patterns"), // How user modifies content
+
   collaborationStyle: jsonb("collaboration_style"), // Interaction with AI systems
   // Psychological indicators
   conceptualComplexity: text("conceptual_complexity"), // comfort with complex ideas
@@ -168,7 +168,7 @@ export const insertCognitiveProfileSchema = createInsertSchema(cognitiveProfiles
   cognitiveStyle: true,
   learningBehavior: true,
   documentPreferences: true,
-  rewritePatterns: true,
+
   collaborationStyle: true,
   conceptualComplexity: true,
   attentionToDetail: true,
@@ -180,36 +180,7 @@ export const insertCognitiveProfileSchema = createInsertSchema(cognitiveProfiles
   productivityPattern: true,
 });
 
-// Rewrite history for tracking evolution of thinking and writing
-export const rewriteHistory = pgTable("rewrite_history", {
-  id: serial("id").primaryKey(),
-  documentId: integer("document_id").references(() => documents.id),
-  userEmail: text("user_email").references(() => users.email),
-  originalText: text("original_text").notNull(),
-  rewrittenText: text("rewritten_text").notNull(),
-  rewriteMode: text("rewrite_mode").notNull(), // rewrite_existing, add_new, hybrid
-  instructions: text("instructions"),
-  provider: text("provider").notNull(),
-  qualityImprovement: integer("quality_improvement"), // 1-10 scale
-  lengthChange: integer("length_change"), // percentage change
-  complexityChange: text("complexity_change"), // increased, decreased, same
-  conceptualDepth: integer("conceptual_depth"), // 1-10 scale
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
 
-export const insertRewriteHistorySchema = createInsertSchema(rewriteHistory).pick({
-  documentId: true,
-  userEmail: true,
-  originalText: true,
-  rewrittenText: true,
-  rewriteMode: true,
-  instructions: true,
-  provider: true,
-  qualityImprovement: true,
-  lengthChange: true,
-  complexityChange: true,
-  conceptualDepth: true,
-});
 
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -230,8 +201,7 @@ export type UserActivity = typeof userActivities.$inferSelect;
 export type InsertCognitiveProfile = z.infer<typeof insertCognitiveProfileSchema>;
 export type CognitiveProfile = typeof cognitiveProfiles.$inferSelect;
 
-export type InsertRewriteHistory = z.infer<typeof insertRewriteHistorySchema>;
-export type RewriteHistory = typeof rewriteHistory.$inferSelect;
+
 
 export type InsertCaseAssessment = z.infer<typeof insertCaseAssessmentSchema>;
 export type CaseAssessment = typeof caseAssessments.$inferSelect;

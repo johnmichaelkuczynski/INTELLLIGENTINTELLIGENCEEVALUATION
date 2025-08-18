@@ -5,10 +5,7 @@ import DocumentResults from "@/components/DocumentResults";
 import ComparativeResults from "@/components/ComparativeResults";
 import AIDetectionModal from "@/components/AIDetectionModal";
 import ProviderSelector, { LLMProvider } from "@/components/ProviderSelector";
-import UnifiedRewriteSection from "@/components/UnifiedRewriteSection";
-import ChunkRewriteModal from "@/components/ChunkRewriteModal";
-import SimpleRewriteModal from "@/components/SimpleRewriteModal";
-import SelectiveChunkRewriter from "@/components/SelectiveChunkRewriter";
+
 import ChatDialog from "@/components/ChatDialog";
 import SemanticDensityAnalyzer from "@/components/SemanticDensityAnalyzer";
 import CaseAssessmentModal from "@/components/CaseAssessmentModal";
@@ -34,9 +31,7 @@ const HomePage: React.FC = () => {
   const [analysisB, setAnalysisB] = useState<DocumentAnalysis | null>(null);
   const [comparison, setComparison] = useState<DocumentComparison | null>(null);
 
-  // State for rewrite results
-  const [rewrittenText, setRewrittenText] = useState<string>("");
-  const [rewriteStats, setRewriteStats] = useState<any>(null);
+
 
   // State for loading indicators
   const [isAnalysisLoading, setIsAnalysisLoading] = useState(false);
@@ -50,9 +45,7 @@ const HomePage: React.FC = () => {
   const [currentAICheckDocument, setCurrentAICheckDocument] = useState<"A" | "B">("A");
   const [aiDetectionResult, setAIDetectionResult] = useState<AIDetectionResult | undefined>(undefined);
 
-  // State for immediate rewrite dialog
-  const [showRewriteDialog, setShowRewriteDialog] = useState(false);
-  const [rewriteMode, setRewriteMode] = useState<"simple" | "chunk">("chunk");
+
   
   // State for case assessment
   const [caseAssessmentModalOpen, setCaseAssessmentModalOpen] = useState(false);
@@ -307,11 +300,7 @@ const HomePage: React.FC = () => {
     }
   };
   
-  // Handler for rewrite completion
-  const handleRewriteComplete = (text: string, stats: any) => {
-    setRewrittenText(text);
-    setRewriteStats(stats);
-  };
+
   
   // Handler for resetting the entire analysis
   const handleReset = () => {
@@ -324,9 +313,7 @@ const HomePage: React.FC = () => {
     setAnalysisB(null);
     setComparison(null);
     
-    // Clear rewrite results
-    setRewrittenText("");
-    setRewriteStats(null);
+
     
     // Reset UI states
     setShowResults(false);
@@ -472,24 +459,7 @@ const HomePage: React.FC = () => {
             </Button>
           )}
           
-          <div className="flex items-center space-x-2">
-            <select
-              value={rewriteMode}
-              onChange={(e) => setRewriteMode(e.target.value as "simple" | "chunk")}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-            >
-              <option value="chunk">Chunk Rewrite (Large Docs)</option>
-              <option value="simple">Simple Rewrite (Small Docs)</option>
-            </select>
-            <Button
-              onClick={() => setShowRewriteDialog(true)}
-              className="px-6 py-3 bg-green-600 text-white rounded-md font-semibold hover:bg-green-700 flex items-center"
-              disabled={!documentA.content.trim() || isAnalysisLoading}
-            >
-              <FileEdit className="h-5 w-5 mr-2" />
-              <span>Rewrite</span>
-            </Button>
-          </div>
+
           
           <Button
             onClick={handleReset}
@@ -538,20 +508,7 @@ const HomePage: React.FC = () => {
                 />
               )}
               
-              {/* Integrated Enhanced Rewrite Section - only shown for single document analysis */}
-              {analysisA && mode === "single" && (
-                <div className="bg-white rounded-lg shadow-md p-6 mb-8 mt-8">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-6">Enhance Document with Web Search & AI Rewrite</h2>
-                  <p className="text-gray-600 mb-6">Use AI to rewrite your document with custom instructions and web search integration</p>
-                  
-                  <UnifiedRewriteSection
-                    originalDocument={documentA}
-                    onRewriteComplete={handleRewriteComplete}
-                  />
-                  
-                  {/* Rewrite results are now displayed inside the UnifiedRewriteSection component */}
-                </div>
-              )}
+
               
               {/* Semantic Density Analysis - always shown when there's text */}
               {mode === "single" && documentA.content.trim() && (
@@ -564,26 +521,7 @@ const HomePage: React.FC = () => {
         </div>
       )}
 
-      {/* Conditional Rewrite Modal */}
-      {rewriteMode === "chunk" ? (
-        <SelectiveChunkRewriter
-          isOpen={showRewriteDialog}
-          onClose={() => setShowRewriteDialog(false)}
-          originalText={documentA.content}
-          onRewriteUpdate={(newText: string) => {
-            setDocumentA({ ...documentA, content: newText });
-          }}
-        />
-      ) : (
-        <SimpleRewriteModal
-          isOpen={showRewriteDialog}
-          onClose={() => setShowRewriteDialog(false)}
-          originalText={documentA.content}
-          onRewriteUpdate={(newText: string) => {
-            setDocumentA({ ...documentA, content: newText });
-          }}
-        />
-      )}
+
 
       {/* Case Assessment Modal */}
       <CaseAssessmentModal

@@ -5,9 +5,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import HomePage from "@/pages/HomePage";
 import TranslationPage from "@/pages/TranslationPage";
-import RewritePage from "@/pages/RewritePage";
+
 import WebSearchPage from "@/pages/WebSearchPage";
-import SimpleDirectPage from "@/pages/SimpleDirectPage";
+
 import { AnalyticsPage } from "@/pages/AnalyticsPage";
 import NotFound from "@/pages/not-found";
 import { BrainCircuit, Languages, FileEdit, Globe, Bot, Brain } from "lucide-react";
@@ -30,12 +30,7 @@ function Navigation() {
               <span>Cognitive Analytics</span>
             </Link>
           </li>
-          <li>
-            <Link href="/direct" className="flex items-center gap-2 hover:underline">
-              <Bot className="h-5 w-5" />
-              <span>Direct AI Rewrite</span>
-            </Link>
-          </li>
+
         </ul>
       </div>
     </nav>
@@ -49,7 +44,7 @@ function Router() {
       <Switch>
         <Route path="/" component={HomePage} />
         <Route path="/analytics" component={AnalyticsPage} />
-        <Route path="/direct" component={SimpleDirectPage} />
+
         <Route component={NotFound} />
       </Switch>
     </>
