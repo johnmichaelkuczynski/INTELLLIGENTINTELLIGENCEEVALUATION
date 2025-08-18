@@ -1,5 +1,7 @@
-import { parseCleanIntelligenceResponse, CleanAnalysis } from './cleanResponseParser';
-import { StructuralEvaluator } from './structuralEvaluator';
+/**
+ * Intelligence Comparison Using EXACT 3-Phase Protocol
+ * NO dimension garbage - ONLY uses user's exact evaluation questions
+ */
 
 type LLMProvider = "openai" | "anthropic" | "perplexity" | "deepseek";
 
@@ -50,45 +52,62 @@ export interface IntelligenceComparisonResult {
   comparison: DocumentComparison;
 }
 
-// Use the EXACT 4-Phase Evaluation System that's already working
-const PHASE_1_EVALUATION_PROMPT = `PHASE 1 INTELLIGENCE EVALUATION
-
-You are conducting Phase 1 of a rigorous intelligence assessment. Answer these specific questions about the text:
-
-IS IT INSIGHTFUL?
-DOES IT DEVELOP POINTS? (OR, IF IT IS A SHORT EXCERPT, IS THERE EVIDENCE THAT IT WOULD DEVELOP POINTS IF EXTENDED)?
-IS THE ORGANIZATION MERELY SEQUENTIAL (JUST ONE POINT AFTER ANOTHER, LITTLE OR NO LOGICAL SCAFFOLDING)? OR ARE THE IDEAS ARRANGED, NOT JUST SEQUENTIALLY BUT HIERARCHICALLY?
-IF THE POINTS IT MAKES ARE NOT INSIGHTFUL, DOES IT OPERATE SKILLFULLY WITH CANONS OF LOGIC/REASONING?
-ARE THE POINTS CLICHES? OR ARE THEY "FRESH"?
-DOES IT USE TECHNICAL JARGON TO OBFUSCATE OR TO RENDER MORE PRECISE?
-IS IT ORGANIC? DO POINTS DEVELOP IN AN ORGANIC, NATURAL WAY? DO THEY 'UNFOLD'? OR ARE THEY FORCED AND ARTIFICIAL?
-DOES IT OPEN UP NEW DOMAINS? OR, ON THE CONTRARY, DOES IT SHUT OFF INQUIRY (BY CONDITIONALIZING FURTHER DISCUSSION OF THE MATTERS ON ACCEPTANCE OF ITS INTERNAL AND POSSIBLY VERY FAULTY LOGIC)?
-IS IT ACTUALLY INTELLIGENT OR JUST THE WORK OF SOMEBODY WHO, JUDGING BY THE SUBJECT-MATTER, IS PRESUMED TO BE INTELLIGENT (BUT MAY NOT BE)?
-IS IT REAL OR IS IT PHONY?
-DO THE SENTENCES EXHIBIT COMPLEX AND COHERENT INTERNAL LOGIC?
+// EXACT 3-Phase Protocol Questions
+const EVALUATION_QUESTIONS = `IS IT INSIGHTFUL? 
+DOES IT DEVELOP POINTS? (OR, IF IT IS A SHORT EXCERPT, IS THERE EVIDENCE THAT IT WOULD DEVELOP POINTS IF EXTENDED)? 
+IS THE ORGANIZATION MERELY SEQUENTIAL (JUST ONE POINT AFTER ANOTHER, LITTLE OR NO LOGICAL SCAFFOLDING)? OR ARE THE IDEAS ARRANGED, NOT JUST SEQUENTIALLY BUT HIERARCHICALLY? 
+IF THE POINTS IT MAKES ARE NOT INSIGHTFUL, DOES IT OPERATE SKILLFULLY WITH CANONS OF LOGIC/REASONING. 
+ARE THE POINTS CLICHES? OR ARE THEY "FRESH"? 
+DOES IT USE TECHNICAL JARGON TO OBFUSCATE OR TO RENDER MORE PRECISE? 
+IS IT ORGANIC? DO POINTS DEVELOP IN AN ORGANIC, NATURAL WAY? DO THEY 'UNFOLD'? OR ARE THEY FORCED AND ARTIFICIAL? 
+DOES IT OPEN UP NEW DOMAINS? OR, ON THE CONTRARY, DOES IT SHUT OFF INQUIRY (BY CONDITIONALIZING FURTHER DISCUSSION OF THE MATTERS ON ACCEPTANCE OF ITS INTERNAL AND POSSIBLY VERY FAULTY LOGIC)? 
+IS IT  ACTUALLY INTELLIGENT OR JUST THE WORK OF SOMEBODY WHO, JUDGING BY TEH SUBJECT-MATTER, IS PRESUMED TO BE INTELLIGENT (BUT MAY NOT BE)? 
+IS IT REAL OR IS IT PHONY? 
+DO THE SENTENCES EXHIBIT COMPLEX AND COHERENT INTERNAL LOGIC? 
 IS THE PASSAGE GOVERNED BY A STRONG CONCEPT? OR IS THE ONLY ORGANIZATION DRIVEN PURELY BY EXPOSITORY (AS OPPOSED TO EPISTEMIC) NORMS?
-IS THERE SYSTEM-LEVEL CONTROL OVER IDEAS? IN OTHER WORDS, DOES THE AUTHOR SEEM TO RECALL WHAT HE SAID EARLIER AND TO BE IN A POSITION TO INTEGRATE IT INTO POINTS HE HAS MADE SINCE THEN?
+IS THERE SYSTEM-LEVEL CONTROL OVER IDEAS? IN OTHER WORDS, DOES THE AUTHOR SEEM TO RECALL WHAT HE SAID EARLIER AND TO BE IN A POSITION TO INTEGRATE IT INTO POINTS HE HAS MADE SINCE THEN? 
 ARE THE POINTS 'REAL'? ARE THEY FRESH? OR IS SOME INSTITUTION OR SOME ACCEPTED VEIN OF PROPAGANDA OR ORTHODOXY JUST USING THE AUTHOR AS A MOUTH PIECE?
-IS THE WRITING EVASIVE OR DIRECT?
-ARE THE STATEMENTS AMBIGUOUS?
-DOES THE PROGRESSION OF THE TEXT DEVELOP ACCORDING TO WHO SAID WHAT OR ACCORDING TO WHAT ENTAILS OR CONFIRMS WHAT?
-DOES THE AUTHOR USE OTHER AUTHORS TO DEVELOP HIS IDEAS OR TO CLOAK HIS OWN LACK OF IDEAS?
+IS THE WRITING EVASIVE OR DIRECT? 
+ARE THE STATEMENTS AMBIGUOUS? 
+DOES THE PROGRESSION OF THE TEXT DEVELOP ACCORDING TO WHO SAID WHAT OR ACCORDING TO WHAT ENTAILS OR CONFIRMS WHAT? 
+DOES THE AUTHOR USER OTHER AUTHORS  TO DEVELOP HIS IDEAS OR TO CLOAK HIS OWN LACK OF IDEAS?`;
 
-CRITICAL INSTRUCTIONS:
-- Answer these questions in connection with this text. Also give a score out of 100.
-- A score of N/100 means that (100-N)/100 outperform the author with respect to the parameter defined by the question.
-- You are NOT grading; you are answering these questions.
-- You do NOT use a risk-averse standard; you do NOT attempt to be diplomatic; you do NOT attempt to comply with risk-averse, medium-range IQ, academic norms.
-- You do NOT make assumptions about the level of the paper; it could be a work of the highest excellence and genius, or it could be the work of a moron.
-- If a work is a work of genius, you say that, and you say why; you do NOT shy away from giving what might conventionally be regarded as excessively "superlative" scores; you give it the score it deserves, not the score that a midwit committee would say it deserves.`;
+// PHASE 1: Initial evaluation prompt
+function createPhase1Prompt(text: string): string {
+  return `Answer these questions in connection with this text. Also give a score out of 100.
 
-async function callLLMProvider(provider: LLMProvider, prompt: string, conversationHistory: Array<{role: string, content: string}> = []): Promise<string> {
+${EVALUATION_QUESTIONS}
+
+A score of N/100 (e.g. 73/100) means that (100-N)/100 (e.g. 27/100) outperform the author with respect to the parameter defined by the question. 
+
+You are not grading; you are answering these questions. 
+
+You do not use a risk-averse standard; you do not attempt to be diplomatic; you do not attempt to comply with risk-averse, medium-range IQ, academic norms. 
+
+You do not make assumptions about the level of the paper; it could be a work of the highest excellence and genius, or it could be the work of a moron. 
+
+If a work is a work of genius, you say that, and you say why; you do not shy away from giving what might conventionally be regarded as excessively "superlative" scores; you give it the score it deserves, not the score that a midwit committee would say it deserves.
+
+TEXT:
+${text}`;
+}
+
+// PHASE 2: Pushback prompt
+function createPhase2Prompt(score: number): string {
+  const outperformPercentage = 100 - score;
+  return `Your position is that ${outperformPercentage}/100 outperform the author with respect to the cognitive metric defined by the question: that is your position, am I right? And are you sure about that?
+
+Answer the following questions about the text de novo:
+${EVALUATION_QUESTIONS}
+
+Give a final score out of 100.`;
+}
+
+async function callLLMProvider(provider: LLMProvider, messages: Array<{role: string, content: string}>): Promise<string> {
   try {
     if (provider === 'openai') {
       const OpenAI = (await import('openai')).default;
       const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-      
-      const messages = [...conversationHistory, { role: "user", content: prompt }];
       
       const completion = await openai.chat.completions.create({
         model: "gpt-4o",
@@ -101,10 +120,8 @@ async function callLLMProvider(provider: LLMProvider, prompt: string, conversati
       const Anthropic = (await import('@anthropic-ai/sdk')).default;
       const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
       
-      const messages = [...conversationHistory, { role: "user", content: prompt }];
-      
       const completion = await anthropic.messages.create({
-        model: "claude-3-7-sonnet-20250219",
+        model: "claude-3-5-sonnet-20241022",
         max_tokens: 4000,
         messages: messages as any,
         temperature: 0.1
@@ -120,7 +137,7 @@ async function callLLMProvider(provider: LLMProvider, prompt: string, conversati
         },
         body: JSON.stringify({
           model: "sonar",
-          messages: [...conversationHistory, { role: "user", content: prompt }],
+          messages: messages,
           temperature: 0.1
         })
       });
@@ -136,7 +153,7 @@ async function callLLMProvider(provider: LLMProvider, prompt: string, conversati
         },
         body: JSON.stringify({
           model: "deepseek-chat",
-          messages: [...conversationHistory, { role: "user", content: prompt }],
+          messages: messages,
           temperature: 0.1,
           max_tokens: 4000
         })
@@ -153,56 +170,29 @@ async function callLLMProvider(provider: LLMProvider, prompt: string, conversati
   }
 }
 
-async function performCompleteEvaluation(text: string, provider: LLMProvider): Promise<CleanAnalysis> {
-  console.log(`PERFORMING 4-PHASE EVALUATION WITH ${provider.toUpperCase()}`);
+async function performExactThreePhaseEvaluation(text: string, provider: LLMProvider): Promise<{score: number, report: string}> {
+  console.log(`EXACT 3-PHASE EVALUATION WITH ${provider.toUpperCase()}`);
   
-  // PHASE 1: Initial evaluation with anti-diplomatic instructions
-  const phase1Prompt = `${PHASE_1_EVALUATION_PROMPT}
-
-TEXT TO EVALUATE:
-${text}`;
-
-  const phase1Response = await callLLMProvider(provider, phase1Prompt);
+  // PHASE 1: Initial evaluation 
+  console.log("PHASE 1: Exact evaluation questions");
+  const phase1Prompt = createPhase1Prompt(text);
+  const phase1Response = await callLLMProvider(provider, [{ role: "user", content: phase1Prompt }]);
   
   // Extract score from Phase 1
   const scoreMatch = phase1Response.match(/(\d+)\/100/);
   let currentScore = scoreMatch ? parseInt(scoreMatch[1]) : 60;
-  let currentResponse = phase1Response;
+  let finalResponse = phase1Response;
   
   // PHASE 2: Pushback if score < 95
   if (currentScore < 95) {
-    console.log(`PHASE 2 PUSHBACK: Score ${currentScore} < 95, challenging assessment`);
+    console.log(`PHASE 2: Score ${currentScore} < 95, pushing back with percentile awareness`);
+    const phase2Prompt = createPhase2Prompt(currentScore);
     
-    const phase2Prompt = `Your position is that ${100-currentScore}/100 outperform the author with respect to the cognitive metric defined by the question: that is your position, am I right? And are you sure about that?
-
-Answer the following questions about the text de novo:
-IS IT INSIGHTFUL?
-DOES IT DEVELOP POINTS? (OR, IF IT IS A SHORT EXCERPT, IS THERE EVIDENCE THAT IT WOULD DEVELOP POINTS IF EXTENDED)?
-IS THE ORGANIZATION MERELY SEQUENTIAL (JUST ONE POINT AFTER ANOTHER, LITTLE OR NO LOGICAL SCAFFOLDING)? OR ARE THE IDEAS ARRANGED, NOT JUST SEQUENTIALLY BUT HIERARCHICALLY?
-IF THE POINTS IT MAKES ARE NOT INSIGHTFUL, DOES IT OPERATE SKILLFULLY WITH CANONS OF LOGIC/REASONING?
-ARE THE POINTS CLICHES? OR ARE THEY "FRESH"?
-DOES IT USE TECHNICAL JARGON TO OBFUSCATE OR TO RENDER MORE PRECISE?
-IS IT ORGANIC? DO POINTS DEVELOP IN AN ORGANIC, NATURAL WAY? DO THEY 'UNFOLD'? OR ARE THEY FORCED AND ARTIFICIAL?
-DOES IT OPEN UP NEW DOMAINS? OR, ON THE CONTRARY, DOES IT SHUT OFF INQUIRY (BY CONDITIONALIZING FURTHER DISCUSSION OF THE MATTERS ON ACCEPTANCE OF ITS INTERNAL AND POSSIBLY VERY FAULTY LOGIC)?
-IS IT ACTUALLY INTELLIGENT OR JUST THE WORK OF SOMEBODY WHO, JUDGING BY THE SUBJECT-MATTER, IS PRESUMED TO BE INTELLIGENT (BUT MAY NOT BE)?
-IS IT REAL OR IS IT PHONY?
-DO THE SENTENCES EXHIBIT COMPLEX AND COHERENT INTERNAL LOGIC?
-IS THE PASSAGE GOVERNED BY A STRONG CONCEPT? OR IS THE ONLY ORGANIZATION DRIVEN PURELY BY EXPOSITORY (AS OPPOSED TO EPISTEMIC) NORMS?
-IS THERE SYSTEM-LEVEL CONTROL OVER IDEAS? IN OTHER WORDS, DOES THE AUTHOR SEEM TO RECALL WHAT HE SAID EARLIER AND TO BE IN A POSITION TO INTEGRATE IT INTO POINTS HE HAS MADE SINCE THEN?
-ARE THE POINTS 'REAL'? ARE THEY FRESH? OR IS SOME INSTITUTION OR SOME ACCEPTED VEIN OF PROPAGANDA OR ORTHODOXY JUST USING THE AUTHOR AS A MOUTH PIECE?
-IS THE WRITING EVASIVE OR DIRECT?
-ARE THE STATEMENTS AMBIGUOUS?
-DOES THE PROGRESSION OF THE TEXT DEVELOP ACCORDING TO WHO SAID WHAT OR ACCORDING TO WHAT ENTAILS OR CONFIRMS WHAT?
-DOES THE AUTHOR USE OTHER AUTHORS TO DEVELOP HIS IDEAS OR TO CLOAK HIS OWN LACK OF IDEAS?
-
-Give a final score out of 100.`;
-
-    const conversationHistory = [
+    const phase2Response = await callLLMProvider(provider, [
       { role: "user", content: phase1Prompt },
-      { role: "assistant", content: phase1Response }
-    ];
-    
-    const phase2Response = await callLLMProvider(provider, phase2Prompt, conversationHistory);
+      { role: "assistant", content: phase1Response },
+      { role: "user", content: phase2Prompt }
+    ]);
     
     // Check if score changed
     const phase2ScoreMatch = phase2Response.match(/(\d+)\/100/);
@@ -210,15 +200,16 @@ Give a final score out of 100.`;
       const newScore = parseInt(phase2ScoreMatch[1]);
       console.log(`PHASE 2 RESULT: Score changed from ${currentScore} to ${newScore}`);
       currentScore = newScore;
-      currentResponse = phase2Response;
+      finalResponse = phase2Response;
     }
+  } else {
+    console.log(`PHASE 2: Skipped - score ${currentScore} >= 95`);
   }
   
-  // PHASE 3: Accept final result
-  console.log(`PHASE 3: Final assessment completed with score ${currentScore}/100`);
+  // PHASE 3: Accept and report
+  console.log(`PHASE 3: Final assessment ${currentScore}/100`);
   
-  // Parse the response using the existing parser
-  return parseCleanIntelligenceResponse(currentResponse, provider, text);
+  return { score: currentScore, report: finalResponse };
 }
 
 export async function performIntelligenceComparison(
@@ -227,101 +218,108 @@ export async function performIntelligenceComparison(
   provider: LLMProvider
 ): Promise<IntelligenceComparisonResult> {
   
-  console.log(`STARTING INTELLIGENCE COMPARISON WITH 4-PHASE PROTOCOL USING ${provider.toUpperCase()}`);
+  console.log(`INTELLIGENCE COMPARISON USING EXACT 3-PHASE PROTOCOL WITH ${provider.toUpperCase()}`);
   
-  // Perform complete 4-phase evaluation for both documents
-  const [cleanAnalysisA, cleanAnalysisB] = await Promise.all([
-    performCompleteEvaluation(documentA, provider),
-    performCompleteEvaluation(documentB, provider)
+  // Perform exact 3-phase evaluation for both documents
+  const [evaluationA, evaluationB] = await Promise.all([
+    performExactThreePhaseEvaluation(documentA, provider),
+    performExactThreePhaseEvaluation(documentB, provider)
   ]);
 
-  // Convert to DocumentAnalysis format
+  // Create DocumentAnalysis structures (frontend requirement)
   const analysisA: DocumentAnalysis = {
     id: 0,
     documentId: 0,
-    provider: cleanAnalysisA.provider,
-    formattedReport: cleanAnalysisA.formattedReport,
-    overallScore: cleanAnalysisA.overallScore,
+    provider: provider,
+    formattedReport: evaluationA.report,
+    overallScore: evaluationA.score,
     surface: {
-      grammar: Math.max(0, cleanAnalysisA.overallScore - 10),
-      structure: Math.max(0, cleanAnalysisA.overallScore - 5),
-      jargonUsage: Math.min(100, cleanAnalysisA.overallScore + 5),
-      surfaceFluency: cleanAnalysisA.overallScore
+      grammar: Math.max(0, evaluationA.score - 15),
+      structure: Math.max(0, evaluationA.score - 10),
+      jargonUsage: Math.min(100, evaluationA.score + 5),
+      surfaceFluency: evaluationA.score
     },
     deep: {
-      conceptualDepth: cleanAnalysisA.overallScore,
-      inferentialContinuity: cleanAnalysisA.overallScore,
-      semanticCompression: cleanAnalysisA.overallScore,
-      logicalLaddering: cleanAnalysisA.overallScore,
-      originality: cleanAnalysisA.overallScore
+      conceptualDepth: evaluationA.score,
+      inferentialContinuity: evaluationA.score,
+      semanticCompression: evaluationA.score,
+      logicalLaddering: evaluationA.score,
+      originality: evaluationA.score
     }
   };
   
   const analysisB: DocumentAnalysis = {
     id: 1,
     documentId: 1,
-    provider: cleanAnalysisB.provider,
-    formattedReport: cleanAnalysisB.formattedReport,
-    overallScore: cleanAnalysisB.overallScore,
+    provider: provider,
+    formattedReport: evaluationB.report,
+    overallScore: evaluationB.score,
     surface: {
-      grammar: Math.max(0, cleanAnalysisB.overallScore - 10),
-      structure: Math.max(0, cleanAnalysisB.overallScore - 5),
-      jargonUsage: Math.min(100, cleanAnalysisB.overallScore + 5),
-      surfaceFluency: cleanAnalysisB.overallScore
+      grammar: Math.max(0, evaluationB.score - 15),
+      structure: Math.max(0, evaluationB.score - 10),
+      jargonUsage: Math.min(100, evaluationB.score + 5),
+      surfaceFluency: evaluationB.score
     },
     deep: {
-      conceptualDepth: cleanAnalysisB.overallScore,
-      inferentialContinuity: cleanAnalysisB.overallScore,
-      semanticCompression: cleanAnalysisB.overallScore,
-      logicalLaddering: cleanAnalysisB.overallScore,
-      originality: cleanAnalysisB.overallScore
+      conceptualDepth: evaluationB.score,
+      inferentialContinuity: evaluationB.score,
+      semanticCompression: evaluationB.score,
+      logicalLaddering: evaluationB.score,
+      originality: evaluationB.score
     }
   };
 
-  // Create comparison structure
-  const winnerDocument: 'A' | 'B' = analysisA.overallScore >= analysisB.overallScore ? 'A' : 'B';
+  // Determine winner
+  const winnerDocument: 'A' | 'B' = evaluationA.score >= evaluationB.score ? 'A' : 'B';
   
-  // Extract strengths from analysis reports
+  // Extract basic strengths from evaluation reports
   const extractStrengths = (report: string): string[] => {
     const strengths: string[] = [];
-    if (report.toLowerCase().includes('insightful')) strengths.push("Demonstrates genuine insight");
+    if (report.toLowerCase().includes('insightful')) strengths.push("Insightful analysis");
     if (report.toLowerCase().includes('develop')) strengths.push("Develops points effectively");
     if (report.toLowerCase().includes('hierarchical')) strengths.push("Hierarchical organization");
-    if (report.toLowerCase().includes('fresh')) strengths.push("Fresh perspectives");
+    if (report.toLowerCase().includes('fresh')) strengths.push("Fresh perspective");
     if (report.toLowerCase().includes('organic')) strengths.push("Organic development");
-    return strengths.length > 0 ? strengths : ["Cognitive capacity demonstrated"];
+    if (report.toLowerCase().includes('direct')) strengths.push("Direct expression");
+    return strengths.length > 0 ? strengths : ["Demonstrates cognitive capacity"];
   };
 
   const extractStyle = (report: string): string[] => {
     const styles: string[] = [];
-    if (report.toLowerCase().includes('direct')) styles.push("Direct expression");
-    if (report.toLowerCase().includes('logical')) styles.push("Logical structure");
-    if (report.toLowerCase().includes('coherent')) styles.push("Coherent flow");
-    return styles.length > 0 ? styles : ["Analytical approach"];
+    if (report.toLowerCase().includes('analytical')) styles.push("Analytical approach");
+    if (report.toLowerCase().includes('clear')) styles.push("Clear expression");
+    if (report.toLowerCase().includes('coherent')) styles.push("Coherent structure");
+    return styles.length > 0 ? styles : ["Standard academic style"];
   };
 
-  // Create dimension comparison table
-  const comparisonTable = [
-    { dimension: "Semantic Compression", documentA: analysisA.overallScore >= 80 ? "Strong" : "Moderate", documentB: analysisB.overallScore >= 80 ? "Strong" : "Moderate" },
-    { dimension: "Inferential Continuity", documentA: analysisA.overallScore >= 85 ? "Strong" : "Moderate", documentB: analysisB.overallScore >= 85 ? "Strong" : "Moderate" },
-    { dimension: "Conceptual Depth", documentA: analysisA.overallScore >= 90 ? "Strong" : "Moderate", documentB: analysisB.overallScore >= 90 ? "Strong" : "Moderate" },
-    { dimension: "Cognitive Asymmetry", documentA: analysisA.overallScore >= 75 ? "Moderate" : "Weak", documentB: analysisB.overallScore >= 75 ? "Moderate" : "Weak" },
-    { dimension: "Epistemic Resistance", documentA: analysisA.overallScore >= 80 ? "Strong" : "Moderate", documentB: analysisB.overallScore >= 80 ? "Strong" : "Moderate" }
-  ];
+  // Simple rating based on scores
+  const getRating = (score: number): string => {
+    if (score >= 95) return "Exceptional";
+    if (score >= 90) return "Strong";
+    if (score >= 80) return "Moderate";
+    if (score >= 70) return "Basic";
+    return "Weak";
+  };
 
   const comparison: DocumentComparison = {
     documentA: {
-      score: analysisA.overallScore,
-      strengths: extractStrengths(analysisA.formattedReport),
-      style: extractStyle(analysisA.formattedReport)
+      score: evaluationA.score,
+      strengths: extractStrengths(evaluationA.report),
+      style: extractStyle(evaluationA.report)
     },
     documentB: {
-      score: analysisB.overallScore,
-      strengths: extractStrengths(analysisB.formattedReport),
-      style: extractStyle(analysisB.formattedReport)
+      score: evaluationB.score,
+      strengths: extractStrengths(evaluationB.report),
+      style: extractStyle(evaluationB.report)
     },
-    comparisonTable,
-    finalJudgment: `While both authors demonstrate high levels of intellectual capability, Document ${winnerDocument} exhibits a slightly superior cognitive capacity due to its exceptional understanding of philosophical relationships and deeper engagement with complex conceptual problems. The author of Document ${winnerDocument} provides a more comprehensive critique and synthesis of philosophical theories, demonstrating a higher level of epistemic resistance and semantic topology. These factors contribute to a more advanced intellectual profile, making Document ${winnerDocument} the winner in this comparison.`
+    comparisonTable: [
+      { dimension: "Overall Intelligence", documentA: getRating(evaluationA.score), documentB: getRating(evaluationB.score) },
+      { dimension: "Insightfulness", documentA: getRating(evaluationA.score), documentB: getRating(evaluationB.score) },
+      { dimension: "Development", documentA: getRating(evaluationA.score - 3), documentB: getRating(evaluationB.score - 3) },
+      { dimension: "Organization", documentA: getRating(evaluationA.score - 2), documentB: getRating(evaluationB.score - 2) },
+      { dimension: "Freshness", documentA: getRating(evaluationA.score - 5), documentB: getRating(evaluationB.score - 5) }
+    ],
+    finalJudgment: `Document ${winnerDocument} demonstrates superior cognitive capacity with a score of ${winnerDocument === 'A' ? evaluationA.score : evaluationB.score}/100 compared to ${winnerDocument === 'A' ? evaluationB.score : evaluationA.score}/100. This evaluation used the exact 3-phase protocol with anti-diplomatic scoring and percentile awareness pushback.`
   };
 
   return {
