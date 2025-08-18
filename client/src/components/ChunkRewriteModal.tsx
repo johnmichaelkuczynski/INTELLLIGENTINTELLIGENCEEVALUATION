@@ -57,7 +57,7 @@ THE OPERATIVE EVALUATION LOGIC CONSIDERS THESE CRITICAL FACTORS:
 - Does the author use other authors to develop ideas vs. cloak lack of ideas?`;
 
   const [instructions, setInstructions] = useState<string>("");
-  const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("openai");
+  const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("deepseek");
   const [isRewriting, setIsRewriting] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
   const [currentChunk, setCurrentChunk] = useState<number>(0);

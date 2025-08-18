@@ -73,3 +73,9 @@ The application is structured as a monorepo, separating client and server compon
     - **Condition B**: Preserve existing content as much as condition A allows, only changing what's necessary
     - **Intelligence Integration**: All rewrites optimize for 17 evaluation criteria (insight, hierarchical organization, freshness, logic, etc.)
     - **Flexible Implementation**: System adapts instruction complexity based on whether user provides custom guidance
+  - **August 18, 2025 - DEEPSEEK DEFAULT**: Set DeepSeek as default LLM across all application functions
+    - **Frontend Components**: Updated HomePage, ChunkRewriteModal, SelectiveChunkRewriter to default to DeepSeek
+    - **Backend Routes**: All API endpoints now default to DeepSeek (rewrite, translate, case assessment, etc.)
+    - **Service Functions**: Document rewrite services updated to use DeepSeek as default provider
+    - **Multi-Model Requests**: Reordered default model array to prioritize DeepSeek first
+    - **System Status**: DeepSeek is now primary LLM across all evaluation, rewrite, and analysis functions

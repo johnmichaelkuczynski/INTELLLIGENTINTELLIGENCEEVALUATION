@@ -66,7 +66,7 @@ function splitIntoChunks(text: string, maxChunkSize: number = 2000): string[] {
 export async function streamRewriteDocument(
   documentText: string, 
   options: RewriteOptions, 
-  provider: string = 'openai',
+  provider: string = 'deepseek',
   onChunk: (chunk: string, index: number, total: number) => void
 ): Promise<{ content: string }> {
   // Create final instruction using enhanced logic
@@ -152,7 +152,7 @@ INSTRUCTION PRIORITY: If it is difficult to both follow the custom instructions 
 export async function rewriteDocument(
   originalText: string, 
   options: RewriteOptions, 
-  provider: string = "openai"
+  provider: string = "deepseek"
 ): Promise<RewriteResult> {
   // Create final instruction using enhanced logic
   const finalInstruction = createFinalInstruction(options.instruction || "");

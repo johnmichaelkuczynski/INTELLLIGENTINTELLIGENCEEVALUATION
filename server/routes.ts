@@ -460,7 +460,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
   // Streaming rewrite endpoint
   app.post("/api/rewrite-stream", async (req: Request, res: Response) => {
     try {
-      const { originalText, instructions, provider = "openai", mode = "hybrid" } = req.body;
+      const { originalText, instructions, provider = "deepseek", mode = "hybrid" } = req.body;
       
       if (!originalText) {
         return res.status(400).json({ error: "Original text is required" });
@@ -507,7 +507,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
   // Rewrite document
   app.post("/api/rewrite", async (req: Request, res: Response) => {
     try {
-      const { originalText, instructions, options, provider = "openai", mode = "rewrite_existing" } = req.body;
+      const { originalText, instructions, options, provider = "deepseek", mode = "rewrite_existing" } = req.body;
       
       if (!originalText) {
         return res.status(400).json({ error: "Original text is required" });
@@ -553,7 +553,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
   // Translate document
   app.post("/api/translate", async (req: Request, res: Response) => {
     try {
-      const { text, options, provider = "openai" } = req.body;
+      const { text, options, provider = "deepseek" } = req.body;
       
       if (!text) {
         return res.status(400).json({ error: "Text is required" });
@@ -634,7 +634,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
 
   app.post("/api/direct-model-request", async (req: Request, res: Response) => {
     try {
-      const { instruction, provider = "openai" } = req.body;
+      const { instruction, provider = "deepseek" } = req.body;
       
       if (!instruction) {
         return res.status(400).json({ error: "Instruction is required" });
@@ -713,7 +713,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
   // Case assessment endpoint
   app.post("/api/case-assessment", async (req: Request, res: Response) => {
     try {
-      const { text, provider = "openai", documentId } = req.body;
+      const { text, provider = "deepseek", documentId } = req.body;
       
       if (!text || typeof text !== 'string') {
         return res.status(400).json({ error: "Text content is required for case assessment" });
