@@ -79,3 +79,10 @@ The application is structured as a monorepo, separating client and server compon
     - **Service Functions**: Document rewrite services updated to use DeepSeek as default provider
     - **Multi-Model Requests**: Reordered default model array to prioritize DeepSeek first
     - **System Status**: DeepSeek is now primary LLM across all evaluation, rewrite, and analysis functions
+  - **August 18, 2025 - REWRITE UX FIXED**: Fixed instruction field behavior for all rewrite components
+    - **Empty Instructions Support**: Users can now leave instruction fields empty and hit Enter/click buttons
+    - **Backend Default Applied**: When no instructions provided, backend automatically uses intelligence-optimized default
+    - **Validation Removed**: Removed frontend validation that required instructions in all rewrite modals
+    - **Keyboard Support**: Added Ctrl+Enter keyboard shortcut to trigger rewrite in all instruction fields
+    - **Placeholder Updated**: All instruction fields now show "Leave empty to use default intelligence-optimized instructions"
+    - **Components Fixed**: SelectiveChunkRewriter, ChunkRewriteModal, and EnhancedRewriteSection all support empty instructions

@@ -100,15 +100,7 @@ THE OPERATIVE EVALUATION LOGIC CONSIDERS THESE CRITICAL FACTORS:
   };
 
   const handleChunkRewrite = async () => {
-    if (!instructions.trim()) {
-      toast({
-        title: "Instructions required",
-        description: "Please enter rewrite instructions",
-        variant: "destructive"
-      });
-      return;
-    }
-
+    // Instructions are optional - backend will use default if empty
     setIsRewriting(true);
     setProgress(0);
     setRewrittenChunks([]);
@@ -131,7 +123,7 @@ THE OPERATIVE EVALUATION LOGIC CONSIDERS THESE CRITICAL FACTORS:
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             originalText: chunks[i],
-            instructions: instructions,
+            instructions: instructions.trim() || "",
             provider: selectedProvider
           })
         });
@@ -290,14 +282,20 @@ THE OPERATIVE EVALUATION LOGIC CONSIDERS THESE CRITICAL FACTORS:
               <Textarea
                 value={instructions}
                 onChange={(e) => setInstructions(e.target.value)}
-                placeholder="Enter rewrite instructions for all chunks..."
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && e.ctrlKey && !isRewriting) {
+                    e.preventDefault();
+                    handleChunkRewrite();
+                  }
+                }}
+                placeholder="Leave empty to use default intelligence-optimized instructions"
                 className="min-h-32"
               />
             </div>
 
             <Button 
               onClick={handleChunkRewrite} 
-              disabled={isRewriting || !instructions.trim()}
+              disabled={isRewriting}
               className="w-full"
             >
               {isRewriting ? `Processing Chunk ${currentChunk}/${totalChunks}...` : "Start Chunk Rewrite"}

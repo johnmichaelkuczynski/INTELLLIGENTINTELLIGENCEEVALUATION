@@ -346,10 +346,7 @@ THE OPERATIVE EVALUATION LOGIC CONSIDERS THESE CRITICAL FACTORS:
       });
     }
     
-    // If no instructions provided, add a default
-    if (!finalInstruction.trim()) {
-      finalInstruction = "Improve the clarity and precision of the text while maintaining the original meaning. Enhance logical flow and conceptual precision.";
-    }
+    // Let backend handle default instructions if none provided
     
     // Set up the rewrite options
     const options: RewriteOptions = {
