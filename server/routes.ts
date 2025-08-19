@@ -66,7 +66,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
   // Quick analysis API endpoint
   app.post("/api/quick-analysis", async (req: Request, res: Response) => {
     try {
-      const { text, provider = 'openai' } = req.body;
+      const { text, provider = 'deepseek' } = req.body;
 
       if (!text || typeof text !== 'string') {
         return res.status(400).json({ 
@@ -93,7 +93,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
   // Quick comparison API endpoint  
   app.post("/api/quick-compare", async (req: Request, res: Response) => {
     try {
-      const { documentA, documentB, provider = 'openai' } = req.body;
+      const { documentA, documentB, provider = 'deepseek' } = req.body;
 
       if (!documentA || !documentB) {
         return res.status(400).json({ 

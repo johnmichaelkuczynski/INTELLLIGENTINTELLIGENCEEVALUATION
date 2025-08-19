@@ -5,7 +5,7 @@ export async function performQuickAnalysis(text: string, provider: string = 'dee
   
   try {
     // Use only Phase 1 of the exact 4-phase protocol
-    const phase1Result = await executePhase1Protocol(text, provider);
+    const phase1Result = await executePhase1Protocol(text, provider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek');
     
     console.log(`Quick analysis complete - Score: ${phase1Result.intelligence_score}/100`);
     
@@ -29,8 +29,8 @@ export async function performQuickComparison(documentA: string, documentB: strin
   try {
     // For comparison, analyze both documents using Phase 1 only
     const [phase1A, phase1B] = await Promise.all([
-      executePhase1Protocol(documentA, provider),
-      executePhase1Protocol(documentB, provider)
+      executePhase1Protocol(documentA, provider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek'),
+      executePhase1Protocol(documentB, provider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek')
     ]);
     
     // Create comparison structure matching the expected format

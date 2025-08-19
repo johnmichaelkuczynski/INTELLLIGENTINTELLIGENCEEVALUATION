@@ -103,7 +103,7 @@ const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportP
   const formattedReport = analysis.formattedReport || analysis.report || "";
   const cleanedReport = cleanAIResponse(formattedReport);
   
-  const intelligenceScore = extractIntelligenceScore(cleanedReport);
+  const intelligenceScore = analysis.overallScore || extractIntelligenceScore(cleanedReport);
   const dimensions = extractDimensions(cleanedReport);
   const executiveSummary = extractExecutiveSummary(cleanedReport);
   const comparativePlacement = extractComparativePlacement(cleanedReport);

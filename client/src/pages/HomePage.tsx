@@ -362,12 +362,36 @@ const HomePage: React.FC = () => {
         setAnalysisB(null);
         setComparison(null);
       } else {
-        // Use the selected provider for comparison
-        console.log(`Comparing with ${selectedProvider}...`);
-        const results = await compareDocuments(documentA, documentB, selectedProvider);
-        setAnalysisA(results.analysisA);
-        setAnalysisB(results.analysisB);
-        setComparison(results.comparison);
+        // Two-document mode: choose between quick and comprehensive
+        if (analysisType === "quick") {
+          const provider = selectedProvider === "all" ? "deepseek" : selectedProvider;
+          
+          const response = await fetch('/api/quick-compare', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              documentA: documentA.content,
+              documentB: documentB.content,
+              provider: provider
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`Quick comparison failed: ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          setAnalysisA(data.analysisA);
+          setAnalysisB(data.analysisB);
+          setComparison(data.comparison);
+        } else {
+          // Use the comprehensive comparison (existing logic)
+          console.log(`Comparing with ${selectedProvider}...`);
+          const results = await compareDocuments(documentA, documentB, selectedProvider);
+          setAnalysisA(results.analysisA);
+          setAnalysisB(results.analysisB);
+          setComparison(results.comparison);
+        }
       }
     } catch (error) {
       console.error("Error analyzing documents:", error);
