@@ -216,17 +216,25 @@ const IntelligenceReportModal: React.FC<IntelligenceReportModalProps> = ({ isOpe
 
         <ScrollArea className="h-[calc(95vh-150px)] pr-6">
           <div className="space-y-8">
-            {/* Debug Info */}
-            {!executiveSummary && !dimensions.length && !comparativePlacement && !finalVerdict && (
-              <Card className="bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800">
+            {/* Quick Analysis Content or Debug Info */}
+            {(!executiveSummary && !dimensions.length && !comparativePlacement && !finalVerdict) && (
+              <Card className={analysisMode === "quick" ? "bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800" : "bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800"}>
                 <CardHeader>
-                  <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-200">Raw Report Content</h3>
+                  <h3 className={`text-lg font-semibold ${analysisMode === "quick" ? "text-blue-800 dark:text-blue-200" : "text-yellow-800 dark:text-yellow-200"}`}>
+                    {analysisMode === "quick" ? "Phase 1 Assessment Results" : "Raw Report Content"}
+                  </h3>
                 </CardHeader>
                 <CardContent>
                   <div className="prose prose-sm dark:prose-invert max-w-none">
-                    <pre className="whitespace-pre-wrap text-xs bg-gray-100 dark:bg-gray-900 p-4 rounded overflow-auto max-h-96">
-                      {cleanedReport}
-                    </pre>
+                    {analysisMode === "quick" ? (
+                      <div className="whitespace-pre-wrap text-sm bg-white dark:bg-gray-800 p-4 rounded border">
+                        {cleanedReport}
+                      </div>
+                    ) : (
+                      <pre className="whitespace-pre-wrap text-xs bg-gray-100 dark:bg-gray-900 p-4 rounded overflow-auto max-h-96">
+                        {cleanedReport}
+                      </pre>
+                    )}
                   </div>
                 </CardContent>
               </Card>
