@@ -15,7 +15,8 @@ import { FictionComparisonModal } from "@/components/FictionComparisonModal";
 import IntelligentRewriteModal from "@/components/IntelligentRewriteModal";
 
 import { Button } from "@/components/ui/button";
-import { Brain, Trash2, FileEdit, BrainCircuit, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Brain, Trash2, FileEdit, BrainCircuit, Loader2, Zap, Clock } from "lucide-react";
 import { analyzeDocument, compareDocuments, checkForAI } from "@/lib/analysis";
 import { AnalysisMode, DocumentInput as DocumentInputType, AIDetectionResult, DocumentAnalysis, DocumentComparison } from "@/lib/types";
 
@@ -67,6 +68,9 @@ const HomePage: React.FC = () => {
   
   // State for intelligent rewrite
   const [showRewriteModal, setShowRewriteModal] = useState(false);
+  
+  // State for analysis mode (quick vs comprehensive)
+  const [analysisMode, setAnalysisMode] = useState<"quick" | "comprehensive">("quick");
   
   // State for LLM provider
   const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("openai");
@@ -319,10 +323,40 @@ const HomePage: React.FC = () => {
     
     try {
       if (mode === "single") {
-        // Use the selected provider for analysis
-        console.log(`Analyzing with ${selectedProvider}...`);
-        const result = await analyzeDocument(documentA, selectedProvider);
-        setAnalysisA(result);
+        // Choose between quick and comprehensive analysis
+        if (analysisMode === "quick") {
+          const provider = selectedProvider === "all" ? "openai" : selectedProvider;
+          
+          const response = await fetch('/api/quick-analysis', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              text: documentA.content,
+              provider: provider
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`Quick analysis failed: ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          
+          // Convert quick analysis result to standard format
+          setAnalysisA({
+            id: Date.now(),
+            formattedReport: data.result.analysis,
+            overallScore: data.result.intelligence_score,
+            provider: data.result.provider,
+            summary: data.result.key_insights,
+            analysis: data.result.cognitive_profile
+          });
+        } else {
+          // Use the comprehensive analysis (existing logic)
+          console.log(`Analyzing with ${selectedProvider}...`);
+          const result = await analyzeDocument(documentA, selectedProvider);
+          setAnalysisA(result);
+        }
         setAnalysisB(null);
         setComparison(null);
       } else {
@@ -383,6 +417,39 @@ const HomePage: React.FC = () => {
         <h2 className="text-xl font-semibold text-gray-800 mb-4">Analysis Settings</h2>
         <div className="flex flex-wrap gap-8 items-center">
           <ModeToggle mode={mode} setMode={setMode} />
+          
+          {/* Analysis Mode Toggle */}
+          <div className="border p-4 rounded-lg bg-white shadow-sm">
+            <h3 className="text-lg font-medium text-gray-800 mb-3">Analysis Mode</h3>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => setAnalysisMode("quick")}
+                variant={analysisMode === "quick" ? "default" : "outline"}
+                className="flex items-center gap-2"
+              >
+                <Zap className="h-4 w-4" />
+                Quick Analysis
+              </Button>
+              <Button
+                onClick={() => setAnalysisMode("comprehensive")}
+                variant={analysisMode === "comprehensive" ? "default" : "outline"}
+                className="flex items-center gap-2"
+              >
+                <Clock className="h-4 w-4" />
+                Comprehensive
+                <Badge variant="secondary" className="ml-1 text-xs">
+                  ~3 min
+                </Badge>
+              </Button>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              {analysisMode === "quick" 
+                ? "Fast assessment focusing on core intelligence indicators"
+                : "In-depth 4-phase evaluation protocol (takes up to 3 minutes)"
+              }
+            </p>
+          </div>
+          
           <div className="border p-4 rounded-lg bg-white shadow-sm mt-2 md:mt-0">
             <h3 className="text-lg font-medium text-gray-800 mb-3">Choose Your AI Provider</h3>
             <ProviderSelector 

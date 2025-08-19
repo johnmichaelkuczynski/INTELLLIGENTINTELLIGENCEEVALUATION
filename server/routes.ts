@@ -63,7 +63,61 @@ export async function registerRoutes(app: Express): Promise<Express> {
     });
   });
 
-  // PURE cognitive evaluation using exact 3-phase protocol - DEEPSEEK DEFAULT
+  // Quick analysis API endpoint
+  app.post("/api/quick-analysis", async (req: Request, res: Response) => {
+    try {
+      const { text, provider = 'openai' } = req.body;
+
+      if (!text || typeof text !== 'string') {
+        return res.status(400).json({ 
+          error: "Text is required and must be a string" 
+        });
+      }
+
+      console.log(`Starting quick analysis with ${provider}...`);
+      
+      const { performQuickAnalysis } = await import('./services/quickAnalysis');
+      const result = await performQuickAnalysis(text, provider);
+      
+      res.json({ success: true, result });
+      
+    } catch (error: any) {
+      console.error("Quick analysis error:", error);
+      res.status(500).json({ 
+        error: true, 
+        message: error.message || "Quick analysis failed" 
+      });
+    }
+  });
+
+  // Quick comparison API endpoint  
+  app.post("/api/quick-compare", async (req: Request, res: Response) => {
+    try {
+      const { documentA, documentB, provider = 'openai' } = req.body;
+
+      if (!documentA || !documentB) {
+        return res.status(400).json({ 
+          error: "Both documents are required" 
+        });
+      }
+
+      console.log(`Starting quick comparison with ${provider}...`);
+      
+      const { performQuickComparison } = await import('./services/quickAnalysis');
+      const result = await performQuickComparison(documentA, documentB, provider);
+      
+      res.json(result);
+      
+    } catch (error: any) {
+      console.error("Quick comparison error:", error);
+      res.status(500).json({ 
+        error: true, 
+        message: error.message || "Quick comparison failed" 
+      });
+    }
+  });
+
+  // COMPREHENSIVE cognitive evaluation using exact 4-phase protocol - DEEPSEEK DEFAULT
   app.post("/api/cognitive-evaluate", async (req: Request, res: Response) => {
     try {
       const { content, provider = 'deepseek' } = req.body;
