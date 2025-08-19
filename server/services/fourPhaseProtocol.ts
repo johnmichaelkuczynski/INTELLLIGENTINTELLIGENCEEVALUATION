@@ -151,7 +151,7 @@ async function callLLMProvider(
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'sonar-small-online',
+          model: 'sonar',
           messages: messages,
           temperature: 0.1
         })
