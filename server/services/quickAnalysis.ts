@@ -1,140 +1,80 @@
-// Import the LLM calling function directly 
-import OpenAI from 'openai';
-import Anthropic from '@anthropic-ai/sdk';
+import { executePhase1Protocol } from './fourPhaseProtocol';
 
-interface QuickAnalysisResult {
-  intelligence_score: number;
-  key_insights: string;
-  cognitive_profile: string;
-  analysis: string;
-  provider: string;
-}
-
-export async function performQuickAnalysis(
-  text: string,
-  provider: string
-): Promise<QuickAnalysisResult> {
-  console.log(`QUICK INTELLIGENCE ANALYSIS WITH ${provider.toUpperCase()}`);
+export async function performQuickAnalysis(text: string, provider: string = 'deepseek') {
+  console.log(`QUICK INTELLIGENCE ANALYSIS WITH ${provider.toUpperCase()} - PHASE 1 ONLY`);
   
-  // Single streamlined prompt that captures core intelligence assessment
-  const quickPrompt = `You are evaluating the intelligence of an author based on their writing. Provide a focused assessment in exactly this format:
-
-INTELLIGENCE SCORE: [0-100]/100
-
-KEY INSIGHTS: [2-3 sentences describing the most important cognitive strengths or weaknesses]
-
-COGNITIVE PROFILE: [Brief assessment of thinking style - analytical, creative, systematic, etc.]
-
-ANALYSIS: [Concise 3-4 sentence evaluation focusing on: conceptual depth, logical reasoning, originality of thought, and clarity of expression]
-
-TEXT TO ANALYZE:
-${text}
-
-Focus on genuine intellectual capacity, not academic credentials or verbose language. Look for evidence of:
-- Original thinking and novel insights
-- Logical reasoning and argument structure  
-- Conceptual sophistication
-- Authentic vs. superficial analysis
-
-Provide honest, direct assessment without diplomatic hedging.`;
-
   try {
-    let response: string;
+    // Use only Phase 1 of the exact 4-phase protocol
+    const phase1Result = await executePhase1Protocol(text, provider);
     
-    // Call the appropriate LLM provider
-    if (provider === 'openai') {
-      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [{ role: "user", content: quickPrompt }],
-        temperature: 0.1,
-      });
-      response = completion.choices[0]?.message?.content || '';
-    } else if (provider === 'anthropic') {
-      const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-      const completion = await anthropic.messages.create({
-        model: "claude-3-5-sonnet-20241022",
-        max_tokens: 2000,
-        messages: [{ role: "user", content: quickPrompt }],
-        temperature: 0.1,
-      });
-      response = completion.content[0]?.type === 'text' ? completion.content[0].text : '';
-    } else {
-      throw new Error(`Quick analysis not supported for ${provider} yet`);
-    }
-    
-    // Extract components from response
-    const scoreMatch = response.match(/INTELLIGENCE SCORE:\s*(\d+)\/100/gi);
-    const insightsMatch = response.match(/KEY INSIGHTS:\s*(.*?)(?=COGNITIVE PROFILE:|$)/gm);
-    const profileMatch = response.match(/COGNITIVE PROFILE:\s*(.*?)(?=ANALYSIS:|$)/gm);
-    const analysisMatch = response.match(/ANALYSIS:\s*(.*?)$/gm);
-    
-    const intelligence_score = scoreMatch ? parseInt(scoreMatch[0].split(':')[1].split('/')[0].trim()) : 75;
-    const key_insights = insightsMatch ? insightsMatch[0].split(':')[1].trim() : "Standard analytical capability observed.";
-    const cognitive_profile = profileMatch ? profileMatch[0].split(':')[1].trim() : "Conventional academic approach.";
-    const analysis = analysisMatch ? analysisMatch[0].split(':')[1].trim() : response.slice(0, 500);
-
-    console.log(`Quick analysis complete - Score: ${intelligence_score}/100`);
+    console.log(`Quick analysis complete - Score: ${phase1Result.intelligence_score}/100`);
     
     return {
-      intelligence_score,
-      key_insights,
-      cognitive_profile,
-      analysis,
-      provider
+      analysis: phase1Result.analysis,
+      intelligence_score: phase1Result.intelligence_score,
+      provider: provider,
+      key_insights: phase1Result.key_insights || "Phase 1 assessment completed",
+      cognitive_profile: phase1Result.cognitive_profile || "Initial cognitive evaluation",
     };
     
   } catch (error) {
-    console.error(`Quick analysis failed with ${provider}:`, error);
+    console.error(`Quick analysis error with ${provider}:`, error);
     throw new Error(`Quick analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
-export async function performQuickComparison(
-  textA: string,
-  textB: string,
-  provider: string
-): Promise<{ analysisA: QuickAnalysisResult; analysisB: QuickAnalysisResult; comparison: string }> {
-  console.log(`QUICK INTELLIGENCE COMPARISON WITH ${provider.toUpperCase()}`);
+export async function performQuickComparison(documentA: string, documentB: string, provider: string = 'deepseek') {
+  console.log(`QUICK COMPARISON WITH ${provider.toUpperCase()} - PHASE 1 ONLY FOR BOTH DOCUMENTS`);
   
-  // Perform quick analysis on both texts simultaneously
-  const [analysisA, analysisB] = await Promise.all([
-    performQuickAnalysis(textA, provider),
-    performQuickAnalysis(textB, provider)
-  ]);
-  
-  // Generate brief comparison
-  const comparisonPrompt = `Compare these two intelligence assessments briefly:
-
-DOCUMENT A: Score ${analysisA.intelligence_score}/100 - ${analysisA.key_insights}
-
-DOCUMENT B: Score ${analysisB.intelligence_score}/100 - ${analysisB.key_insights}
-
-Provide a 2-3 sentence comparison highlighting the key cognitive differences and which author demonstrates superior intellectual capacity.`;
-
-  let comparison: string;
-  
-  // Call the appropriate LLM provider for comparison
-  if (provider === 'openai') {
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{ role: "user", content: comparisonPrompt }],
-      temperature: 0.1,
-    });
-    comparison = completion.choices[0]?.message?.content || '';
-  } else if (provider === 'anthropic') {
-    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const completion = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20241022",
-      max_tokens: 1000,
-      messages: [{ role: "user", content: comparisonPrompt }],
-      temperature: 0.1,
-    });
-    comparison = completion.content[0]?.type === 'text' ? completion.content[0].text : '';
-  } else {
-    comparison = `Comparison completed using ${provider}`;
+  try {
+    // For comparison, analyze both documents using Phase 1 only
+    const [phase1A, phase1B] = await Promise.all([
+      executePhase1Protocol(documentA, provider),
+      executePhase1Protocol(documentB, provider)
+    ]);
+    
+    // Create comparison structure matching the expected format
+    const analysisA = {
+      id: Date.now(),
+      formattedReport: phase1A.analysis,
+      overallScore: phase1A.intelligence_score,
+      provider: provider,
+      summary: phase1A.key_insights,
+      analysis: phase1A.cognitive_profile
+    };
+    
+    const analysisB = {
+      id: Date.now() + 1,
+      formattedReport: phase1B.analysis,
+      overallScore: phase1B.intelligence_score,
+      provider: provider,
+      summary: phase1B.key_insights,
+      analysis: phase1B.cognitive_profile
+    };
+    
+    const comparison = {
+      documentA: {
+        score: phase1A.intelligence_score || 0,
+        strengths: [],
+        style: []
+      },
+      documentB: {
+        score: phase1B.intelligence_score || 0,
+        strengths: [],
+        style: []
+      },
+      comparisonTable: [],
+      finalJudgment: `Quick Analysis Results - Document A: ${phase1A.intelligence_score}/100, Document B: ${phase1B.intelligence_score}/100`
+    };
+    
+    return {
+      analysisA,
+      analysisB,
+      comparison
+    };
+    
+  } catch (error) {
+    console.error(`Quick comparison error with ${provider}:`, error);
+    throw new Error(`Quick comparison failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-  
-  return { analysisA, analysisB, comparison };
 }

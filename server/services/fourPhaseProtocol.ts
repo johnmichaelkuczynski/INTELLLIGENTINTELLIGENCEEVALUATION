@@ -370,6 +370,46 @@ FINAL ASSESSMENT SCORE: ${finalScore}/100`;
   };
 }
 
+// PHASE 1 ONLY EXECUTION (FOR QUICK ANALYSIS)
+export async function executePhase1Protocol(
+  text: string, 
+  provider: 'openai' | 'anthropic' | 'perplexity' | 'deepseek'
+): Promise<{
+  analysis: string;
+  intelligence_score: number;
+  key_insights: string;
+  cognitive_profile: string;
+}> {
+  console.log(`EXECUTING PHASE 1 ONLY WITH ${provider.toUpperCase()}`);
+  
+  // PHASE 1: Ask questions and get score
+  const phase1Prompt = createPhase1Prompt(text);
+  const phase1Response = await callLLMProvider(provider, [
+    { role: 'user', content: phase1Prompt }
+  ]);
+  const phase1Score = extractScore(phase1Response);
+  
+  console.log(`PHASE 1 COMPLETE: Score ${phase1Score}/100`);
+  
+  // Clean up response formatting
+  const cleanResponse = (text: string) => {
+    return text
+      .replace(/\*{1,3}/g, '') // Remove asterisks
+      .replace(/#{1,6}\s*/g, '') // Remove hashtags
+      .replace(/\-{3,}/g, '') // Remove horizontal lines
+      .replace(/\_{3,}/g, '') // Remove underscores
+      .replace(/\n{3,}/g, '\n\n') // Reduce multiple newlines
+      .trim();
+  };
+  
+  return {
+    analysis: cleanResponse(phase1Response),
+    intelligence_score: phase1Score,
+    key_insights: `Phase 1 evaluation using your exact protocol questions`,
+    cognitive_profile: `Initial assessment: ${phase1Score}/100`
+  };
+}
+
 // Individual provider functions
 export async function fourPhaseOpenAIAnalyze(text: string): Promise<FourPhaseAnalysisResult> {
   return await executeFourPhaseProtocol(text, 'openai');
