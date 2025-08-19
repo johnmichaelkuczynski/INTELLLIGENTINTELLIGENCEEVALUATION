@@ -34,13 +34,14 @@ export async function performQuickComparison(documentA: string, documentB: strin
     ]);
     
     // Create comparison structure matching the expected format
+    // Both analyses need the same complete structure for proper modal display
     const analysisA = {
       id: Date.now(),
       formattedReport: phase1A.analysis,
       overallScore: phase1A.intelligence_score,
       provider: provider,
       summary: phase1A.key_insights,
-      analysis: phase1A.cognitive_profile
+      analysis: phase1A.analysis // Use the full analysis content for display
     };
     
     const analysisB = {
@@ -49,7 +50,7 @@ export async function performQuickComparison(documentA: string, documentB: strin
       overallScore: phase1B.intelligence_score,
       provider: provider,
       summary: phase1B.key_insights,
-      analysis: phase1B.cognitive_profile
+      analysis: phase1B.analysis // Use the full analysis content for display
     };
     
     const comparison = {
