@@ -15,12 +15,14 @@ interface DocumentResultsProps {
   id: "A" | "B";
   analysis: DocumentAnalysis;
   originalDocument?: DocumentInputType;
+  analysisMode?: "quick" | "comprehensive";
 }
 
 const DocumentResults: React.FC<DocumentResultsProps> = ({ 
   id, 
   analysis, 
-  originalDocument 
+  originalDocument,
+  analysisMode = "comprehensive"
 }) => {
   const [showShareModal, setShowShareModal] = useState(false);
   const [showRewriteModal, setShowRewriteModal] = useState(false);
@@ -135,7 +137,10 @@ const DocumentResults: React.FC<DocumentResultsProps> = ({
       
       {/* Philosophical Intelligence Report */}
       <div className="mb-6">
-        <PhilosophicalIntelligenceReport analysis={analysis} />
+        <PhilosophicalIntelligenceReport 
+          analysis={analysis} 
+          analysisMode={analysisMode}
+        />
       </div>
 
       {/* AI Detection Result (if available) */}

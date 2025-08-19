@@ -11,6 +11,7 @@ import IntelligenceReportModal from './IntelligenceReportModal';
 
 interface PhilosophicalIntelligenceReportProps {
   analysis: DocumentAnalysis;
+  analysisMode?: "quick" | "comprehensive";
 }
 
 function extractIntelligenceScore(text: string): number | null {
@@ -87,7 +88,7 @@ function extractExecutiveSummary(text: string): string {
   return summaryMatch ? summaryMatch[1].trim() : '';
 }
 
-const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportProps> = ({ analysis }) => {
+const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportProps> = ({ analysis, analysisMode = "comprehensive" }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   // Check if the analysis contains multiple provider results
@@ -119,8 +120,12 @@ const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportP
             <div className="flex items-center gap-3">
               <Brain className="w-8 h-8 text-blue-600 dark:text-blue-400" />
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Intelligence Assessment</h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Cognitive Analysis Report</p>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {analysisMode === "quick" ? "Quick Intelligence Assessment" : "Comprehensive Intelligence Assessment"}
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {analysisMode === "quick" ? "Rapid Cognitive Analysis" : "Forensic Cognitive Analysis with Extensive Textual Evidence"}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -160,7 +165,9 @@ const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportP
       {/* Detailed Cognitive Dimensions */}
       {dimensions.length > 0 && (
         <div className="space-y-6">
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Detailed Cognitive Analysis</h3>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            {analysisMode === "quick" ? "Core Cognitive Indicators" : "Detailed Cognitive Analysis"}
+          </h3>
           {dimensions.map((dim, index) => (
             <Card key={index} className="border-l-4 border-l-blue-500">
               <CardHeader className="pb-3">
@@ -313,6 +320,7 @@ const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportP
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         analysis={analysis}
+        analysisMode={analysisMode}
       />
     </div>
   );

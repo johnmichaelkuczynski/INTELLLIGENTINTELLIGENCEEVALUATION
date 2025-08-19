@@ -23,6 +23,9 @@ import { AnalysisMode, DocumentInput as DocumentInputType, AIDetectionResult, Do
 const HomePage: React.FC = () => {
   // State for analysis mode
   const [mode, setMode] = useState<AnalysisMode>("single");
+  
+  // State for analysis type (quick vs comprehensive)
+  const [analysisType, setAnalysisType] = useState<"quick" | "comprehensive">("quick");
 
   // State for document inputs
   const [documentA, setDocumentA] = useState<DocumentInputType>({ content: "" });
@@ -69,11 +72,10 @@ const HomePage: React.FC = () => {
   // State for intelligent rewrite
   const [showRewriteModal, setShowRewriteModal] = useState(false);
   
-  // State for analysis mode (quick vs comprehensive)
-  const [analysisMode, setAnalysisMode] = useState<"quick" | "comprehensive">("quick");
+
   
   // State for LLM provider
-  const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("openai");
+  const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("deepseek");
   const [apiStatus, setApiStatus] = useState<{
     openai: boolean;
     anthropic: boolean;
@@ -324,8 +326,8 @@ const HomePage: React.FC = () => {
     try {
       if (mode === "single") {
         // Choose between quick and comprehensive analysis
-        if (analysisMode === "quick") {
-          const provider = selectedProvider === "all" ? "openai" : selectedProvider;
+        if (analysisType === "quick") {
+          const provider = selectedProvider === "all" ? "deepseek" : selectedProvider;
           
           const response = await fetch('/api/quick-analysis', {
             method: 'POST',
@@ -423,16 +425,16 @@ const HomePage: React.FC = () => {
             <h3 className="text-lg font-medium text-gray-800 mb-3">Analysis Mode</h3>
             <div className="flex gap-3">
               <Button
-                onClick={() => setAnalysisMode("quick")}
-                variant={analysisMode === "quick" ? "default" : "outline"}
+                onClick={() => setAnalysisType("quick")}
+                variant={analysisType === "quick" ? "default" : "outline"}
                 className="flex items-center gap-2"
               >
                 <Zap className="h-4 w-4" />
                 Quick Analysis
               </Button>
               <Button
-                onClick={() => setAnalysisMode("comprehensive")}
-                variant={analysisMode === "comprehensive" ? "default" : "outline"}
+                onClick={() => setAnalysisType("comprehensive")}
+                variant={analysisType === "comprehensive" ? "default" : "outline"}
                 className="flex items-center gap-2"
               >
                 <Clock className="h-4 w-4" />
@@ -443,7 +445,7 @@ const HomePage: React.FC = () => {
               </Button>
             </div>
             <p className="text-xs text-gray-500 mt-2">
-              {analysisMode === "quick" 
+              {analysisType === "quick" 
                 ? "Fast assessment focusing on core intelligence indicators"
                 : "In-depth 4-phase evaluation protocol (takes up to 3 minutes)"
               }
@@ -619,11 +621,11 @@ const HomePage: React.FC = () => {
           ) : (
             <div>
               {/* Document A Results */}
-              {analysisA && <DocumentResults id="A" analysis={analysisA} originalDocument={documentA} />}
+              {analysisA && <DocumentResults id="A" analysis={analysisA} originalDocument={documentA} analysisMode={analysisType} />}
 
               {/* Document B Results (only in compare mode) */}
               {mode === "compare" && analysisB && (
-                <DocumentResults id="B" analysis={analysisB} originalDocument={documentB} />
+                <DocumentResults id="B" analysis={analysisB} originalDocument={documentB} analysisMode={analysisType} />
               )}
 
               {/* Comparative Results (only in compare mode) */}

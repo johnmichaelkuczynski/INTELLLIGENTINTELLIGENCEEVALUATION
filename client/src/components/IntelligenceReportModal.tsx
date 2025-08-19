@@ -11,6 +11,7 @@ interface IntelligenceReportModalProps {
   isOpen: boolean;
   onClose: () => void;
   analysis: DocumentAnalysis;
+  analysisMode?: "quick" | "comprehensive";
 }
 
 function extractIntelligenceScore(text: string): number | null {
@@ -177,7 +178,7 @@ function formatTextContent(text: string, colorClass: string = "text-gray-700 dar
   });
 }
 
-const IntelligenceReportModal: React.FC<IntelligenceReportModalProps> = ({ isOpen, onClose, analysis }) => {
+const IntelligenceReportModal: React.FC<IntelligenceReportModalProps> = ({ isOpen, onClose, analysis, analysisMode = "comprehensive" }) => {
   const formattedReport = analysis.formattedReport || analysis.report || "";
   const cleanedReport = cleanAIResponse(formattedReport);
   
@@ -197,7 +198,7 @@ const IntelligenceReportModal: React.FC<IntelligenceReportModalProps> = ({ isOpe
               <Brain className="w-10 h-10 text-blue-600 dark:text-blue-400" />
               <div>
                 <DialogTitle className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                  Comprehensive Intelligence Assessment
+                  {analysisMode === "quick" ? "Quick Intelligence Assessment" : "Comprehensive Intelligence Assessment"}
                 </DialogTitle>
                 <p id="intelligence-report-description" className="text-base text-gray-600 dark:text-gray-400 mt-2">
                   Forensic Cognitive Analysis with Extensive Textual Evidence
