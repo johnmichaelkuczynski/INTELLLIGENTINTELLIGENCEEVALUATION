@@ -492,15 +492,19 @@ const HomePage: React.FC = () => {
               <div className="flex flex-wrap gap-2">
                 <div className={`px-3 py-1 rounded-full text-xs font-medium flex items-center ${apiStatus.openai ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                   <span className={`h-2 w-2 rounded-full mr-1.5 ${apiStatus.openai ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                  OpenAI: {apiStatus.openai ? 'Active' : 'Inactive'}
+                  ZHI 2: {apiStatus.openai ? 'Active' : 'Inactive'}
                 </div>
                 <div className={`px-3 py-1 rounded-full text-xs font-medium flex items-center ${apiStatus.anthropic ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                   <span className={`h-2 w-2 rounded-full mr-1.5 ${apiStatus.anthropic ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                  Anthropic: {apiStatus.anthropic ? 'Active' : 'Inactive'}
+                  ZHI 1: {apiStatus.anthropic ? 'Active' : 'Inactive'}
                 </div>
                 <div className={`px-3 py-1 rounded-full text-xs font-medium flex items-center ${apiStatus.perplexity ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                   <span className={`h-2 w-2 rounded-full mr-1.5 ${apiStatus.perplexity ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                  Perplexity: {apiStatus.perplexity ? 'Active' : 'Inactive'}
+                  ZHI 4: {apiStatus.perplexity ? 'Active' : 'Inactive'}
+                </div>
+                <div className={`px-3 py-1 rounded-full text-xs font-medium flex items-center ${apiStatus.deepseek ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                  <span className={`h-2 w-2 rounded-full mr-1.5 ${apiStatus.deepseek ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                  ZHI 3: {apiStatus.deepseek ? 'Active' : 'Inactive'}
                 </div>
               </div>
               <p className="mt-2 text-xs text-gray-500">All API providers are active and ready to use. Each offers different analysis capabilities.</p>
