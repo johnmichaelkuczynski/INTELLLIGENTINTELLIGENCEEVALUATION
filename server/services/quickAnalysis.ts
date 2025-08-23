@@ -1,36 +1,50 @@
 import { executePhase1Protocol } from './fourPhaseProtocol';
 
-export async function performQuickAnalysis(text: string, provider: string = 'deepseek') {
-  console.log(`QUICK INTELLIGENCE ANALYSIS WITH ${provider.toUpperCase()} - PHASE 1 ONLY`);
+export async function performQuickAnalysis(
+  text: string, 
+  provider: string = 'deepseek',
+  evaluationType: 'intelligence' | 'originality' | 'cogency' | 'overall_quality' = 'intelligence'
+) {
+  console.log(`QUICK ${evaluationType.toUpperCase()} ANALYSIS WITH ${provider.toUpperCase()} - PHASE 1 ONLY`);
   
   try {
     // Use only Phase 1 of the exact 4-phase protocol
-    const phase1Result = await executePhase1Protocol(text, provider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek');
+    const phase1Result = await executePhase1Protocol(
+      text, 
+      provider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek',
+      evaluationType
+    );
     
-    console.log(`Quick analysis complete - Score: ${phase1Result.intelligence_score}/100`);
+    console.log(`Quick ${evaluationType} analysis complete - Score: ${phase1Result.intelligence_score}/100`);
     
     return {
       analysis: phase1Result.analysis,
       intelligence_score: phase1Result.intelligence_score,
       provider: provider,
-      key_insights: phase1Result.key_insights || "Phase 1 assessment completed",
-      cognitive_profile: phase1Result.cognitive_profile || "Initial cognitive evaluation",
+      evaluation_type: evaluationType,
+      key_insights: phase1Result.key_insights || `Phase 1 ${evaluationType} assessment completed`,
+      cognitive_profile: phase1Result.cognitive_profile || `Initial ${evaluationType} evaluation`,
     };
     
   } catch (error) {
-    console.error(`Quick analysis error with ${provider}:`, error);
-    throw new Error(`Quick analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    console.error(`Quick ${evaluationType} analysis error with ${provider}:`, error);
+    throw new Error(`Quick ${evaluationType} analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
-export async function performQuickComparison(documentA: string, documentB: string, provider: string = 'deepseek') {
-  console.log(`QUICK COMPARISON WITH ${provider.toUpperCase()} - PHASE 1 ONLY FOR BOTH DOCUMENTS`);
+export async function performQuickComparison(
+  documentA: string, 
+  documentB: string, 
+  provider: string = 'deepseek',
+  evaluationType: 'intelligence' | 'originality' | 'cogency' | 'overall_quality' = 'intelligence'
+) {
+  console.log(`QUICK ${evaluationType.toUpperCase()} COMPARISON WITH ${provider.toUpperCase()} - PHASE 1 ONLY FOR BOTH DOCUMENTS`);
   
   try {
     // For comparison, analyze both documents using Phase 1 only
     const [phase1A, phase1B] = await Promise.all([
-      executePhase1Protocol(documentA, provider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek'),
-      executePhase1Protocol(documentB, provider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek')
+      executePhase1Protocol(documentA, provider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek', evaluationType),
+      executePhase1Protocol(documentB, provider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek', evaluationType)
     ]);
     
     // Create comparison structure matching the expected format

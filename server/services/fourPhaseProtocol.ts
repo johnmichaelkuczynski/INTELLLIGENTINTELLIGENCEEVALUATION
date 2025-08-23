@@ -9,8 +9,8 @@ interface FourPhaseAnalysisResult {
   overallScore: number;
 }
 
-// YOUR EXACT EVALUATION QUESTIONS FOR PHASE 2
-const PHASE_2_QUESTIONS = `IS IT INSIGHTFUL? 
+// EXACT INTELLIGENCE EVALUATION QUESTIONS AS SPECIFIED
+const INTELLIGENCE_QUESTIONS = `IS IT INSIGHTFUL? 
 DOES IT DEVELOP POINTS? (OR, IF IT IS A SHORT EXCERPT, IS THERE EVIDENCE THAT IT WOULD DEVELOP POINTS IF EXTENDED)? 
 IS THE ORGANIZATION MERELY SEQUENTIAL (JUST ONE POINT AFTER ANOTHER, LITTLE OR NO LOGICAL SCAFFOLDING)? OR ARE THE IDEAS ARRANGED, NOT JUST SEQUENTIALLY BUT HIERARCHICALLY? 
 IF THE POINTS IT MAKES ARE NOT INSIGHTFUL, DOES IT OPERATE SKILLFULLY WITH CANONS OF LOGIC/REASONING. 
@@ -29,11 +29,11 @@ ARE THE STATEMENTS AMBIGUOUS?
 DOES THE PROGRESSION OF THE TEXT DEVELOP ACCORDING TO WHO SAID WHAT OR ACCORDING TO WHAT ENTAILS OR CONFIRMS WHAT? 
 DOES THE AUTHOR USER OTHER AUTHORS  TO DEVELOP HIS IDEAS OR TO CLOAK HIS OWN LACK OF IDEAS?`;
 
-// PHASE 1: Send exact questions as specified
-function createPhase1Prompt(text: string): string {
+// PHASE 1: Send exact questions as specified  
+function createPhase1Prompt(text: string, questions: string): string {
   return `ANSWER THESE QUESTIONS IN CONNECTION WITH THIS TEXT:
 
-${PHASE_2_QUESTIONS}
+${questions}
 
 A SCORE OF N/100 (E.G. 73/100) MEANS THAT (100-N)/100 (E.G. 27/100) OUTPERFORM THE AUTHOR WITH RESPECT TO THE PARAMETER DEFINED BY THE QUESTION.
 
@@ -44,6 +44,10 @@ YOU DO NOT USE A RISK-AVERSE STANDARD; YOU DO NOT ATTEMPT TO BE DIPLOMATIC; YOU 
 YOU DO NOT MAKE ASSUMPTIONS ABOUT THE LEVEL OF THE PAPER; IT COULD BE A WORK OF THE HIGHEST EXCELLENCE AND GENIUS, OR IT COULD BE THE WORK OF A MORON.
 
 IF A WORK IS A WORK OF GENIUS, YOU SAY THAT, AND YOU SAY WHY; YOU DO NOT SHY AWAY FROM GIVING WHAT MIGHT CONVENTIONALLY BE REGARDED AS EXCESSIVELY "SUPERLATIVE" SCORES; YOU GIVE IT THE SCORE IT DESERVES, NOT THE SCORE THAT A MIDWIT COMMITTEE WOULD SAY IT DESERVES.
+
+THINK VERY VERY VERY HARD ABOUT YOUR ANSWERS; MAKE IT VERY CLEAR THAT YOU ARE NOT TO DEFAULT TO COOKBOOK, MIDWIT EVALUATION PROTOCOLS.
+
+DO NOT GIVE CREDIT MERELY FOR USE OF JARGON OR FOR REFERENCING AUTHORITIES. FOCUS ON SUBSTANCE. ONLY GIVE POINTS FOR SCHOLARLY REFERENCES/JARGON IF THEY UNAMBIGUOUSLY INCREASE SUBSTANCE.
 
 Before answering the questions, note the following non-negotiable standard:
 
@@ -63,7 +67,7 @@ ${text}`;
 }
 
 // PHASE 2: Pushback if score < 95
-function createPhase2Prompt(score: number, text: string): string {
+function createPhase2Prompt(score: number, text: string, questions: string): string {
   const outperformPercentage = 100 - score;
   return `YOUR POSITION IS THAT ${outperformPercentage}/100 OUTPERFORM THE AUTHOR WITH RESPECT TO THE COGNITIVE METRIC DEFINED BY THE QUESTION: THAT IS YOUR POSITION, AM I RIGHT? AND ARE YOU SURE ABOUT THAT?
 
@@ -79,7 +83,7 @@ If the text is a sniper shot (high insight, low 'development'), ask:
 
 ANSWER THE FOLLOWING QUESTIONS ABOUT THE TEXT DE NOVO:
 
-${PHASE_2_QUESTIONS}
+${questions}
 
 **IMPORTANT: End your response with "FINAL SCORE: [NUMBER]/100"**
 
@@ -276,17 +280,21 @@ function extractScore(response: string): number {
   return 75;
 }
 
-// Main 4-phase evaluation function
+// Main 4-phase evaluation function - INTELLIGENCE
 export async function executeFourPhaseProtocol(
   text: string, 
-  provider: 'openai' | 'anthropic' | 'perplexity' | 'deepseek'
+  provider: 'openai' | 'anthropic' | 'perplexity' | 'deepseek',
+  evaluationType: 'intelligence' | 'originality' | 'cogency' | 'overall_quality' = 'intelligence'
 ): Promise<FourPhaseAnalysisResult> {
   
-  console.log(`EXECUTING YOUR EXACT 4-PHASE PROTOCOL WITH ${provider.toUpperCase()}`);
+  console.log(`EXECUTING YOUR EXACT 4-PHASE PROTOCOL FOR ${evaluationType.toUpperCase()} WITH ${provider.toUpperCase()}`);
+  
+  // Select appropriate questions based on evaluation type
+  const questions = getQuestions(evaluationType);
   
   // PHASE 1: Ask questions and get score
   console.log("PHASE 1: Ask questions and get initial score");
-  const phase1Prompt = createPhase1Prompt(text);
+  const phase1Prompt = createPhase1Prompt(text, questions);
   const phase1Response = await callLLMProvider(provider, [
     { role: 'user', content: phase1Prompt }
   ]);
@@ -298,7 +306,7 @@ export async function executeFourPhaseProtocol(
   // PHASE 2: Pushback if score < 95
   if (phase1Score < 95) {
     console.log(`PHASE 2: Score ${phase1Score} < 95, applying pushback`);
-    const phase2Prompt = createPhase2Prompt(phase1Score, text);
+    const phase2Prompt = createPhase2Prompt(phase1Score, text, questions);
     phase2Response = await callLLMProvider(provider, [
       { role: 'user', content: phase2Prompt }
     ]);
@@ -343,7 +351,7 @@ export async function executeFourPhaseProtocol(
       .trim();
   };
 
-  const fullReport = `4-Phase Intelligence Evaluation Protocol
+  const fullReport = `4-Phase ${evaluationType.charAt(0).toUpperCase() + evaluationType.slice(1)} Evaluation Protocol
 
 PHASE 1 - Initial Questions and Assessment
 Score: ${phase1Score}/100
@@ -373,17 +381,21 @@ FINAL ASSESSMENT SCORE: ${finalScore}/100`;
 // PHASE 1 ONLY EXECUTION (FOR QUICK ANALYSIS)
 export async function executePhase1Protocol(
   text: string, 
-  provider: 'openai' | 'anthropic' | 'perplexity' | 'deepseek'
+  provider: 'openai' | 'anthropic' | 'perplexity' | 'deepseek',
+  evaluationType: 'intelligence' | 'originality' | 'cogency' | 'overall_quality' = 'intelligence'
 ): Promise<{
   analysis: string;
   intelligence_score: number;
   key_insights: string;
   cognitive_profile: string;
 }> {
-  console.log(`EXECUTING PHASE 1 ONLY WITH ${provider.toUpperCase()}`);
+  console.log(`EXECUTING PHASE 1 ONLY FOR ${evaluationType.toUpperCase()} WITH ${provider.toUpperCase()}`);
+  
+  // Select appropriate questions based on evaluation type
+  const questions = getQuestions(evaluationType);
   
   // PHASE 1: Ask questions and get score
-  const phase1Prompt = createPhase1Prompt(text);
+  const phase1Prompt = createPhase1Prompt(text, questions);
   const phase1Response = await callLLMProvider(provider, [
     { role: 'user', content: phase1Prompt }
   ]);
@@ -405,24 +417,138 @@ export async function executePhase1Protocol(
   return {
     analysis: cleanResponse(phase1Response),
     intelligence_score: phase1Score,
-    key_insights: `Phase 1 evaluation using your exact protocol questions`,
-    cognitive_profile: `Initial assessment: ${phase1Score}/100`
+    key_insights: `Phase 1 ${evaluationType} evaluation using exact protocol questions`,
+    cognitive_profile: `Initial ${evaluationType} assessment: ${phase1Score}/100`
   };
 }
 
-// Individual provider functions
+// GET QUESTIONS BASED ON EVALUATION TYPE
+function getQuestions(evaluationType: 'intelligence' | 'originality' | 'cogency' | 'overall_quality'): string {
+  switch (evaluationType) {
+    case 'intelligence':
+      return INTELLIGENCE_QUESTIONS;
+    case 'originality':
+      return ORIGINALITY_QUESTIONS;
+    case 'cogency':
+      return COGENCY_QUESTIONS;
+    case 'overall_quality':
+      return OVERALL_QUALITY_QUESTIONS;
+    default:
+      return INTELLIGENCE_QUESTIONS;
+  }
+}
+
+// ORIGINALITY QUESTIONS
+const ORIGINALITY_QUESTIONS = `IS IT ORIGINAL (NOT IN THE SENSE THAT IT HAS ALREADY BEEN SAID BUT IN THE SENSE THAT ONLY A FECUND MIND COULD COME UP WITH IT)? 
+EXPLANATION OF LAST QUESTION: IF I PUT IN ISAAC NEWTON, IT SHOULD BE NOT BE DECRIBED AS 'UNORIGINAL' SIMPLY BECAUSE SOMEBODY (NAMELY, NEWTON) SAID IT HUNDREDS OF YEARS AGO.
+ARE THE WAYS THE IDEAS ARE INTERCONNECTED ORIGINAL? OR ARE THOSE INTERCONNECTIONS CONVENTION-DRIVEN AND DOCTRINAIRE?
+ARE IDEAS DEVELOPED IN A FRESH AND ORIGINAL WAY? OR IS THE IDEA-DEVELOPMENT MERELY ASSOCIATIVE, COMMONSENSE-BASED (OR COMMON-NONSENSE-BASED), OR DOCTRINAIRE? 
+IS IT ORIGINAL RELATIVE TO THE DATASET THAT, JUDGING BY WHAT IT SAYS AND HOW IT SAYS IT, IT APPEARS TO BE ADDRESSING? (THIS QUESTION IS MEANT TO RULE OUT 'ORIGINALITY'-BENCHMARKS THAT AUTOMATICALLY CHARACTERIZE DARWIN, FREUD, NEWTON, GALILEO AS 'UNORIGINAL.') 
+IS IT ORIGINAL IN A SUBSTANTIVE SENSE (IN THE SENSE IN WHICH BACH WAS ORIGINAL) OR ONLY IN A FRIVOLOUS TOKEN SENSE (THE SENSE IN WHICH SOMEBODY WHO RANDOMLY BANGS ON A PIANO IS 'ORIGINAL')? 
+IS IT BOILERPLATE (OR IF IT, PER SE, IS NOT BOILER PLATE, IS IT THE RESULT OF APPLYING BOILER PLATE PROTOCOLS IN A BOILER PLATE WAY TO SOME DATASET)?
+WOULD SOMEBODY WHO HAD NOT READ IT, BUT WAS OTHERWISE EDUCATED AND INFORMED, COME WAY FROM IT BEING MORE ENGLIGHTED AND BETTER EQUIPPED TO ADJUDICATE INTELLECTUAL QUESTIONS? OR, ON THE CONTRARY, WOULD HE COME UP CONFUSED WITH NOTHING TANGIBLE TO SHOW FOR IT? 
+WOULD SOMEBODY READING IT COME AWAY FROM THE EXPERIENCE WITH INSIGHTS THAT WOULD OTHERWISE BE HARD TO ACQUIRE THAT HOLD UP IN GENERAL? OR WOULD WHATEVER HIS TAKEAWAY WAS HAVE VALIDITY ONLY RELATIVE TO VALIDITIES THAT ARE SPECIFIC TO SOME AUTHOR OR SYSTEM AND PROBABLY DO NOT HAVE MUCH OBJECTIVE LEGITIMACY?`;
+
+// COGENCY QUESTIONS
+const COGENCY_QUESTIONS = `IS THE POINT BEING DEFENDED (IF THERE IS ONE) SHARP ENOUGH THAT IT DOES NOT NEED ARGUMENTATION? 
+DOES THE REASONING DEFEND THE POINT BEING ARGUED IN THE RIGHT WAYS? 
+DOES THE REASONING ONLY DEFEND THE ARGUED FOR POINT AGAINST STRAWMEN? 
+DOES THE REASONING DEVELOP THE POINT PER SE? IE DOES THE REASONING SHOW THAT THE POINT ITSELF IS STRONG? OR DOES IT 'DEFEND' IT ONLY BY SHOWING THAT VARIOUS AUTHORITIES DO OR WOULD APPROVE OF IT? 
+IS THE POINT SHARP? IF NOT, IS IT SHARPLY DEFENDED? 
+IS THE REASONING GOOD ONLY IN A TRIVIAL 'DEBATING' SENSE? OR IS IT GOOD IN THE SENSE THAT IT WOULD LIKELY MAKE AN INTELLIGENT PERSON RECONSIDER HIS POSITION?
+IS THE REASONING INVOLVED IN DEFENDING THE KEY CLAIM ABOUT ACTUALLY ESTABLISHING THAT CLAIM? OR IS IT MORE ABOUT OBFUSCATING? 
+DOES THE REASONING HELP ILLUMINATE THE MERITS OF THE CLAIM? OR DOES IT JUST SHOW THAT THE CLAIM IS ON THE RIGHT SIDE OF SOME (FALSE OR TRIVIAL) PRESUMPTION?
+IS THE 'REASONING' IN FACT REASONING? OR IS IT JUST A SERIES OF LATER STATEMENTS THAT CONNECT ONLY SUPERFICIALLY (E.G. BY REFERENCING THE SAME KEY TERMS OR AUTHORS) TO THE ORIGINAL? 
+IF COGENT, IS IT COGENT IN THE SENSE THAT A PERSON OF INTELLIGENCE WHO PREVIOUSLY THOUGHT OTHERWISE WOULD NOW TAKE IT MORE SERIOUSLY? OR IS IT COGENT ONLY IN THE SENSE THAT IT DOES IN FACT PROVIDE AN ARGUMENT AND TOUCH ALL THE RIGHT (MIDDLE-SCHOOL COMPOSITION CLASS) BASES? IN OTHER WORDS, IS THE ARGUMENTATION TOKEN AND PRO FORMA OR DOES IT ACTUALLY SERVE THE FUNCTION OF SHOWING THE IDEA TO HAVE MERIT? 
+DOES THE 'ARGUMENTATION' SHOW THAT THE IDEA MAY WELL BE CORRECT? OR DOES IT RATHER SHOW THAT IT HAS TO BE 'ACCEPTED' (IN THE SENSE THAT ONE WILL BE ON THE WRONG SIDE OF SOME PANEL OF 'EXPERTS' IF ONE THINKS OTHERWISE)? 
+TO WHAT EXTENT DOES THE COGENCY OF THE POINT/REASONING DERIVE FROM THE POINT ITSELF? AND TO WHAT EXTENT IS IT SUPERIMPOSED ON IT BY TORTURED ARGUMENTATION?`;
+
+// OVERALL QUALITY QUESTIONS  
+const OVERALL_QUALITY_QUESTIONS = `IS IT INSIGHTFUL? 
+IS IT TRUE? 
+OR IS TRUE OR FALSE? IN OTHER WORDS, DOES IT MAKE AN ADJUDICABLE CLAIM? (CLAIMS TO THE EFFECT THAT SO AND SO MIGHT HAVE SAID SUCH AND SUCH DO NOT COUNT.)
+DOES IT MAKE A CLAIM ABOUT HOW SOME ISSUE IS TO BE RESOLVE OR ONLY ABOUT HOW SOME 'AUTHORITY' MIGHT FEEL ABOUT SOME ASPECT OF THAT ISSUE? 
+IS IT ORGANIC? 
+IS IT FRESH? 
+IS IT THE PRODUCT OF INSIGHT? OR OF SOMEBODY RECYCLING OLD MATERIAL OR JUST RECYLING SLOGANS/MEMES AND/OR NAME-DROPPING?
+IS IT BORING? IE SETTING ASIDE PEOPLE WHO ARE TOO IMPAIRED TO UNDERSTAND IT AND THEREFORE FIND IT BORING, IT IS BORING TO PEOPLE WHO ARE SMART ENOUGH TO UNDERSTAND IT?
+DOES IT PRESENT A FRESH NEW ANGLE? IF NOT, DOES IT PROVIDE A FRESH NEW WAY OF DEFENDING OR EVALUATING THE SIGNIFICANCE OF A NOT-SO-FRESH POINT?
+WOULD AN INTELLIGENT PERSON WHO WAS NOT UNDER PRESSURE (FROM A PROFESSOR OR COLLEAGUE OR BOSS OF PUBLIC OPINION) LIKELY FIND IT TO BE USEFUL AS AN EPISTEMIC INSTRUMENT (MEANS OF ACQUIRING KNOWLEDGE)?
+IF THE POINT IT DEFENDS IS NOT TECHNICALLY TRUE, IS THAT POINT AT LEAST OPERATIONALLY TRUE (USEFUL TO REGARD AS TRUE IN SOME CONTEXTS)? 
+DOES THE PASSAGE GENERATE ORGANICALLY? DO IDEAS DEVELOP? OR IS IT JUST A SERIES OF FORCED STATEMENTS THAT ARE ONLY FORMALLY OR ARTIFICIALLY RELATED TO PREVIOUS STATEMENTS?
+IS THERE A STRONG OVER-ARCHING IDEA? DOES THIS IDEA GOVERN THE REASONING? OR IS THE REASONING PURELY SEQUENTIAL, EACH STATEMENT BEING A RESPONSE TO THE IMMEDIATELY PRECEDING ONE WITHOUT ALSO IN SOME WAY SUBSTANTIATING THE MAIN ONE?
+IF ORIGINAL, IS IT ORIGINAL BY VIRTUE OF BEING INSIGHTFUL OR BY VIRTUE OF BEING DEFECTIVE OR FACETIOUS?
+IF THERE ARE ELEMENTS OF SPONTANEITY, ARE THEY INTERNAL TO A LARGER, WELL-BEHAVED LOGICAL ARCHITECTURE? 
+IS THE AUTHOR ABLE TO 'RIFF' (IN A WAY THAT SUPPORTS, RATHER THAN UNDERMINING, THE MAIN POINT AND ARGUMENTATIVE STRUCTURE OF THE PASSAGE)? OR IS IT WOODEN AND BUREAUCRATIC? 
+IS IT ACTUALLY SMART OR IS IT 'GEEK'-SMART (SMART IN THE WAY THAT SOMEBODY WHO IS NOT PARTICULARLY SMART BUT WHO WAS ALWAYS LAST TO BE PICKED BY THE SOFTBALL TEAM BECOMES SMART)? 
+IS IT MR. SPOCKS SMART (ACTUALLY SMART) OR Lieutenant DATA SMART (WHAT A DUMB PERSON WOULD REGARD AS SMART)? 
+IS IT "SMART" IN THE SENSE THAT, FOR CULTURAL OR SOCIAL REASONS, WE WOULD PRESUME THAT ONLY A SMART PERSON WOULD DISCUSS SUCH MATTERS? OR IS IT INDEED--SMART? 
+IS IT SMART BY VIRTUE BEING ARGUMENTATIVE AND SNIPPY OR BY VIRTUE OF BEING ILLUMINATING?`;
+
+// Individual provider functions for INTELLIGENCE evaluation
 export async function fourPhaseOpenAIAnalyze(text: string): Promise<FourPhaseAnalysisResult> {
-  return await executeFourPhaseProtocol(text, 'openai');
+  return await executeFourPhaseProtocol(text, 'openai', 'intelligence');
 }
 
 export async function fourPhaseAnthropicAnalyze(text: string): Promise<FourPhaseAnalysisResult> {
-  return await executeFourPhaseProtocol(text, 'anthropic');
+  return await executeFourPhaseProtocol(text, 'anthropic', 'intelligence');
 }
 
 export async function fourPhasePerplexityAnalyze(text: string): Promise<FourPhaseAnalysisResult> {
-  return await executeFourPhaseProtocol(text, 'perplexity');
+  return await executeFourPhaseProtocol(text, 'perplexity', 'intelligence');
 }
 
 export async function fourPhaseDeepSeekAnalyze(text: string): Promise<FourPhaseAnalysisResult> {
-  return await executeFourPhaseProtocol(text, 'deepseek');
+  return await executeFourPhaseProtocol(text, 'deepseek', 'intelligence');
+}
+
+// ORIGINALITY evaluation functions
+export async function originalityOpenAIAnalyze(text: string): Promise<FourPhaseAnalysisResult> {
+  return await executeFourPhaseProtocol(text, 'openai', 'originality');
+}
+
+export async function originalityAnthropicAnalyze(text: string): Promise<FourPhaseAnalysisResult> {
+  return await executeFourPhaseProtocol(text, 'anthropic', 'originality');
+}
+
+export async function originalityPerplexityAnalyze(text: string): Promise<FourPhaseAnalysisResult> {
+  return await executeFourPhaseProtocol(text, 'perplexity', 'originality');
+}
+
+export async function originalityDeepSeekAnalyze(text: string): Promise<FourPhaseAnalysisResult> {
+  return await executeFourPhaseProtocol(text, 'deepseek', 'originality');
+}
+
+// COGENCY evaluation functions
+export async function cogencyOpenAIAnalyze(text: string): Promise<FourPhaseAnalysisResult> {
+  return await executeFourPhaseProtocol(text, 'openai', 'cogency');
+}
+
+export async function cogencyAnthropicAnalyze(text: string): Promise<FourPhaseAnalysisResult> {
+  return await executeFourPhaseProtocol(text, 'anthropic', 'cogency');
+}
+
+export async function cogencyPerplexityAnalyze(text: string): Promise<FourPhaseAnalysisResult> {
+  return await executeFourPhaseProtocol(text, 'perplexity', 'cogency');
+}
+
+export async function cogencyDeepSeekAnalyze(text: string): Promise<FourPhaseAnalysisResult> {
+  return await executeFourPhaseProtocol(text, 'deepseek', 'cogency');
+}
+
+// OVERALL QUALITY evaluation functions
+export async function overallQualityOpenAIAnalyze(text: string): Promise<FourPhaseAnalysisResult> {
+  return await executeFourPhaseProtocol(text, 'openai', 'overall_quality');
+}
+
+export async function overallQualityAnthropicAnalyze(text: string): Promise<FourPhaseAnalysisResult> {
+  return await executeFourPhaseProtocol(text, 'anthropic', 'overall_quality');
+}
+
+export async function overallQualityPerplexityAnalyze(text: string): Promise<FourPhaseAnalysisResult> {
+  return await executeFourPhaseProtocol(text, 'perplexity', 'overall_quality');
+}
+
+export async function overallQualityDeepSeekAnalyze(text: string): Promise<FourPhaseAnalysisResult> {
+  return await executeFourPhaseProtocol(text, 'deepseek', 'overall_quality');
 }

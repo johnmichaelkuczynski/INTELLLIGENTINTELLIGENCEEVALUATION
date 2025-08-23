@@ -63,10 +63,10 @@ export async function registerRoutes(app: Express): Promise<Express> {
     });
   });
 
-  // Quick analysis API endpoint
+  // Quick analysis API endpoint with evaluation type support
   app.post("/api/quick-analysis", async (req: Request, res: Response) => {
     try {
-      const { text, provider = 'deepseek' } = req.body;
+      const { text, provider = 'deepseek', evaluationType = 'intelligence' } = req.body;
 
       if (!text || typeof text !== 'string') {
         return res.status(400).json({ 
@@ -74,10 +74,18 @@ export async function registerRoutes(app: Express): Promise<Express> {
         });
       }
 
-      console.log(`Starting quick analysis with ${provider}...`);
+      // Validate evaluation type
+      const validTypes = ['intelligence', 'originality', 'cogency', 'overall_quality'];
+      if (!validTypes.includes(evaluationType)) {
+        return res.status(400).json({
+          error: `Invalid evaluation type. Must be one of: ${validTypes.join(', ')}`
+        });
+      }
+
+      console.log(`Starting quick ${evaluationType} analysis with ${provider}...`);
       
       const { performQuickAnalysis } = await import('./services/quickAnalysis');
-      const result = await performQuickAnalysis(text, provider);
+      const result = await performQuickAnalysis(text, provider, evaluationType);
       
       res.json({ success: true, result });
       
@@ -90,10 +98,10 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
-  // Quick comparison API endpoint  
+  // Quick comparison API endpoint with evaluation type support
   app.post("/api/quick-compare", async (req: Request, res: Response) => {
     try {
-      const { documentA, documentB, provider = 'deepseek' } = req.body;
+      const { documentA, documentB, provider = 'deepseek', evaluationType = 'intelligence' } = req.body;
 
       if (!documentA || !documentB) {
         return res.status(400).json({ 
@@ -101,10 +109,18 @@ export async function registerRoutes(app: Express): Promise<Express> {
         });
       }
 
-      console.log(`Starting quick comparison with ${provider}...`);
+      // Validate evaluation type
+      const validTypes = ['intelligence', 'originality', 'cogency', 'overall_quality'];
+      if (!validTypes.includes(evaluationType)) {
+        return res.status(400).json({
+          error: `Invalid evaluation type. Must be one of: ${validTypes.join(', ')}`
+        });
+      }
+
+      console.log(`Starting quick ${evaluationType} comparison with ${provider}...`);
       
       const { performQuickComparison } = await import('./services/quickAnalysis');
-      const result = await performQuickComparison(documentA, documentB, provider);
+      const result = await performQuickComparison(documentA, documentB, provider, evaluationType);
       
       res.json(result);
       
@@ -117,10 +133,10 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
-  // COMPREHENSIVE cognitive evaluation using exact 4-phase protocol - DEEPSEEK DEFAULT
+  // COMPREHENSIVE 4-PHASE EVALUATION using exact protocol with evaluation type support
   app.post("/api/cognitive-evaluate", async (req: Request, res: Response) => {
     try {
-      const { content, provider = 'deepseek' } = req.body;
+      const { content, provider = 'deepseek', evaluationType = 'intelligence' } = req.body;
 
       if (!content || typeof content !== 'string') {
         return res.status(400).json({ 
@@ -128,12 +144,24 @@ export async function registerRoutes(app: Express): Promise<Express> {
         });
       }
 
-      // Import PURE 3-phase protocol - NO GARBAGE EVALUATORS
-      const { pureDeepSeekAnalyze } = await import('./services/pureThreePhaseProtocol');
+      // Validate evaluation type
+      const validTypes = ['intelligence', 'originality', 'cogency', 'overall_quality'];
+      if (!validTypes.includes(evaluationType)) {
+        return res.status(400).json({
+          error: `Invalid evaluation type. Must be one of: ${validTypes.join(', ')}`
+        });
+      }
 
-      console.log(`PURE 3-PHASE COGNITIVE EVALUATION: Analyzing ${content.length} characters with exact protocol`);
+      // Import the exact 4-phase protocol
+      const { executeFourPhaseProtocol } = await import('./services/fourPhaseProtocol');
+
+      console.log(`EXACT 4-PHASE ${evaluationType.toUpperCase()} EVALUATION: Analyzing ${content.length} characters with protocol`);
       
-      const evaluation = await pureDeepSeekAnalyze(content);
+      const evaluation = await executeFourPhaseProtocol(
+        content, 
+        provider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek',
+        evaluationType as 'intelligence' | 'originality' | 'cogency' | 'overall_quality'
+      );
 
       res.json({
         success: true,
@@ -143,17 +171,17 @@ export async function registerRoutes(app: Express): Promise<Express> {
           provider: evaluation.provider,
           metadata: {
             contentLength: content.length,
-            evaluationType: 'pure-3-phase',
+            evaluationType: evaluationType,
             timestamp: new Date().toISOString()
           }
         }
       });
 
     } catch (error: any) {
-      console.error("Error in pure cognitive evaluation:", error);
+      console.error(`Error in ${req.body.evaluationType || 'cognitive'} evaluation:`, error);
       res.status(500).json({
         success: false,
-        error: "Pure cognitive evaluation failed",
+        error: `${req.body.evaluationType || 'cognitive'} evaluation failed`,
         details: error.message
       });
     }
@@ -230,34 +258,20 @@ export async function registerRoutes(app: Express): Promise<Express> {
       // If the user requests a specific single provider
       if (provider.toLowerCase() !== 'all') {
         // Import the 4-PHASE analysis methods using your exact protocol
-        const { 
-          fourPhaseOpenAIAnalyze, 
-          fourPhaseAnthropicAnalyze, 
-          fourPhasePerplexityAnalyze,
-          fourPhaseDeepSeekAnalyze 
-        } = await import('./services/fourPhaseProtocol');
+        const { executeFourPhaseProtocol } = await import('./services/fourPhaseProtocol');
         
         // Perform analysis with your exact 4-phase protocol
-        console.log(`${provider.toUpperCase()} ANALYSIS WITH YOUR EXACT 4-PHASE PROTOCOL`);
+        console.log(`${provider.toUpperCase()} ANALYSIS WITH YOUR EXACT 4-PHASE INTELLIGENCE PROTOCOL`);
         
         let pureResult;
         
         try {
-          switch (provider.toLowerCase()) {
-            case 'anthropic':
-              pureResult = await fourPhaseAnthropicAnalyze(content);
-              break;
-            case 'perplexity':
-              pureResult = await fourPhasePerplexityAnalyze(content);
-              break;
-            case 'openai':
-              pureResult = await fourPhaseOpenAIAnalyze(content);
-              break;
-            case 'deepseek':
-            default:
-              pureResult = await fourPhaseDeepSeekAnalyze(content);
-              break;
-          }
+          // Use the unified executeFourPhaseProtocol function for intelligence evaluation
+          pureResult = await executeFourPhaseProtocol(
+            content,
+            provider.toLowerCase() as 'openai' | 'anthropic' | 'perplexity' | 'deepseek',
+            'intelligence'
+          );
           
           // Use PURE result - NO FILTERING - pass through complete unfiltered evaluation
           const result = {
@@ -869,6 +883,150 @@ export async function registerRoutes(app: Express): Promise<Express> {
       return res.status(500).json({ 
         error: "Failed to perform fiction comparison",
         message: error.message 
+      });
+    }
+  });
+
+  // ORIGINALITY EVALUATION API endpoint
+  app.post("/api/originality-evaluate", async (req: Request, res: Response) => {
+    try {
+      const { content, provider = 'deepseek', phase = 'comprehensive' } = req.body;
+
+      if (!content || typeof content !== 'string') {
+        return res.status(400).json({ 
+          error: "Content is required and must be a string" 
+        });
+      }
+
+      console.log(`${phase.toUpperCase()} ORIGINALITY EVALUATION WITH ${provider.toUpperCase()}`);
+      
+      if (phase === 'quick') {
+        const { performQuickAnalysis } = await import('./services/quickAnalysis');
+        const result = await performQuickAnalysis(content, provider, 'originality');
+        res.json({ success: true, result });
+      } else {
+        const { executeFourPhaseProtocol } = await import('./services/fourPhaseProtocol');
+        const evaluation = await executeFourPhaseProtocol(
+          content, 
+          provider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek',
+          'originality'
+        );
+        res.json({
+          success: true,
+          evaluation: {
+            formattedReport: evaluation.formattedReport,
+            overallScore: evaluation.overallScore,
+            provider: evaluation.provider,
+            metadata: {
+              contentLength: content.length,
+              evaluationType: 'originality',
+              timestamp: new Date().toISOString()
+            }
+          }
+        });
+      }
+    } catch (error: any) {
+      console.error("Originality evaluation error:", error);
+      res.status(500).json({
+        success: false,
+        error: "Originality evaluation failed",
+        details: error.message
+      });
+    }
+  });
+
+  // COGENCY EVALUATION API endpoint
+  app.post("/api/cogency-evaluate", async (req: Request, res: Response) => {
+    try {
+      const { content, provider = 'deepseek', phase = 'comprehensive' } = req.body;
+
+      if (!content || typeof content !== 'string') {
+        return res.status(400).json({ 
+          error: "Content is required and must be a string" 
+        });
+      }
+
+      console.log(`${phase.toUpperCase()} COGENCY EVALUATION WITH ${provider.toUpperCase()}`);
+      
+      if (phase === 'quick') {
+        const { performQuickAnalysis } = await import('./services/quickAnalysis');
+        const result = await performQuickAnalysis(content, provider, 'cogency');
+        res.json({ success: true, result });
+      } else {
+        const { executeFourPhaseProtocol } = await import('./services/fourPhaseProtocol');
+        const evaluation = await executeFourPhaseProtocol(
+          content, 
+          provider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek',
+          'cogency'
+        );
+        res.json({
+          success: true,
+          evaluation: {
+            formattedReport: evaluation.formattedReport,
+            overallScore: evaluation.overallScore,
+            provider: evaluation.provider,
+            metadata: {
+              contentLength: content.length,
+              evaluationType: 'cogency',
+              timestamp: new Date().toISOString()
+            }
+          }
+        });
+      }
+    } catch (error: any) {
+      console.error("Cogency evaluation error:", error);
+      res.status(500).json({
+        success: false,
+        error: "Cogency evaluation failed",
+        details: error.message
+      });
+    }
+  });
+
+  // OVERALL QUALITY EVALUATION API endpoint
+  app.post("/api/overall-quality-evaluate", async (req: Request, res: Response) => {
+    try {
+      const { content, provider = 'deepseek', phase = 'comprehensive' } = req.body;
+
+      if (!content || typeof content !== 'string') {
+        return res.status(400).json({ 
+          error: "Content is required and must be a string" 
+        });
+      }
+
+      console.log(`${phase.toUpperCase()} OVERALL QUALITY EVALUATION WITH ${provider.toUpperCase()}`);
+      
+      if (phase === 'quick') {
+        const { performQuickAnalysis } = await import('./services/quickAnalysis');
+        const result = await performQuickAnalysis(content, provider, 'overall_quality');
+        res.json({ success: true, result });
+      } else {
+        const { executeFourPhaseProtocol } = await import('./services/fourPhaseProtocol');
+        const evaluation = await executeFourPhaseProtocol(
+          content, 
+          provider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek',
+          'overall_quality'
+        );
+        res.json({
+          success: true,
+          evaluation: {
+            formattedReport: evaluation.formattedReport,
+            overallScore: evaluation.overallScore,
+            provider: evaluation.provider,
+            metadata: {
+              contentLength: content.length,
+              evaluationType: 'overall_quality',
+              timestamp: new Date().toISOString()
+            }
+          }
+        });
+      }
+    } catch (error: any) {
+      console.error("Overall quality evaluation error:", error);
+      res.status(500).json({
+        success: false,
+        error: "Overall quality evaluation failed",
+        details: error.message
       });
     }
   });
