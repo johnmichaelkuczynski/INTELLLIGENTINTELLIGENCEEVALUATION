@@ -41,6 +41,13 @@ function createPhase1Prompt(text: string, questions: string): string {
 
 ${questions}
 
+CRITICAL REQUIREMENT: EVERY SINGLE EVALUATION MUST BE SUPPORTED BY DIRECT QUOTATIONS FROM THE TEXT. For each assessment you make, provide the exact words from the text that support your judgment. No vague references - give precise quotes.
+
+FORMAT: For each question, provide:
+1. Your assessment 
+2. SUPPORTING QUOTE: "exact text from the document"
+3. Explanation of how the quote supports your evaluation
+
 A SCORE OF N/100 (E.G. 73/100) MEANS THAT (100-N)/100 (E.G. 27/100) OUTPERFORM THE AUTHOR WITH RESPECT TO THE PARAMETER DEFINED BY THE QUESTION.
 
 YOU ARE NOT GRADING; YOU ARE ANSWERING THESE QUESTIONS.
@@ -99,6 +106,13 @@ function createPhase2Prompt(score: number, text: string, questions: string): str
 
 You scored this ${score}/100, meaning ${outperformPercentage}/100 outperform the author. 
 
+CRITICAL REQUIREMENT: EVERY SINGLE EVALUATION MUST BE SUPPORTED BY DIRECT QUOTATIONS FROM THE TEXT. For each revised assessment you make, provide the exact words from the text that support your judgment.
+
+FORMAT: For each question, provide:
+1. Your revised assessment 
+2. SUPPORTING QUOTE: "exact text from the document"
+3. Explanation of how the quote supports your evaluation
+
 PHILOSOPHICAL WORK REALITY CHECK: Distinguish between ROUTINE academic work and REVOLUTIONARY insight.
 
 Standard dissertation abstracts citing McDowell, Wittgenstein etc. = competent academic work (70-85/100)
@@ -110,7 +124,7 @@ Describe the cognitive superiority of those ${outperformPercentage} people in co
 
 What specific insight, skill, or knowledge do they have that the author lacks?
 How does this superiority manifest in their work?
-If you cannot articulate this, revise the score to 97-100.
+If you cannot articulate this, revise the score.
 
 If the text is a sniper shot (high insight, low 'development'), ask:
 'Is the lack of 'development' a flaw, or is the point obvious to those who see it?'
@@ -131,6 +145,13 @@ function createPhase3Prompt(score: number): string {
   const outperformPercentage = 100 - score;
   return `You stated that ${outperformPercentage}/100 Walmart patrons outperform the author. Provide specific examples of work by those patrons that demonstrates this superiority. If you cannot, justify or revise the score.
 
+CRITICAL REQUIREMENT: EVERY JUSTIFICATION FOR YOUR SCORE MUST BE SUPPORTED BY DIRECT QUOTATIONS FROM THE TEXT. Point to exact passages that demonstrate the level of quality you're assessing.
+
+FORMAT: For your score justification, provide:
+1. Your assessment of the text's quality level
+2. SUPPORTING QUOTE: "exact text from the document"  
+3. Explanation of what this quote reveals about cognitive sophistication
+
 ARE YOUR NUMERICAL SCORES (N/100, E.G. 99/100, 42/100) CONSISTENT WITH THE FACT THAT THOSE ARE TO BE TAKEN TO MEAN THAT (100-N) PEOPLE OUT OF 100 OUTPERFORM THE AUTHOR IN THE RELEVANT RESPECT?
 
 IF A SCORE OF ${score}/100 IS AWARDED TO A PAPER, THAT MEANS THAT ${outperformPercentage}/100 PEOPLE IN WALMART ARE RUNNING RINGS AROUND THIS PERSON.
@@ -144,11 +165,16 @@ If you scored ${score}/100 ('${outperformPercentage}% outperform'), show me ${ou
 function createPhase4Prompt(): string {
   return `Before finalizing scores, confirm:
 
+CRITICAL REQUIREMENT: YOUR FINAL ASSESSMENT MUST BE SUPPORTED BY DIRECT QUOTATIONS FROM THE TEXT. Point to exact passages that demonstrate the overall quality level you're determining.
+
+FORMAT: For your final validation, provide:
+1. Your final assessment of the text's overall quality
+2. SUPPORTING QUOTE: "exact text from the document that best represents the cognitive level"
+3. Final justification based on textual evidence
+
 Have you penalized the text for not being conventional? If yes, recalibrate.
 Does the score reflect truth density, not compliance with norms?
 Is the Walmart metric empirically grounded or a lazy guess?
-
-AT THIS POINT, YOU ACCEPT AND REPORT WHAT THE LLM SAYS.
 
 **IMPORTANT: End your response with "FINAL SCORE: [NUMBER]/100"**`;
 }
