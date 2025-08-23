@@ -301,12 +301,17 @@ const IntelligenceReportModal: React.FC<IntelligenceReportModalProps> = ({ isOpe
   const formattedReport = analysis.formattedReport || analysis.report || "";
   const cleanedReport = cleanAIResponse(formattedReport);
   
-  const intelligenceScore = extractIntelligenceScore(cleanedReport);
+  // Use ONLY the final score from 4-phase protocol - no extraction needed
+  const intelligenceScore = analysis.overallScore;
   const executiveSummary = extractExecutiveSummary(cleanedReport);
   const dimensions = extractDimensions(cleanedReport);
   const comparativePlacement = extractComparativePlacement(cleanedReport);
   const finalVerdict = extractFinalVerdict(cleanedReport);
   const provider = analysis.provider || "AI";
+  
+  // Check if we have phase-by-phase data for comprehensive reports
+  const hasPhaseData = analysis.phases && analysisMode === "comprehensive";
+  const phases = analysis.phases;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -327,7 +332,7 @@ const IntelligenceReportModal: React.FC<IntelligenceReportModalProps> = ({ isOpe
             {intelligenceScore && (
               <div className="text-right bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 p-4 rounded-lg">
                 <div className="text-5xl font-bold text-blue-600 dark:text-blue-400">{intelligenceScore}/100</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Final Intelligence Score</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">4-Phase Protocol Final Score</div>
               </div>
             )}
           </div>
@@ -335,8 +340,111 @@ const IntelligenceReportModal: React.FC<IntelligenceReportModalProps> = ({ isOpe
 
         <ScrollArea className="h-[calc(95vh-150px)] pr-6">
           <div className="space-y-8">
-            {/* Enhanced Quick Analysis Content */}
-            {(!executiveSummary && !dimensions.length && !comparativePlacement && !finalVerdict) && (
+            {/* Comprehensive 4-Phase Protocol Display */}
+            {hasPhaseData && phases && (
+              <div className="space-y-6">
+                {/* Phase 1 */}
+                <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900 border-blue-200 dark:border-blue-700">
+                  <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Brain className="w-6 h-6" />
+                        <div>
+                          <h3 className="text-xl font-bold">Phase 1: Initial Questions and Assessment</h3>
+                          <p className="text-blue-100 text-sm mt-1">{phases.phase1.prompt}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold">{phases.phase1.score}/100</div>
+                        <div className="text-blue-100 text-sm">Initial Score</div>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                      {formatTextContent(phases.phase1.response)}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Phase 2 */}
+                <Card className={`bg-gradient-to-br ${phases.phase2.applied ? 'from-orange-50 to-red-50 dark:from-orange-900 dark:to-red-900 border-orange-200 dark:border-orange-700' : 'from-green-50 to-emerald-50 dark:from-green-900 dark:to-emerald-900 border-green-200 dark:border-green-700'}`}>
+                  <CardHeader className={`bg-gradient-to-r ${phases.phase2.applied ? 'from-orange-600 to-red-600' : 'from-green-600 to-emerald-600'} text-white rounded-t-lg`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Target className="w-6 h-6" />
+                        <div>
+                          <h3 className="text-xl font-bold">Phase 2: Pushback Protocol</h3>
+                          <p className={`${phases.phase2.applied ? 'text-orange-100' : 'text-green-100'} text-sm mt-1`}>
+                            {phases.phase2.applied ? 'Applied - Score was < 95' : 'Skipped - Score was ≥ 95'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold">{phases.phase2.score}/100</div>
+                        <div className={`${phases.phase2.applied ? 'text-orange-100' : 'text-green-100'} text-sm`}>Revised Score</div>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                      {formatTextContent(phases.phase2.response)}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Phase 3 */}
+                <Card className="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900 dark:to-violet-900 border-purple-200 dark:border-purple-700">
+                  <CardHeader className="bg-gradient-to-r from-purple-600 to-violet-600 text-white rounded-t-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <TrendingUp className="w-6 h-6" />
+                        <div>
+                          <h3 className="text-xl font-bold">Phase 3: Walmart Metric Consistency</h3>
+                          <p className="text-purple-100 text-sm mt-1">Reality check on scoring vs. general population</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold">{phases.phase3.score}/100</div>
+                        <div className="text-purple-100 text-sm">Validated Score</div>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                      {formatTextContent(phases.phase3.response)}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Phase 4 */}
+                <Card className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900 dark:to-teal-900 border-emerald-200 dark:border-emerald-700">
+                  <CardHeader className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-t-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <FileText className="w-6 h-6" />
+                        <div>
+                          <h3 className="text-xl font-bold">Phase 4: Final Validation</h3>
+                          <p className="text-emerald-100 text-sm mt-1">Acceptance and final report</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-3xl font-bold">{phases.phase4.score}/100</div>
+                        <div className="text-emerald-100 text-sm">Final Score</div>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                      {formatTextContent(phases.phase4.response)}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+            
+            {/* Enhanced Quick Analysis Content or fallback */}
+            {(!hasPhaseData && (!executiveSummary && !dimensions.length && !comparativePlacement && !finalVerdict)) && (
               <Card className="bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950 border-slate-200 dark:border-slate-700 shadow-lg">
                 <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
                   <div className="flex items-center gap-3">

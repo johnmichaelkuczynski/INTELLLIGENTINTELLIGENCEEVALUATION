@@ -115,7 +115,7 @@ function formatEnhancedAnalysis(text: string) {
         formattedContent.push(
           <div key={i} className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-6 rounded-lg my-6 text-center shadow-lg">
             <div className="text-4xl font-bold mb-2">{scoreMatch[1]}/{scoreMatch[2]}</div>
-            <div className="text-emerald-100 text-lg">Intelligence Assessment Score</div>
+            <div className="text-emerald-100 text-lg">4-Phase Protocol Final Score</div>
           </div>
         );
         continue;
@@ -199,7 +199,8 @@ const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportP
   const formattedReport = analysis.formattedReport || analysis.report || "";
   const cleanedReport = cleanAIResponse(formattedReport);
   
-  const intelligenceScore = analysis.overallScore || extractIntelligenceScore(cleanedReport);
+  // Use ONLY the final score from 4-phase protocol - no text extraction needed
+  const intelligenceScore = analysis.overallScore;
   const dimensions = extractDimensions(cleanedReport);
   const executiveSummary = extractExecutiveSummary(cleanedReport);
   const comparativePlacement = extractComparativePlacement(cleanedReport);

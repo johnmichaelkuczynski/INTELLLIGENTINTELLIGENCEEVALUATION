@@ -7,6 +7,12 @@ interface FourPhaseAnalysisResult {
   formattedReport: string;
   provider: string;
   overallScore: number;
+  phases?: {
+    phase1: { score: number; response: string; prompt: string };
+    phase2: { score: number; response: string; applied: boolean };
+    phase3: { score: number; response: string };
+    phase4: { score: number; response: string };
+  };
 }
 
 // EXACT INTELLIGENCE EVALUATION QUESTIONS AS SPECIFIED
@@ -367,6 +373,28 @@ export async function executeFourPhaseProtocol(
       .trim();
   };
 
+  // Detailed phase breakdown for comprehensive reports
+  const phases = {
+    phase1: {
+      score: phase1Score,
+      response: cleanResponse(phase1Response),
+      prompt: "Initial Intelligence Evaluation using exact 18-question protocol"
+    },
+    phase2: {
+      score: phase2Score,
+      response: cleanResponse(phase2Response),
+      applied: phase1Score < 95
+    },
+    phase3: {
+      score: phase3Score,
+      response: cleanResponse(phase3Response)
+    },
+    phase4: {
+      score: finalScore,
+      response: cleanResponse(phase4Response)
+    }
+  };
+
   const fullReport = `4-Phase ${evaluationType.charAt(0).toUpperCase() + evaluationType.slice(1)} Evaluation Protocol
 
 PHASE 1 - Initial Questions and Assessment
@@ -390,7 +418,8 @@ FINAL ASSESSMENT SCORE: ${finalScore}/100`;
   return {
     formattedReport: fullReport,
     provider: provider,
-    overallScore: finalScore
+    overallScore: finalScore,
+    phases: phases
   };
 }
 
