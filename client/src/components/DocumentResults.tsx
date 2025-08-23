@@ -95,9 +95,17 @@ const DocumentResults: React.FC<DocumentResultsProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold text-gray-800">Document {id} Analysis</h2>
+    <div className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 p-8 mb-8">
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
+            <BrainCircuit className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 dark:from-slate-200 dark:to-slate-400 bg-clip-text text-transparent">Document {id} Analysis</h2>
+            <p className="text-slate-600 dark:text-slate-400 text-sm">{analysisMode === "quick" ? "Phase 1 Assessment" : "Comprehensive Evaluation"}</p>
+          </div>
+        </div>
         <div className="flex gap-2">
           <Button
             size="sm"
@@ -135,12 +143,14 @@ const DocumentResults: React.FC<DocumentResultsProps> = ({
         </div>
       </div>
       
-      {/* Philosophical Intelligence Report */}
-      <div className="mb-6">
-        <PhilosophicalIntelligenceReport 
-          analysis={analysis} 
-          analysisMode={analysisMode}
-        />
+      {/* Enhanced Intelligence Report Display */}
+      <div className="mb-8">
+        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600 shadow-sm overflow-hidden">
+          <PhilosophicalIntelligenceReport 
+            analysis={analysis} 
+            analysisMode={analysisMode}
+          />
+        </div>
       </div>
 
       {/* AI Detection Result (if available) */}

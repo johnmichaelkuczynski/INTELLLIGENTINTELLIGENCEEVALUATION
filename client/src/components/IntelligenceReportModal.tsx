@@ -126,56 +126,164 @@ function extractFinalVerdict(text: string): string {
 }
 
 function formatTextContent(text: string, colorClass: string = "text-gray-700 dark:text-gray-300") {
-  return text.split('\n').map((paragraph, index) => {
-    if (!paragraph.trim()) return null;
+  // Split text into sentences for better readability
+  const sentences = text.split(/(?<=[.!?])\s+/);
+  const chunks = [];
+  
+  for (let i = 0; i < sentences.length; i++) {
+    const sentence = sentences[i].trim();
+    if (!sentence) continue;
     
-    // Handle quotes specially with enhanced styling and larger text
-    if (paragraph.includes('"')) {
-      return (
-        <blockquote key={index} className="border-l-4 border-blue-400 dark:border-blue-600 pl-6 my-8 italic bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 p-6 rounded-r-lg shadow-sm">
-          <div className="text-blue-800 dark:text-blue-200 font-medium leading-relaxed text-lg">
-            {paragraph}
+    // Handle scores specially
+    if (sentence.match(/Score:\s*(\d+)\/(\d+)/i)) {
+      const scoreMatch = sentence.match(/Score:\s*(\d+)\/(\d+)/i);
+      if (scoreMatch) {
+        chunks.push(
+          <div key={i} className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-4 rounded-lg my-4 text-center shadow-lg">
+            <div className="text-2xl font-bold">{scoreMatch[1]}/{scoreMatch[2]}</div>
+            <div className="text-emerald-100 text-sm">Assessment Score</div>
+          </div>
+        );
+        continue;
+      }
+    }
+    
+    // Handle section headers (questions)
+    if (sentence.endsWith('?') && sentence.length < 200) {
+      chunks.push(
+        <div key={i} className="bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-500 p-4 my-4 rounded-r-lg">
+          <h4 className="font-semibold text-blue-800 dark:text-blue-200 text-base">{sentence}</h4>
+        </div>
+      );
+      continue;
+    }
+    
+    // Handle quotes
+    if (sentence.includes('"')) {
+      chunks.push(
+        <blockquote key={i} className="border-l-4 border-amber-400 bg-amber-50 dark:bg-amber-950 p-4 my-4 rounded-r-lg">
+          <div className="text-amber-800 dark:text-amber-200 font-medium italic">
+            {sentence}
           </div>
         </blockquote>
       );
+      continue;
     }
     
-    // Handle evidence analysis headers
-    if (paragraph.startsWith('**Quote Analysis:**') || paragraph.startsWith('**Additional Evidence:**') || paragraph.startsWith('**Justification:**')) {
-      const cleanHeader = paragraph.replace(/\*\*/g, '');
-      return (
-        <h6 key={index} className="font-bold text-gray-900 dark:text-gray-100 mt-8 mb-4 text-md bg-gray-100 dark:bg-gray-800 p-3 rounded">
-          {cleanHeader}
-        </h6>
+    // Group regular sentences into readable paragraphs (3-4 sentences each)
+    const remainingSentences = sentences.slice(i);
+    const paragraphSentences = [];
+    let paragraphLength = 0;
+    
+    for (let j = 0; j < remainingSentences.length && j < 4; j++) {
+      const nextSentence = remainingSentences[j].trim();
+      if (nextSentence && paragraphLength + nextSentence.length < 600) {
+        paragraphSentences.push(nextSentence);
+        paragraphLength += nextSentence.length;
+      } else {
+        break;
+      }
+    }
+    
+    if (paragraphSentences.length > 0) {
+      chunks.push(
+        <p key={i} className={`mb-4 ${colorClass} leading-relaxed text-base`}>
+          {paragraphSentences.join(' ')}
+        </p>
       );
+      i += paragraphSentences.length - 1; // Skip the sentences we just processed
+    }
+  }
+  
+  return chunks;
+}
+
+function formatEnhancedReport(text: string) {
+  // Split text into sentences for better processing
+  const sentences = text.split(/(?<=[.!?])\s+/);
+  const formattedContent = [];
+  
+  for (let i = 0; i < sentences.length; i++) {
+    const sentence = sentences[i].trim();
+    if (!sentence) continue;
+    
+    // Handle main score extraction and highlight it
+    if (sentence.match(/Score:\s*(\d+)\/(\d+)/i)) {
+      const scoreMatch = sentence.match(/Score:\s*(\d+)\/(\d+)/i);
+      if (scoreMatch) {
+        formattedContent.push(
+          <div key={i} className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-6 rounded-lg my-6 text-center shadow-lg">
+            <div className="text-4xl font-bold mb-2">{scoreMatch[1]}/{scoreMatch[2]}</div>
+            <div className="text-emerald-100 text-lg">Intelligence Assessment Score</div>
+          </div>
+        );
+        continue;
+      }
     }
     
-    // Handle main section headers
-    if (paragraph.startsWith('**') && paragraph.endsWith('**')) {
-      const cleanHeader = paragraph.replace(/\*\*/g, '');
-      return (
-        <h5 key={index} className="font-semibold text-gray-900 dark:text-gray-100 mt-8 mb-4 text-lg border-b border-gray-200 dark:border-gray-700 pb-2">
-          {cleanHeader}
-        </h5>
-      );
-    }
-    
-    // Handle numbered analysis steps
-    if (/^\d+\./.test(paragraph.trim())) {
-      return (
-        <div key={index} className={`mb-4 ${colorClass} leading-relaxed pl-4 border-l-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-3 rounded`}>
-          {paragraph}
+    // Handle section headers (questions)
+    if (sentence.endsWith('?') && sentence.length < 200) {
+      formattedContent.push(
+        <div key={i} className="bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-500 p-4 my-4 rounded-r-lg">
+          <h4 className="font-semibold text-blue-800 dark:text-blue-200 text-lg">{sentence}</h4>
         </div>
       );
+      continue;
     }
     
-    // Regular paragraphs with enhanced spacing
-    return (
-      <p key={index} className={`mb-5 ${colorClass} leading-relaxed text-base`}>
-        {paragraph}
-      </p>
-    );
-  });
+    // Handle quoted text
+    if (sentence.includes('"')) {
+      formattedContent.push(
+        <blockquote key={i} className="border-l-4 border-amber-400 bg-amber-50 dark:bg-amber-950 p-6 my-6 rounded-r-lg shadow-sm">
+          <div className="text-amber-800 dark:text-amber-200 font-medium text-lg italic leading-relaxed">
+            {sentence}
+          </div>
+        </blockquote>
+      );
+      continue;
+    }
+    
+    // Handle assessment criteria (sentences with colons)
+    if (sentence.includes(':') && !sentence.startsWith('http')) {
+      const [label, ...rest] = sentence.split(':');
+      const content = rest.join(':').trim();
+      if (content && label.length < 100) {
+        formattedContent.push(
+          <div key={i} className="mb-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600">
+            <dt className="font-semibold text-slate-800 dark:text-slate-200 mb-2 text-lg">{label}:</dt>
+            <dd className="text-slate-700 dark:text-slate-300 leading-relaxed">{content}</dd>
+          </div>
+        );
+        continue;
+      }
+    }
+    
+    // Group regular sentences into readable paragraphs (3-4 sentences each)
+    const remainingSentences = sentences.slice(i);
+    const paragraphSentences = [];
+    let paragraphLength = 0;
+    
+    for (let j = 0; j < remainingSentences.length && j < 4; j++) {
+      const nextSentence = remainingSentences[j].trim();
+      if (nextSentence && paragraphLength + nextSentence.length < 600) {
+        paragraphSentences.push(nextSentence);
+        paragraphLength += nextSentence.length;
+      } else {
+        break;
+      }
+    }
+    
+    if (paragraphSentences.length > 0) {
+      formattedContent.push(
+        <p key={i} className="mb-5 text-slate-700 dark:text-slate-300 leading-relaxed text-base bg-white dark:bg-slate-900 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+          {paragraphSentences.join(' ')}
+        </p>
+      );
+      i += paragraphSentences.length - 1; // Skip the sentences we just processed
+    }
+  }
+  
+  return formattedContent;
 }
 
 const IntelligenceReportModal: React.FC<IntelligenceReportModalProps> = ({ isOpen, onClose, analysis, analysisMode = "comprehensive" }) => {
@@ -216,25 +324,29 @@ const IntelligenceReportModal: React.FC<IntelligenceReportModalProps> = ({ isOpe
 
         <ScrollArea className="h-[calc(95vh-150px)] pr-6">
           <div className="space-y-8">
-            {/* Quick Analysis Content or Debug Info */}
+            {/* Enhanced Quick Analysis Content */}
             {(!executiveSummary && !dimensions.length && !comparativePlacement && !finalVerdict) && (
-              <Card className={analysisMode === "quick" ? "bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800" : "bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800"}>
-                <CardHeader>
-                  <h3 className={`text-lg font-semibold ${analysisMode === "quick" ? "text-blue-800 dark:text-blue-200" : "text-yellow-800 dark:text-yellow-200"}`}>
-                    {analysisMode === "quick" ? "Phase 1 Assessment Results" : "Raw Report Content"}
-                  </h3>
+              <Card className="bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950 border-slate-200 dark:border-slate-700 shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
+                  <div className="flex items-center gap-3">
+                    <Brain className="w-6 h-6" />
+                    <div>
+                      <h3 className="text-xl font-bold">
+                        {analysisMode === "quick" ? "Intelligence Assessment Report" : "Comprehensive Analysis Report"}
+                      </h3>
+                      <p className="text-blue-100 text-sm mt-1">
+                        {analysisMode === "quick" ? "Phase 1 Cognitive Evaluation" : "Complete Multi-Phase Analysis"}
+                      </p>
+                    </div>
+                  </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="prose prose-sm dark:prose-invert max-w-none">
-                    {analysisMode === "quick" ? (
-                      <div className="whitespace-pre-wrap text-sm bg-white dark:bg-gray-800 p-4 rounded border">
-                        {cleanedReport}
+                <CardContent className="p-0">
+                  <div className="bg-white dark:bg-slate-800 m-6 rounded-lg border border-slate-200 dark:border-slate-600 shadow-sm">
+                    <div className="p-6">
+                      <div className="prose prose-lg dark:prose-invert max-w-none">
+                        {formatEnhancedReport(cleanedReport)}
                       </div>
-                    ) : (
-                      <pre className="whitespace-pre-wrap text-xs bg-gray-100 dark:bg-gray-900 p-4 rounded overflow-auto max-h-96">
-                        {cleanedReport}
-                      </pre>
-                    )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>

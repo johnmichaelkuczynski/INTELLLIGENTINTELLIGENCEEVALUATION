@@ -88,6 +88,91 @@ function extractExecutiveSummary(text: string): string {
   return summaryMatch ? summaryMatch[1].trim() : '';
 }
 
+function formatEnhancedAnalysis(text: string) {
+  const lines = text.split('\n');
+  const formattedContent = [];
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    
+    if (!line) continue;
+    
+    // Handle main score extraction and highlight it
+    if (line.match(/Score:\s*(\d+)\/(\d+)/i)) {
+      const scoreMatch = line.match(/Score:\s*(\d+)\/(\d+)/i);
+      if (scoreMatch) {
+        formattedContent.push(
+          <div key={i} className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-6 rounded-lg my-6 text-center shadow-lg">
+            <div className="text-4xl font-bold mb-2">{scoreMatch[1]}/{scoreMatch[2]}</div>
+            <div className="text-emerald-100 text-lg">Intelligence Assessment Score</div>
+          </div>
+        );
+        continue;
+      }
+    }
+    
+    // Handle section headers (ALL CAPS or starting with capitals)
+    if ((line === line.toUpperCase() && line.length > 3 && !line.includes(':')) || 
+        (line.match(/^[A-Z][A-Z\s]{10,}/) && !line.includes(':'))) {
+      formattedContent.push(
+        <div key={i} className="mt-8 mb-4">
+          <h3 className="text-2xl font-bold bg-gradient-to-r from-slate-700 to-slate-900 dark:from-slate-200 dark:to-slate-100 bg-clip-text text-transparent">
+            {line}
+          </h3>
+          <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full w-20 mt-2"></div>
+        </div>
+      );
+      continue;
+    }
+    
+    // Handle questions (lines ending with ?)
+    if (line.endsWith('?')) {
+      formattedContent.push(
+        <div key={i} className="bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-500 p-4 my-4 rounded-r-lg">
+          <h4 className="font-semibold text-blue-800 dark:text-blue-200 text-lg">{line}</h4>
+        </div>
+      );
+      continue;
+    }
+    
+    // Handle quoted text
+    if (line.includes('"') || line.startsWith('"')) {
+      formattedContent.push(
+        <blockquote key={i} className="border-l-4 border-amber-400 bg-amber-50 dark:bg-amber-950 p-6 my-6 rounded-r-lg shadow-sm">
+          <div className="text-amber-800 dark:text-amber-200 font-medium text-lg italic leading-relaxed">
+            {line}
+          </div>
+        </blockquote>
+      );
+      continue;
+    }
+    
+    // Handle assessment criteria (lines with colons)
+    if (line.includes(':') && !line.startsWith('http')) {
+      const [label, ...rest] = line.split(':');
+      const content = rest.join(':').trim();
+      formattedContent.push(
+        <div key={i} className="mb-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600">
+          <dt className="font-semibold text-slate-800 dark:text-slate-200 mb-2 text-lg">{label}:</dt>
+          <dd className="text-slate-700 dark:text-slate-300 leading-relaxed">{content}</dd>
+        </div>
+      );
+      continue;
+    }
+    
+    // Regular paragraphs with enhanced styling
+    if (line.length > 20) {
+      formattedContent.push(
+        <p key={i} className="mb-5 text-slate-700 dark:text-slate-300 leading-relaxed text-base">
+          {line}
+        </p>
+      );
+    }
+  }
+  
+  return formattedContent;
+}
+
 const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportProps> = ({ analysis, analysisMode = "comprehensive" }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   
@@ -111,43 +196,55 @@ const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportP
   const highlights = extractHighlights(cleanedReport);
   const provider = analysis.provider || "AI";
 
+  // If no structured content is available, display the raw report in an enhanced format
+  const hasStructuredContent = executiveSummary || dimensions.length > 0 || comparativePlacement || finalVerdict;
+  
   return (
-    <div className="w-full mt-4 space-y-6">
-      {/* Main Intelligence Score */}
-      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-blue-200 dark:border-blue-800">
-        <CardHeader className="pb-4">
+    <div className="w-full space-y-8">
+      {/* Enhanced Main Intelligence Score Card */}
+      <Card className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-blue-950 dark:to-indigo-950 border-2 border-blue-200 dark:border-blue-700 shadow-xl">
+        <CardHeader className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white rounded-t-lg">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Brain className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                <Brain className="w-8 h-8 text-white" />
+              </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {analysisMode === "quick" ? "Quick Intelligence Assessment" : "Comprehensive Intelligence Assessment"}
+                <h2 className="text-2xl font-bold text-white">
+                  {analysisMode === "quick" ? "Intelligence Assessment" : "Comprehensive Cognitive Analysis"}
                 </h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {analysisMode === "quick" ? "Rapid Cognitive Analysis" : "Forensic Cognitive Analysis with Extensive Textual Evidence"}
+                <p className="text-blue-100 text-sm mt-1">
+                  {analysisMode === "quick" ? "Phase 1 Rapid Evaluation" : "Multi-Phase Forensic Analysis"}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-4">
               {intelligenceScore && (
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{intelligenceScore}/100</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Final Score</div>
+                <div className="text-right bg-white/10 p-4 rounded-lg backdrop-blur-sm">
+                  <div className="text-4xl font-bold text-white">{intelligenceScore}/100</div>
+                  <div className="text-blue-100 text-sm">Intelligence Score</div>
                 </div>
               )}
               <Button 
                 onClick={() => setIsModalOpen(true)}
                 variant="outline"
-                className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950 dark:hover:bg-blue-900 border-blue-200 dark:border-blue-800"
+                className="bg-white/10 hover:bg-white/20 border-white/30 text-white backdrop-blur-sm"
               >
-                <Maximize2 className="w-4 h-4" />
-                View Full Report
+                <Maximize2 className="w-4 h-4 mr-2" />
+                Full Report
               </Button>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          {executiveSummary && (
+        <CardContent className="p-8">
+          {/* Enhanced Content Display */}
+          {!hasStructuredContent ? (
+            <div className="space-y-6">
+              <div className="prose prose-lg dark:prose-invert max-w-none">
+                {formatEnhancedAnalysis(cleanedReport)}
+              </div>
+            </div>
+          ) : executiveSummary ? (
             <div className="prose prose-lg dark:prose-invert max-w-none">
               {executiveSummary.split('\n').map((paragraph, index) => {
                 if (!paragraph.trim()) return null;
@@ -158,7 +255,7 @@ const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportP
                 );
               })}
             </div>
-          )}
+          ) : null}
         </CardContent>
       </Card>
 
@@ -308,11 +405,14 @@ const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportP
         </Card>
       )}
 
-      {/* Provider Badge */}
+      {/* Enhanced Provider Badge */}
       <div className="flex justify-center">
-        <Badge variant="outline" className="px-3 py-1">
-          Analyzed by {provider}
-        </Badge>
+        <div className="bg-gradient-to-r from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 px-6 py-3 rounded-full border border-slate-300 dark:border-slate-600 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span className="text-slate-700 dark:text-slate-300 font-medium">Analyzed by {provider}</span>
+          </div>
+        </div>
       </div>
 
       {/* Intelligence Report Modal */}
