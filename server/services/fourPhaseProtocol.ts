@@ -64,21 +64,21 @@ DO NOT GIVE CREDIT MERELY FOR USE OF JARGON OR FOR REFERENCING AUTHORITIES. FOCU
 
 PHILOSOPHICAL WORK EVALUATION CRITERIA:
 
-REVOLUTIONARY INSIGHT (97-100): Only for texts that fundamentally challenge established philosophical frameworks with novel, compelling arguments that could reshape understanding. Mere citation of philosophers is NOT enough.
+REVOLUTIONARY INSIGHT (97-100): EXTREMELY RARE. Only for texts that fundamentally challenge established philosophical frameworks with novel, compelling arguments that could reshape the field. 99.9% of academic work does NOT qualify.
 
-HIGH-QUALITY ANALYSIS (85-96): Sophisticated engagement with philosophical concepts showing deep understanding and original synthesis.
+HIGH-QUALITY ANALYSIS (85-96): Sophisticated engagement with original insights, not routine academic commentary.
 
-COMPETENT ACADEMIC WORK (70-84): Standard dissertation abstracts, routine philosophical commentary, competent but unremarkable analysis of existing positions.
+COMPETENT ACADEMIC WORK (70-84): Standard dissertation abstracts, routine philosophical commentary, competent but unremarkable analysis. MOST ACADEMIC WORK FALLS HERE.
 
 BASIC PHILOSOPHICAL DISCUSSION (50-69): Surface-level engagement with philosophical topics.
 
-DO NOT award high scores simply for:
-- Mentioning famous philosophers' names
-- Using philosophical terminology 
-- Following standard academic dissertation format
-- Routine critiques of established positions
+AUTOMATIC DISQUALIFIERS FOR HIGH SCORES:
+- Standard dissertation abstract format = MAX 80/100
+- Routine critique of established positions = MAX 80/100  
+- Following academic template structure = MAX 80/100
+- Mentioning philosophers without novel insight = MAX 80/100
 
-ONLY award 95+ scores for genuinely revolutionary philosophical insights that challenge fundamental assumptions.
+REALITY CHECK: 95+ scores mean claiming only 5% of people could do better. For academic dissertations, this is almost never true.
 
 Before answering the questions, note the following non-negotiable standard:
 
@@ -393,10 +393,11 @@ export async function executeFourPhaseProtocol(
   ]);
   let finalScore = extractScore(phase4Response);
   
-  // Use best score if Phase 4 extraction fails
-  if (finalScore <= 75) {
-    finalScore = Math.max(phase1Score, phase2Score, phase3Score);
-    console.log(`PHASE 4 RESULT: Score extraction failed, using best previous score ${finalScore}/100`);
+  // Use the LOWEST reliable score - don't inflate
+  if (finalScore <= 0 || finalScore > 100) {
+    // Only use fallback if Phase 4 completely failed to extract a score
+    finalScore = Math.min(phase1Score, phase2Score, phase3Score);
+    console.log(`PHASE 4 RESULT: Score extraction failed, using LOWEST previous score ${finalScore}/100`);
   } else {
     console.log(`PHASE 4 RESULT: Final score ${finalScore}/100`);
   }
