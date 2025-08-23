@@ -108,18 +108,10 @@ function formatEnhancedAnalysis(text: string) {
     
     if (!line) continue;
     
-    // Handle main score extraction and highlight it
+    // SKIP score extraction from text - scores are handled by the header using analysis.overallScore
     if (line.match(/Score:\s*(\d+)\/(\d+)/i)) {
-      const scoreMatch = line.match(/Score:\s*(\d+)\/(\d+)/i);
-      if (scoreMatch) {
-        formattedContent.push(
-          <div key={i} className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-6 rounded-lg my-6 text-center shadow-lg">
-            <div className="text-4xl font-bold mb-2">{scoreMatch[1]}/{scoreMatch[2]}</div>
-            <div className="text-emerald-100 text-lg">4-Phase Protocol Final Score</div>
-          </div>
-        );
-        continue;
-      }
+      // Skip this line - don't display scores extracted from text
+      continue;
     }
     
     // Handle section headers (ALL CAPS or starting with capitals)
@@ -223,7 +215,7 @@ const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportP
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-white">
-                  {analysisMode === "quick" ? "Intelligence Assessment" : "Comprehensive Cognitive Analysis"}
+                  {analysisMode === "quick" ? "Intelligence Assessment" : "Comprehensive Intelligence Assessment"}
                 </h2>
                 <p className="text-blue-100 text-sm mt-1">
                   {analysisMode === "quick" ? "Phase 1 Rapid Evaluation" : "Multi-Phase Forensic Analysis"}
@@ -234,7 +226,7 @@ const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportP
               {intelligenceScore && (
                 <div className="text-right bg-white/10 p-4 rounded-lg backdrop-blur-sm">
                   <div className="text-4xl font-bold text-white">{intelligenceScore}/100</div>
-                  <div className="text-blue-100 text-sm">Intelligence Score</div>
+                  <div className="text-blue-100 text-sm">4-Phase Protocol Final Score</div>
                 </div>
               )}
               <Button 
