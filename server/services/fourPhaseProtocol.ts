@@ -72,13 +72,13 @@ COMPETENT ACADEMIC WORK (70-84): Standard dissertation abstracts, routine philos
 
 BASIC PHILOSOPHICAL DISCUSSION (50-69): Surface-level engagement with philosophical topics.
 
-AUTOMATIC DISQUALIFIERS FOR HIGH SCORES:
-- Standard dissertation abstract format = MAX 80/100
-- Routine critique of established positions = MAX 80/100  
-- Following academic template structure = MAX 80/100
-- Mentioning philosophers without novel insight = MAX 80/100
+WARNING SIGNS FOR INFLATED SCORES:
+- Routine critique without novel insight
+- Standard academic commentary format
+- Mentioning philosophers without advancing understanding
+- Following template structure without substance
 
-REALITY CHECK: 95+ scores mean claiming only 5% of people could do better. For academic dissertations, this is almost never true.
+REALITY CHECK: 95+ scores mean claiming only 5% of people could do better. This should be based on ACTUAL QUALITY, not format.
 
 Before answering the questions, note the following non-negotiable standard:
 
@@ -393,11 +393,11 @@ export async function executeFourPhaseProtocol(
   ]);
   let finalScore = extractScore(phase4Response);
   
-  // Use the LOWEST reliable score - don't inflate
+  // Use Phase 4 score, or best previous score if Phase 4 fails
   if (finalScore <= 0 || finalScore > 100) {
     // Only use fallback if Phase 4 completely failed to extract a score
-    finalScore = Math.min(phase1Score, phase2Score, phase3Score);
-    console.log(`PHASE 4 RESULT: Score extraction failed, using LOWEST previous score ${finalScore}/100`);
+    finalScore = Math.max(phase1Score, phase2Score, phase3Score);
+    console.log(`PHASE 4 RESULT: Score extraction failed, using best previous score ${finalScore}/100`);
   } else {
     console.log(`PHASE 4 RESULT: Final score ${finalScore}/100`);
   }
