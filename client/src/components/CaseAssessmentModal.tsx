@@ -9,6 +9,17 @@ import { Download, Mail, X, FileText } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import jsPDF from 'jspdf';
 
+// Provider name mapping
+const getProviderDisplayName = (provider: string): string => {
+  const providerMap: { [key: string]: string } = {
+    'deepseek': 'Zhi 3',
+    'openai': 'Zhi 2', 
+    'anthropic': 'Zhi 1',
+    'perplexity': 'Zhi 4'
+  };
+  return providerMap[provider.toLowerCase()] || provider;
+};
+
 interface CaseAssessmentResult {
   proofEffectiveness: number;
   claimCredibility: number;
@@ -195,7 +206,7 @@ ${result.detailedAssessment}
                   Document: {documentTitle || 'Untitled Document'}
                 </div>
                 <div className="text-sm text-gray-600">
-                  Analyzed by: {provider}
+                  Analyzed by: {getProviderDisplayName(provider)}
                 </div>
               </CardContent>
             </Card>

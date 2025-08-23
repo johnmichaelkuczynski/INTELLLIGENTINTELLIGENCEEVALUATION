@@ -9,6 +9,17 @@ import { cleanAIResponse } from '@/lib/textUtils';
 import { Brain, TrendingUp, Target, Zap, Eye, Lightbulb, Maximize2 } from 'lucide-react';
 import IntelligenceReportModal from './IntelligenceReportModal';
 
+// Provider name mapping
+const getProviderDisplayName = (provider: string): string => {
+  const providerMap: { [key: string]: string } = {
+    'deepseek': 'Zhi 3',
+    'openai': 'Zhi 2', 
+    'anthropic': 'Zhi 1',
+    'perplexity': 'Zhi 4'
+  };
+  return providerMap[provider.toLowerCase()] || provider;
+};
+
 interface PhilosophicalIntelligenceReportProps {
   analysis: DocumentAnalysis;
   analysisMode?: "quick" | "comprehensive";
@@ -410,7 +421,7 @@ const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportP
         <div className="bg-gradient-to-r from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 px-6 py-3 rounded-full border border-slate-300 dark:border-slate-600 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span className="text-slate-700 dark:text-slate-300 font-medium">Analyzed by {provider}</span>
+            <span className="text-slate-700 dark:text-slate-300 font-medium">Analyzed by {getProviderDisplayName(provider)}</span>
           </div>
         </div>
       </div>

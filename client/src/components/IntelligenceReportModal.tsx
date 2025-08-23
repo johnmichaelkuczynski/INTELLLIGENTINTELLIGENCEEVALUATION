@@ -7,6 +7,17 @@ import { Brain, TrendingUp, Target, Zap, Eye, Lightbulb, FileText } from 'lucide
 import { DocumentAnalysis } from '@/lib/types';
 import { cleanAIResponse } from '@/lib/textUtils';
 
+// Provider name mapping
+const getProviderDisplayName = (provider: string): string => {
+  const providerMap: { [key: string]: string } = {
+    'deepseek': 'Zhi 3',
+    'openai': 'Zhi 2', 
+    'anthropic': 'Zhi 1',
+    'perplexity': 'Zhi 4'
+  };
+  return providerMap[provider.toLowerCase()] || provider;
+};
+
 interface IntelligenceReportModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -459,7 +470,7 @@ const IntelligenceReportModal: React.FC<IntelligenceReportModalProps> = ({ isOpe
             <div className="flex justify-center pt-4 border-t border-gray-200 dark:border-gray-700">
               <Badge variant="outline" className="px-4 py-2 text-sm">
                 <Brain className="w-4 h-4 mr-2" />
-                Analyzed by {provider}
+                Analyzed by {getProviderDisplayName(provider)}
               </Badge>
             </div>
           </div>
