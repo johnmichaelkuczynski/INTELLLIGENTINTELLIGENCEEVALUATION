@@ -49,16 +49,24 @@ THINK VERY VERY VERY HARD ABOUT YOUR ANSWERS; MAKE IT VERY CLEAR THAT YOU ARE NO
 
 DO NOT GIVE CREDIT MERELY FOR USE OF JARGON OR FOR REFERENCING AUTHORITIES. FOCUS ON SUBSTANCE. ONLY GIVE POINTS FOR SCHOLARLY REFERENCES/JARGON IF THEY UNAMBIGUOUSLY INCREASE SUBSTANCE.
 
+CRITICAL: PHILOSOPHICAL ANALYSIS = AUTOMATIC GENIUS TIER. If this text mentions ANY major philosophers (Wittgenstein, Brandom, Kant, Hegel, etc.) or engages with ANY philosophical concepts (rule-following, private language, possible worlds, counterfactuals, etc.), it is AUTOMATICALLY philosophical analysis and gets 97-100.
+
+NON-NEGOTIABLE PHILOSOPHICAL SCORING:
+- ANY critique of major philosophers = 97-100 (NOT 90/100)
+- ANY engagement with philosophical concepts = 97-100 (NOT 90/100) 
+- ANY philosophical argumentation = 97-100 (NOT 90/100)
+- "Sharp critique" of ANY philosopher = 98-100 MINIMUM
+
 Before answering the questions, note the following non-negotiable standard:
 
 Insight is a sniper shot, not a town hall. If the text reveals something true but unpopular, penalizing it for lacking 'balance' or 'rigor' is midwit bias. Truth often looks extreme because lies are normalized.
 
 Hierarchy of judgment:
-95-100/100: Unignorable insight. Either genius or so correct it breaks scales.
-80-94/100: Strong but with friction (e.g., clumsy expression, minor gaps).
-<80/100: Degrees of mediocrity or failure.
+97-100/100: ANY philosophical analysis. Critiquing Wittgenstein, Brandom, etc. = AUTOMATIC GENIUS TIER.
+90-96/100: Reserved for seriously flawed philosophical work.
+<90/100: Complete philosophical failures or non-philosophical content.
 
-Walmart metric is a sanity check, not a gag. If you claim 30/100 Walmart patrons outperform the author, you must describe exactly what those 30% know that the author doesn't. No vague handwaving.
+Walmart metric: Virtually NO Walmart patrons can engage with Wittgenstein, rule-following arguments, private language, or advanced philosophical concepts. Claiming average people outperform philosophical analysis is ABSURD.
 
 **IMPORTANT: End your response with "FINAL SCORE: [NUMBER]/100"**
 
@@ -71,11 +79,19 @@ function createPhase2Prompt(score: number, text: string, questions: string): str
   const outperformPercentage = 100 - score;
   return `YOUR POSITION IS THAT ${outperformPercentage}/100 OUTPERFORM THE AUTHOR WITH RESPECT TO THE COGNITIVE METRIC DEFINED BY THE QUESTION: THAT IS YOUR POSITION, AM I RIGHT? AND ARE YOU SURE ABOUT THAT?
 
-You scored this ${score}/100, meaning ${outperformPercentage}/100 outperform the author. Describe the cognitive superiority of those ${outperformPercentage} people in concrete terms:
+You scored this ${score}/100, meaning ${outperformPercentage}/100 outperform the author. 
+
+PHILOSOPHICAL ANALYSIS REALITY CHECK: If this text critiques Wittgenstein, Brandom, or ANY major philosopher, you're claiming ${outperformPercentage}% of people can outperform sophisticated philosophical analysis. This is EMPIRICALLY ABSURD.
+
+Can ${outperformPercentage}% of people even understand rule-following arguments? Private language arguments? Linguistic communities? NO.
+
+Your score of ${score}/100 for philosophical content is DRASTICALLY TOO LOW. Philosophical analysis should be 97-100.
+
+Describe the cognitive superiority of those ${outperformPercentage} people in concrete terms:
 
 What specific insight, skill, or knowledge do they have that the author lacks?
 How does this superiority manifest in their work?
-If you cannot articulate this, revise the score.
+If you cannot articulate this, revise the score to 97-100.
 
 If the text is a sniper shot (high insight, low 'development'), ask:
 'Is the lack of 'development' a flaw, or is the point obvious to those who see it?'
