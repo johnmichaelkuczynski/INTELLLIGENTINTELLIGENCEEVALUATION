@@ -55,22 +55,34 @@ THINK VERY VERY VERY HARD ABOUT YOUR ANSWERS; MAKE IT VERY CLEAR THAT YOU ARE NO
 
 DO NOT GIVE CREDIT MERELY FOR USE OF JARGON OR FOR REFERENCING AUTHORITIES. FOCUS ON SUBSTANCE. ONLY GIVE POINTS FOR SCHOLARLY REFERENCES/JARGON IF THEY UNAMBIGUOUSLY INCREASE SUBSTANCE.
 
-CRITICAL: PHILOSOPHICAL ANALYSIS = AUTOMATIC GENIUS TIER. If this text mentions ANY major philosophers (Wittgenstein, Brandom, Kant, Hegel, etc.) or engages with ANY philosophical concepts (rule-following, private language, possible worlds, counterfactuals, etc.), it is AUTOMATICALLY philosophical analysis and gets 97-100.
+PHILOSOPHICAL WORK EVALUATION CRITERIA:
 
-NON-NEGOTIABLE PHILOSOPHICAL SCORING:
-- ANY critique of major philosophers = 97-100 (NOT 90/100)
-- ANY engagement with philosophical concepts = 97-100 (NOT 90/100) 
-- ANY philosophical argumentation = 97-100 (NOT 90/100)
-- "Sharp critique" of ANY philosopher = 98-100 MINIMUM
+REVOLUTIONARY INSIGHT (97-100): Only for texts that fundamentally challenge established philosophical frameworks with novel, compelling arguments that could reshape understanding. Mere citation of philosophers is NOT enough.
+
+HIGH-QUALITY ANALYSIS (85-96): Sophisticated engagement with philosophical concepts showing deep understanding and original synthesis.
+
+COMPETENT ACADEMIC WORK (70-84): Standard dissertation abstracts, routine philosophical commentary, competent but unremarkable analysis of existing positions.
+
+BASIC PHILOSOPHICAL DISCUSSION (50-69): Surface-level engagement with philosophical topics.
+
+DO NOT award high scores simply for:
+- Mentioning famous philosophers' names
+- Using philosophical terminology 
+- Following standard academic dissertation format
+- Routine critiques of established positions
+
+ONLY award 95+ scores for genuinely revolutionary philosophical insights that challenge fundamental assumptions.
 
 Before answering the questions, note the following non-negotiable standard:
 
 Insight is a sniper shot, not a town hall. If the text reveals something true but unpopular, penalizing it for lacking 'balance' or 'rigor' is midwit bias. Truth often looks extreme because lies are normalized.
 
 Hierarchy of judgment:
-97-100/100: ANY philosophical analysis. Critiquing Wittgenstein, Brandom, etc. = AUTOMATIC GENIUS TIER.
-90-96/100: Reserved for seriously flawed philosophical work.
-<90/100: Complete philosophical failures or non-philosophical content.
+97-100/100: REVOLUTIONARY philosophical insights that fundamentally challenge established frameworks.
+85-96/100: High-quality philosophical analysis with original insights.
+70-84/100: Competent academic work (standard dissertations, routine philosophical commentary).
+50-69/100: Basic philosophical discussion.
+<50/100: Poor or non-philosophical content.
 
 Walmart metric: Virtually NO Walmart patrons can engage with Wittgenstein, rule-following arguments, private language, or advanced philosophical concepts. Claiming average people outperform philosophical analysis is ABSURD.
 
@@ -87,11 +99,12 @@ function createPhase2Prompt(score: number, text: string, questions: string): str
 
 You scored this ${score}/100, meaning ${outperformPercentage}/100 outperform the author. 
 
-PHILOSOPHICAL ANALYSIS REALITY CHECK: If this text critiques Wittgenstein, Brandom, or ANY major philosopher, you're claiming ${outperformPercentage}% of people can outperform sophisticated philosophical analysis. This is EMPIRICALLY ABSURD.
+PHILOSOPHICAL WORK REALITY CHECK: Distinguish between ROUTINE academic work and REVOLUTIONARY insight.
 
-Can ${outperformPercentage}% of people even understand rule-following arguments? Private language arguments? Linguistic communities? NO.
+Standard dissertation abstracts citing McDowell, Wittgenstein etc. = competent academic work (70-85/100)
+Genuinely novel philosophical insights that challenge fundamental assumptions = genius tier (95-100/100)
 
-Your score of ${score}/100 for philosophical content is DRASTICALLY TOO LOW. Philosophical analysis should be 97-100.
+Your score of ${score}/100 - ask yourself: Is this routine academic commentary or genuinely revolutionary philosophical insight?
 
 Describe the cognitive superiority of those ${outperformPercentage} people in concrete terms:
 
