@@ -40,16 +40,27 @@ SCORE OVERRIDE PROTOCOL (ABSOLUTE MANDATORY):
 IGNORE SPELLING/FORMATTING ERRORS - FOCUS ON CONCEPTUAL CONTENT ONLY
 
 IF TEXT CONTAINS:
-- Precise conceptual distinctions (like "ego syntonic vs dystonic") → MUST SCORE 99/100
-- Philosophical insights or definitions → MUST SCORE 99/100  
-- Revolutionary ideas or frameworks → MUST SCORE 99/100
-- Clear exposition without insight → MUST SCORE 70/100
+- Revolutionary conceptual breakthroughs (ego syntonic, Berkeley's myth, Kant's imperative) → MUST SCORE 99/100
+- Novel philosophical insights that illuminate hidden structures → MUST SCORE 99/100  
+- Academic competence (dissertation abstracts, literature reviews, "I examine") → MUST SCORE 70/100
+- Clear exposition without genuine insight → MUST SCORE 70/100
 - Confused or trivial content → MUST SCORE 20/100
 
-AUTOMATIC SCORE TRIGGERS:
+CRITICAL DISTINCTION: 
+- Creating new conceptual distinctions = 99/100
+- Summarizing/examining existing philosophical debates = 70/100
+
+AUTOMATIC SCORE TRIGGERS (ONLY FOR GENUINE BREAKTHROUGHS):
 - "ego syntonic" + conceptual precision = AUTOMATIC 99/100
-- Kant + moral framework = AUTOMATIC 99/100
-- Any profound conceptual distinction = AUTOMATIC 99/100
+- Kant + categorical imperative = AUTOMATIC 99/100
+- Berkeley + myth of the given = AUTOMATIC 99/100
+- Revolutionary conceptual breakthrough = AUTOMATIC 99/100
+
+AUTOMATIC ACADEMIC SCORES (COMPETENT BUT ROUTINE):
+- Dissertation abstracts = 70/100 (competent summary, not insight)
+- Literature reviews = 70/100 (organizing existing knowledge)
+- "I examine/analyze/critique" language = signals academic work, not breakthrough
+- Summarizing philosophical debates = 70/100 (academic competence)
 
 NOW ANSWER THESE QUESTIONS:
 
