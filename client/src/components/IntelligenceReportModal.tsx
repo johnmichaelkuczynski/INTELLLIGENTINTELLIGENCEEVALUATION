@@ -341,8 +341,8 @@ const IntelligenceReportModal: React.FC<IntelligenceReportModalProps> = ({ isOpe
           <div className="space-y-8">
             {/* LLM Generated Content Always Displayed */}
             
-            {/* Always show the full LLM analysis for quick analysis mode */}
-            {(analysisMode === "quick" || (!hasPhaseData && (!executiveSummary && !dimensions.length && !comparativePlacement && !finalVerdict))) && (
+            {/* Always show the complete raw LLM analysis */}
+            {analysisMode === "quick" && (
               <Card className="bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950 border-slate-200 dark:border-slate-700 shadow-lg">
                 <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
                   <div className="flex items-center gap-3">
@@ -360,8 +360,8 @@ const IntelligenceReportModal: React.FC<IntelligenceReportModalProps> = ({ isOpe
                 <CardContent className="p-0">
                   <div className="bg-white dark:bg-slate-800 m-6 rounded-lg border border-slate-200 dark:border-slate-600 shadow-sm">
                     <div className="p-6">
-                      <div className="prose prose-lg dark:prose-invert max-w-none">
-                        {formatEnhancedReport(cleanedReport)}
+                      <div className="prose prose-lg dark:prose-invert max-w-none whitespace-pre-wrap">
+                        {cleanedReport}
                       </div>
                     </div>
                   </div>
