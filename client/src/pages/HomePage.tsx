@@ -210,7 +210,7 @@ const HomePage: React.FC = () => {
     }
   };
 
-  // Handler for case assessment - FIXED TO WORK
+  // Handler for case assessment - REAL-TIME STREAMING
   const handleCaseAssessment = async () => {
     if (!documentA.content.trim()) {
       alert("Please enter some text to assess how well it makes its case.");
@@ -230,6 +230,9 @@ const HomePage: React.FC = () => {
       return;
     }
 
+    // Start REAL-TIME streaming for case assessment
+    setIsStreaming(true);
+    setStreamingContent('');
     setIsCaseAssessmentLoading(true);
     setCaseAssessmentResult(null);
 
@@ -251,8 +254,21 @@ const HomePage: React.FC = () => {
         throw new Error(`Case assessment failed: ${response.statusText}`);
       }
 
-      const data = await response.json();
-      setCaseAssessmentResult(data.result);
+      // REAL-TIME STREAMING: Read response token by token
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let fullResponse = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        fullResponse += chunk;
+        setStreamingContent(fullResponse); // Show each token as it arrives
+      }
+
+      setCaseAssessmentResult(fullResponse);
       setCaseAssessmentModalOpen(true);
       
     } catch (error) {
@@ -260,6 +276,7 @@ const HomePage: React.FC = () => {
       alert("Failed to assess document case. Please try again.");
     } finally {
       setIsCaseAssessmentLoading(false);
+      setIsStreaming(false);
     }
   };
 
@@ -317,7 +334,7 @@ const HomePage: React.FC = () => {
     }
   };
 
-  // Handler for fiction assessment
+  // Handler for fiction assessment - REAL-TIME STREAMING
   const handleFictionAssessment = async (documentId: "A" | "B") => {
     const document = documentId === "A" ? documentA : documentB;
     if (!document.content.trim()) {
@@ -338,11 +355,14 @@ const HomePage: React.FC = () => {
       return;
     }
 
+    // Start REAL-TIME streaming for fiction assessment
+    setIsStreaming(true);
+    setStreamingContent('');
     setIsFictionAssessmentLoading(true);
     setFictionAssessmentResult(null);
 
     try {
-      const provider = selectedProvider === "all" ? "deepseek" : selectedProvider;
+      const provider = selectedProvider === "all" ? "zhi1" : selectedProvider;
       
       const response = await fetch('/api/fiction-assessment', {
         method: 'POST',
@@ -359,8 +379,21 @@ const HomePage: React.FC = () => {
         throw new Error(`Fiction assessment failed: ${response.statusText}`);
       }
 
-      const data = await response.json();
-      setFictionAssessmentResult(data.result);
+      // REAL-TIME STREAMING: Read response token by token
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let fullResponse = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        fullResponse += chunk;
+        setStreamingContent(fullResponse); // Show each token as it arrives
+      }
+
+      setFictionAssessmentResult(fullResponse);
       setCurrentFictionDocument(documentId);
       setFictionAssessmentModalOpen(true);
       
@@ -369,6 +402,7 @@ const HomePage: React.FC = () => {
       alert(`Fiction assessment with ${selectedProvider} failed: ${error instanceof Error ? error.message : "Unknown error"}`);
     } finally {
       setIsFictionAssessmentLoading(false);
+      setIsStreaming(false);
     }
   };
 

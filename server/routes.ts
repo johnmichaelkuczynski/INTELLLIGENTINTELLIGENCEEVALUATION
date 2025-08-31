@@ -41,6 +41,364 @@ function mapZhiToProvider(zhiName: string): string {
   return mapping[zhiName] || zhiName;
 }
 
+// REAL-TIME STREAMING: Case Assessment for ALL ZHI providers
+async function streamCaseAssessment(text: string, provider: string, res: any) {
+  const prompt = `Assess how well this text makes its case. Analyze argument effectiveness, proof quality, claim credibility:
+
+${text}
+
+Provide detailed analysis of the argument's strengths and weaknesses.`;
+
+  if (provider === 'openai') {
+    // ZHI 1: OpenAI streaming
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [{ role: 'user', content: prompt }],
+        stream: true,
+        max_tokens: 4000,
+        temperature: 0.7,
+      }),
+    });
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          if (data === '[DONE]') continue;
+          
+          try {
+            const parsed = JSON.parse(data);
+            const content = parsed.choices?.[0]?.delta?.content || '';
+            if (content) {
+              res.write(content);
+              (res as any).flush?.();
+            }
+          } catch (e) {}
+        }
+      }
+    }
+  } else if (provider === 'anthropic') {
+    // ZHI 2: Anthropic streaming
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': process.env.ANTHROPIC_API_KEY!,
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 4000,
+        stream: true,
+        messages: [{ role: 'user', content: prompt }]
+      }),
+    });
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
+              res.write(parsed.delta.text);
+              (res as any).flush?.();
+            }
+          } catch (e) {}
+        }
+      }
+    }
+  } else if (provider === 'deepseek') {
+    // ZHI 3: DeepSeek streaming
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [{ role: 'user', content: prompt }],
+        stream: true,
+        max_tokens: 4000,
+      }),
+    });
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          if (data === '[DONE]') continue;
+          
+          try {
+            const parsed = JSON.parse(data);
+            const content = parsed.choices?.[0]?.delta?.content || '';
+            if (content) {
+              res.write(content);
+              (res as any).flush?.();
+            }
+          } catch (e) {}
+        }
+      }
+    }
+  } else if (provider === 'perplexity') {
+    // ZHI 4: Perplexity streaming
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-sonar-small-128k-online',
+        messages: [{ role: 'user', content: prompt }],
+        stream: true,
+        max_tokens: 4000,
+      }),
+    });
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          if (data === '[DONE]') continue;
+          
+          try {
+            const parsed = JSON.parse(data);
+            const content = parsed.choices?.[0]?.delta?.content || '';
+            if (content) {
+              res.write(content);
+              (res as any).flush?.();
+            }
+          } catch (e) {}
+        }
+      }
+    }
+  }
+  res.end();
+}
+
+// REAL-TIME STREAMING: Fiction Assessment for ALL ZHI providers
+async function streamFictionAssessment(text: string, provider: string, res: any) {
+  const prompt = `Assess this fiction text for literary quality, narrative effectiveness, character development, and prose style:
+
+${text}
+
+Provide detailed analysis of literary merit, character development, plot structure, and creative intelligence.`;
+
+  if (provider === 'openai') {
+    // ZHI 1: OpenAI streaming
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [{ role: 'user', content: prompt }],
+        stream: true,
+        max_tokens: 4000,
+        temperature: 0.7,
+      }),
+    });
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          if (data === '[DONE]') continue;
+          
+          try {
+            const parsed = JSON.parse(data);
+            const content = parsed.choices?.[0]?.delta?.content || '';
+            if (content) {
+              res.write(content);
+              (res as any).flush?.();
+            }
+          } catch (e) {}
+        }
+      }
+    }
+  } else if (provider === 'anthropic') {
+    // ZHI 2: Anthropic streaming
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': process.env.ANTHROPIC_API_KEY!,
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 4000,
+        stream: true,
+        messages: [{ role: 'user', content: prompt }]
+      }),
+    });
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
+              res.write(parsed.delta.text);
+              (res as any).flush?.();
+            }
+          } catch (e) {}
+        }
+      }
+    }
+  } else if (provider === 'deepseek') {
+    // ZHI 3: DeepSeek streaming
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [{ role: 'user', content: prompt }],
+        stream: true,
+        max_tokens: 4000,
+      }),
+    });
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          if (data === '[DONE]') continue;
+          
+          try {
+            const parsed = JSON.parse(data);
+            const content = parsed.choices?.[0]?.delta?.content || '';
+            if (content) {
+              res.write(content);
+              (res as any).flush?.();
+            }
+          } catch (e) {}
+        }
+      }
+    }
+  } else if (provider === 'perplexity') {
+    // ZHI 4: Perplexity streaming
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-sonar-small-128k-online',
+        messages: [{ role: 'user', content: prompt }],
+        stream: true,
+        max_tokens: 4000,
+      }),
+    });
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          if (data === '[DONE]') continue;
+          
+          try {
+            const parsed = JSON.parse(data);
+            const content = parsed.choices?.[0]?.delta?.content || '';
+            if (content) {
+              res.write(content);
+              (res as any).flush?.();
+            }
+          } catch (e) {}
+        }
+      }
+    }
+  }
+  res.end();
+}
+
 export async function registerRoutes(app: Express): Promise<Express> {
   
   // API health check endpoint
@@ -788,71 +1146,59 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
-  // Case assessment endpoint - FIXED TO RETURN JSON
+  // Case assessment endpoint - REAL-TIME STREAMING
   app.post("/api/case-assessment", async (req: Request, res: Response) => {
     try {
-      const { text, provider = "openai" } = req.body;
+      const { text, provider = "zhi1" } = req.body;
       
       if (!text || typeof text !== 'string') {
         return res.status(400).json({ error: "Text content is required for case assessment" });
       }
       
-      console.log(`Starting case assessment with ${provider} for text of length: ${text.length}`);
+      // Set headers for real-time streaming
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('X-Accel-Buffering', 'no');
       
-      const { performCaseAssessment } = await import('./services/caseAssessment');
+      console.log(`Starting REAL-TIME case assessment streaming with ${provider} for text of length: ${text.length}`);
+      
       const actualProvider = mapZhiToProvider(provider);
-      const result = await performCaseAssessment(text, actualProvider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek');
-      
-      res.json({
-        success: true,
-        result: result,
-        provider: provider,
-        metadata: {
-          contentLength: text.length,
-          timestamp: new Date().toISOString()
-        }
-      });
+      await streamCaseAssessment(text, actualProvider, res);
       
     } catch (error: any) {
-      console.error("Error in case assessment:", error);
-      res.status(500).json({
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
+      console.error("Error in case assessment streaming:", error);
+      res.write(`ERROR: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      res.end();
     }
   });
 
-  // Fiction Assessment API endpoint - FIXED TO RETURN JSON
+  // Fiction Assessment API endpoint - REAL-TIME STREAMING
   app.post('/api/fiction-assessment', async (req, res) => {
     try {
-      const { text, provider = 'openai' } = req.body;
+      const { text, provider = 'zhi1' } = req.body;
       
       if (!text) {
         return res.status(400).json({ error: "Text is required" });
       }
       
-      console.log(`Starting fiction assessment with ${provider} for text of length: ${text.length}`);
+      // Set headers for real-time streaming
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('X-Accel-Buffering', 'no');
       
-      const { performFictionAssessment } = await import('./services/fictionAssessment');
+      console.log(`Starting REAL-TIME fiction assessment streaming with ${provider} for text of length: ${text.length}`);
+      
       const actualProvider = mapZhiToProvider(provider);
-      const result = await performFictionAssessment(text, actualProvider);
-      
-      res.json({
-        success: true,
-        result: result,
-        provider: provider,
-        metadata: {
-          contentLength: text.length,
-          timestamp: new Date().toISOString()
-        }
-      });
+      await streamFictionAssessment(text, actualProvider, res);
       
     } catch (error: any) {
-      console.error("Error in fiction assessment:", error);
-      res.status(500).json({
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
+      console.error("Error in fiction assessment streaming:", error);
+      res.write(`ERROR: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      res.end();
     }
   });
 
