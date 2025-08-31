@@ -108,13 +108,30 @@ export async function registerRoutes(app: Express): Promise<Express> {
       try {
         sendProgress(10, `Starting ${evaluationType} analysis with ${provider}...`);
         
-        const { performQuickAnalysis } = await import('./services/quickAnalysis');
+        const { performQuickAnalysisStreaming } = await import('./services/quickAnalysisStreaming');
         
-        sendProgress(30, `Analyzing text content...`);
-        const result = await performQuickAnalysis(text, provider, evaluationType);
+        sendProgress(20, `Preparing Phase 1 evaluation...`);
         
-        sendProgress(90, `Finalizing analysis...`);
-        sendComplete({ success: true, result });
+        await performQuickAnalysisStreaming(
+          text, 
+          provider, 
+          evaluationType,
+          // Progress callback
+          (progress: number, message: string) => {
+            sendProgress(progress, message);
+          },
+          // Content streaming callback - this streams the actual report text
+          (contentChunk: string) => {
+            res.write(`data: ${JSON.stringify({ 
+              type: 'content',
+              content: contentChunk
+            })}\n\n`);
+          },
+          // Results callback
+          (result: any) => {
+            sendComplete({ success: true, result });
+          }
+        );
         
       } catch (error: any) {
         console.error("Streaming quick analysis error:", error);
@@ -986,7 +1003,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
 
   app.post("/api/direct-model-request", async (req: Request, res: Response) => {
     try {
-      const { instruction, provider = "anthropic" } = req.body;
+      const { instruction, provider = "openai" } = req.body;
       
       if (!instruction) {
         return res.status(400).json({ error: "Instruction is required" });
@@ -1314,95 +1331,6 @@ export async function registerRoutes(app: Express): Promise<Express> {
         error: "Overall quality evaluation failed",
         details: error.message
       });
-    }
-  });
-
-  // Chat streaming endpoint for word-by-word responses  
-  app.post('/api/chat/stream', async (req: Request, res: Response) => {
-    try {
-      const { instruction, provider = 'anthropic' } = req.body;
-      
-      if (!instruction) {
-        return res.status(400).json({ error: "Instruction is required" });
-      }
-      
-      // Set headers for Server-Sent Events
-      res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Cache-Control'
-      });
-
-      let fullResponse = '';
-      
-      try {
-        // Import the direct model request functions
-        const { 
-          directOpenAIRequest,
-          directClaudeRequest, 
-          directPerplexityRequest,
-          directDeepSeekRequest
-        } = await import('./api/directModelRequest');
-        
-        // Get response from appropriate LLM provider
-        let response;
-        switch (provider) {
-          case 'openai':
-            response = await directOpenAIRequest(instruction);
-            response = response.content;
-            break;
-          case 'anthropic':
-            response = await directClaudeRequest(instruction);
-            response = response.content;
-            break;
-          case 'perplexity':
-            response = await directPerplexityRequest(instruction);
-            response = response.content;
-            break;
-          case 'deepseek':
-            response = await directDeepSeekRequest(instruction);
-            response = response.content;
-            break;
-          default:
-            throw new Error(`Unsupported provider: ${provider}`);
-        }
-        
-        // Split response into words and stream them
-        const words = response.split(' ');
-        for (let i = 0; i < words.length; i++) {
-          const word = words[i] + (i < words.length - 1 ? ' ' : '');
-          fullResponse += word;
-          
-          res.write(`data: ${JSON.stringify({ 
-            type: 'word', 
-            word: word,
-            fullText: fullResponse,
-            progress: Math.round((i + 1) / words.length * 100)
-          })}\n\n`);
-          
-          // Small delay for word-by-word effect (80ms per word)
-          await new Promise(resolve => setTimeout(resolve, 80));
-        }
-        
-        res.write(`data: ${JSON.stringify({ 
-          type: 'complete', 
-          fullText: fullResponse 
-        })}\n\n`);
-        
-      } catch (error: any) {
-        console.error('Chat streaming error:', error);
-        res.write(`data: ${JSON.stringify({ 
-          type: 'error', 
-          error: error.message 
-        })}\n\n`);
-      }
-      
-      res.end();
-    } catch (error: any) {
-      console.error('Chat streaming setup error:', error);
-      res.status(500).json({ error: 'Failed to start chat stream' });
     }
   });
 

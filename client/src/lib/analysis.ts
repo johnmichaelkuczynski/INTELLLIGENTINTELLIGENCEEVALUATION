@@ -14,7 +14,7 @@ import {
 // Streaming analysis function for single documents
 export async function analyzeDocumentStreaming(
   document: DocumentInput,
-  provider: string = "anthropic",
+  provider: string = "deepseek",
   analysisType: "quick" | "comprehensive" = "quick",
   evaluationType: string = "intelligence",
   onProgress?: (progress: number, message: string) => void,
@@ -70,6 +70,9 @@ export async function analyzeDocumentStreaming(
               if (data.type === 'progress') {
                 onProgress?.(data.progress, data.message);
                 onPartialData?.(data.data);
+              } else if (data.type === 'content') {
+                // Stream the actual report content for real-time display
+                onPartialData?.(data);
               } else if (data.type === 'complete') {
                 resolve(data.result.result || data.result.evaluation || data.result);
                 return;
@@ -97,7 +100,7 @@ export async function analyzeDocumentStreaming(
 export async function compareDocumentsStreaming(
   documentA: DocumentInput,
   documentB: DocumentInput,
-  provider: string = "anthropic",
+  provider: string = "deepseek",
   analysisType: "quick" | "comprehensive" = "quick",
   evaluationType: string = "intelligence",
   onProgress?: (progress: number, message: string) => void,
