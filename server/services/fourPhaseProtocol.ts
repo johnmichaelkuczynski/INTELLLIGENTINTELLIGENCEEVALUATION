@@ -241,7 +241,7 @@ export async function executeNormalProtocol(
 // COMPREHENSIVE PROTOCOL - All 4 phases with chunking for high quality
 export async function executeComprehensiveProtocol(
   text: string,
-  provider: 'openai' | 'anthropic' | 'perplexity' | 'deepseek'
+  provider: 'openai' | 'anthropic' | 'deepseek'
 ): Promise<any> {
   console.log(`CHUNKED 4-PHASE INTELLIGENCE EVALUATION: Analyzing ${text.length} characters with protocol`);
   console.log(`EXECUTING CHUNKED 4-PHASE PROTOCOL FOR INTELLIGENCE WITH ${provider.toUpperCase()}`);

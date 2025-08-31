@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { BrainCircuit, Bot, Sparkles, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-export type LLMProvider = "zhi1" | "zhi2" | "zhi3" | "zhi4" | "all";
+export type LLMProvider = "zhi1" | "zhi2" | "zhi3" | "all";
 
 interface ProviderSelectorProps {
   selectedProvider: LLMProvider;
@@ -22,7 +22,7 @@ const ProviderSelector: React.FC<ProviderSelectorProps> = ({
   className = "",
   label = "AI Provider",
   smallSize = false,
-  apiStatus = { openai: true, anthropic: true, perplexity: true, deepseek: true },
+  apiStatus = { openai: true, anthropic: true, deepseek: true },
   showTooltips = true
 }) => {
   return (
@@ -40,7 +40,6 @@ const ProviderSelector: React.FC<ProviderSelectorProps> = ({
                 <ul className="list-disc pl-5 mt-2 text-sm">
                   <li><span className="font-medium">OpenAI GPT-4o</span> - Excellent for detailed analysis, strong at recognizing complex patterns</li>
                   <li><span className="font-medium">Anthropic Claude</span> - Very good at nuanced text interpretation and detailed reasoning</li>
-                  <li><span className="font-medium">Perplexity Llama</span> - Open source model with good analytical capabilities</li>
                   <li><span className="font-medium">DeepSeek</span> - Advanced reasoning model with strong mathematical and analytical capabilities</li>
                 </ul>
               </TooltipContent>
@@ -84,17 +83,6 @@ const ProviderSelector: React.FC<ProviderSelectorProps> = ({
               <BrainCircuit className="h-4 w-4 text-orange-600" />
               <span>ZHI 3</span>
               {!apiStatus.deepseek && <span className="text-xs text-red-500 ml-2">(Unavailable)</span>}
-            </div>
-          </SelectItem>
-          <SelectItem 
-            value="zhi4" 
-            className="flex items-center"
-            disabled={!apiStatus.perplexity}
-          >
-            <div className="flex items-center gap-2">
-              <Bot className="h-4 w-4 text-blue-600" />
-              <span>ZHI 4</span>
-              {!apiStatus.perplexity && <span className="text-xs text-red-500 ml-2">(Unavailable)</span>}
             </div>
           </SelectItem>
           {/* Compare Providers option temporarily removed */}

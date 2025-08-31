@@ -36,7 +36,6 @@ function mapZhiToProvider(zhiName: string): string {
     'zhi1': 'openai',
     'zhi2': 'anthropic', 
     'zhi3': 'deepseek',
-    'zhi4': 'perplexity'
   };
   return mapping[zhiName] || zhiName;
 }
@@ -405,7 +404,6 @@ export async function registerRoutes(app: Express): Promise<Express> {
   app.get("/api/check-api", async (_req: Request, res: Response) => {
     const openai_key = process.env.OPENAI_API_KEY;
     const anthropic_key = process.env.ANTHROPIC_API_KEY;
-    const perplexity_key = process.env.PERPLEXITY_API_KEY;
     const deepseek_key = process.env.DEEPSEEK_API_KEY;
     const mathpix_app_id = process.env.MATHPIX_APP_ID;
     const mathpix_app_key = process.env.MATHPIX_APP_KEY;
@@ -416,7 +414,6 @@ export async function registerRoutes(app: Express): Promise<Express> {
       api_keys: {
         openai: openai_key ? "configured" : "missing",
         anthropic: anthropic_key ? "configured" : "missing",
-        perplexity: perplexity_key ? "configured" : "missing",
         deepseek: deepseek_key ? "configured" : "missing",
         mathpix: (mathpix_app_id && mathpix_app_key) ? "configured" : "missing"
       }
@@ -426,7 +423,6 @@ export async function registerRoutes(app: Express): Promise<Express> {
     console.log("API Status Check:", { 
       openai: openai_key ? "✓" : "✗", 
       anthropic: anthropic_key ? "✓" : "✗", 
-      perplexity: perplexity_key ? "✓" : "✗",
       deepseek: deepseek_key ? "✓" : "✗",
       mathpix: (mathpix_app_id && mathpix_app_key) ? "✓" : "✗"
     });
@@ -645,7 +641,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
         
         await executeStreamingComprehensiveProtocol(
           text,
-          actualProvider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek',
+          actualProvider as 'openai' | 'anthropic' | 'deepseek',
           res
         );
         
@@ -691,7 +687,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
           const actualProvider = mapZhiToProvider(provider.toLowerCase());
           pureResult = await executeFourPhaseProtocol(
             content,
-            actualProvider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek',
+            actualProvider as 'openai' | 'anthropic' | 'deepseek',
             'intelligence'
           );
           

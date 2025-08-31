@@ -33,7 +33,7 @@ IF I WERE TO GIVE A LOW SCORE TO THIS PASSAGE, WOULD I BE PENALIZING ACTUAL INTE
 
 // Generic LLM caller
 async function callLLMProvider(
-  provider: 'openai' | 'anthropic' | 'perplexity' | 'deepseek',
+  provider: 'openai' | 'anthropic' | 'deepseek',
   messages: Array<{role: string, content: string}>
 ): Promise<string> {
   try {
@@ -78,32 +78,6 @@ async function callLLMProvider(
       
       const data = await response.json();
       const result = data.content?.[0]?.text || '';
-      console.log(`${provider.toUpperCase()} RESPONSE LENGTH: ${result.length}`);
-      console.log(`${provider.toUpperCase()} RESPONSE PREVIEW: "${result.substring(0, 200)}..."`);
-      return result;
-    } else if (provider === 'perplexity') {
-      const response = await fetch('https://api.perplexity.ai/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: "sonar",
-          messages: messages,
-          temperature: 0.1,
-          max_tokens: 4000
-        })
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`PERPLEXITY API ERROR: ${response.status} - ${errorText}`);
-        return '';
-      }
-      
-      const data = await response.json();
-      const result = data.choices?.[0]?.message?.content || '';
       console.log(`${provider.toUpperCase()} RESPONSE LENGTH: ${result.length}`);
       console.log(`${provider.toUpperCase()} RESPONSE PREVIEW: "${result.substring(0, 200)}..."`);
       return result;
@@ -168,7 +142,7 @@ function extractScore(text: string): number {
 
 export async function executeStreamingComprehensiveProtocol(
   text: string,
-  provider: 'openai' | 'anthropic' | 'perplexity' | 'deepseek',
+  provider: 'openai' | 'anthropic' | 'deepseek',
   res: Response
 ): Promise<void> {
   const questions = EXACT_COMPLETE_QUESTIONS;

@@ -219,7 +219,7 @@ const HomePage: React.FC = () => {
       'zhi1': 'openai',
       'zhi2': 'anthropic', 
       'zhi3': 'deepseek',
-      'zhi4': 'perplexity'
+
     };
     const actualApiKey = apiKeyMapping[selectedProvider] || selectedProvider;
     if (selectedProvider !== "all" && !apiStatus[actualApiKey as keyof typeof apiStatus]) {
@@ -318,7 +318,7 @@ const HomePage: React.FC = () => {
       'zhi1': 'openai',
       'zhi2': 'anthropic', 
       'zhi3': 'deepseek',
-      'zhi4': 'perplexity'
+
     };
     const actualApiKey = apiKeyMapping[selectedProvider] || selectedProvider;
     if (selectedProvider !== "all" && !apiStatus[actualApiKey as keyof typeof apiStatus]) {
@@ -373,7 +373,7 @@ const HomePage: React.FC = () => {
       'zhi1': 'openai',
       'zhi2': 'anthropic', 
       'zhi3': 'deepseek',
-      'zhi4': 'perplexity'
+
     };
     const actualApiKey = apiKeyMapping[selectedProvider] || selectedProvider;
     if (selectedProvider !== "all" && !apiStatus[actualApiKey as keyof typeof apiStatus]) {
@@ -488,7 +488,7 @@ const HomePage: React.FC = () => {
       'zhi1': 'openai',
       'zhi2': 'anthropic', 
       'zhi3': 'deepseek',
-      'zhi4': 'perplexity'
+
     };
     const actualApiKey = apiKeyMapping[selectedProvider] || selectedProvider;
     if (selectedProvider !== "all" && !apiStatus[actualApiKey as keyof typeof apiStatus]) {
