@@ -187,8 +187,10 @@ const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportP
     return <MultiProviderResults results={analysis.analysisResults || []} />;
   }
   
-  // Extract data from the formatted report
-  const formattedReport = analysis.formattedReport || analysis.report || "";
+  // Extract data from the formatted report - CHECK ALL POSSIBLE FIELDS
+  const formattedReport = analysis.formattedReport || analysis.content || analysis.analysis || analysis.report || analysis.summary || "";
+  console.log("DEBUGGING - Analysis object:", analysis);
+  console.log("DEBUGGING - Formatted report content:", formattedReport?.substring(0, 200) + "...");
   const cleanedReport = cleanAIResponse(formattedReport);
   
   // Use ONLY the final score from 4-phase protocol - no text extraction needed
