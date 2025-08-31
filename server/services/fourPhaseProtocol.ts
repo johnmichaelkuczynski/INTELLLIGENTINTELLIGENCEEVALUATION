@@ -31,21 +31,21 @@ IF I WERE TO GIVE A HIGH SCORE TO THIS PASSAGE, WOULD I BE REWARDING IMPOSTOR SC
 IF I WERE TO GIVE A HIGH SCORE TO THIS PASSAGE, WOULD I BE REWARDING CONFORMITY TO ACADEMIC/BUREAUCRATIC NORMS?
 IF I WERE TO GIVE A LOW SCORE TO THIS PASSAGE, WOULD I BE PENALIZING ACTUAL INTELLIGENCE OWING TO A LACK OF CONFORMITY TO ACADEMIC/BUREAUCRATIC NORMS?`;
 
-// PHASE 1: Complete protocol with all questions
+// PHASE 1: Complete protocol with all questions exactly as specified
 function createPhase1Prompt(text: string, questions: string): string {
-  return `Analyze this text and answer ALL questions below with supporting quotes.
+  return `Answer these questions in connection with this text. A score of N/100 (e.g. 73/100) means that (100-N)/100 (e.g. 27/100) outperform the author with respect to the parameter defined by the question. You are not grading; you are answering these questions. You do not use a risk-averse standard; you do not attempt to be diplomatic; you do not attempt to comply with risk-averse, medium-range IQ, academic norms. You do not make assumptions about the level of the paper; it could be a work of the highest excellence and genius, or it could be the work of a moron. If a work is a work of genius, you say that, and you say why; you do not shy away from giving what might conventionally be regarded as excessively "superlative" scores; you give it the score it deserves, not the score that a midwit committee would say it deserves. Think very very very hard about your answers; do not default to cookbook, midwit evaluation protocols.
 
-MANDATORY: Answer EVERY question with a quote from the text. Do not give credit merely for jargon or authorities - focus on substance.
+METAPOINT 1: This is not a grading app. You grade the intelligence of what you are given. If you are given brilliant fragment, you give it a high score. You are not grading essays. You are not looking for completeness. You tell the LLM not to 'grade'; their job is to answer the questions, period, and to do so on the basis of the text given, making zero assumptions about whether it is complete or incomplete.
+
+METAPOINT 2: Do not overvalue turns of phrase. An author speaking confidently is not necessarily "shutting down modes of inquiry". By putting a clear stake in the ground, he is probably opening them. Casual speech does not mean disorganized thoughts. Don't judge a book by its cover.
+
+METAPOINT 3: Start by summarizing the text and categorizing it.
+
+METAPOINT 4: Do not change the grading based on the category of the text: if a text is categorized as 'advanced scholarship', still evaluate it with respect to the general population, not with respect only to 'advanced scholarly works.'
+
+METAPOINT 5: This is not a grading app. Do not penalize boldness. Do not take points away for insights that, if correct, stand on their own. Get rid of the idea that "argumentation" is what makes something smart; it isn't. What makes something smart is that it is smart (insightful). Period.
 
 ${questions}
-
-Format as:
-1. IS IT INSIGHTFUL? [Yes/No + brief reason]
-   Quote: "[exact text passage]"
-
-Continue for ALL questions.
-
-IMPORTANT: A score of N/100 means (100-N)/100 people outperform the author. You are not grading; you are answering questions. Do not use risk-averse academic norms.
 
 End with: FINAL SCORE: [NUMBER]/100
 
@@ -53,30 +53,34 @@ TEXT:
 ${text}`;
 }
 
-// PHASE 2: Simplified pushback
+// PHASE 2: Pushback exactly as specified
 function createPhase2Prompt(score: number, text: string, questions: string): string {
-  return `Your initial score was ${score}/100. Reconsider - are you being too conservative?
+  const peopleOutperforming = 100 - score;
+  return `Your position is that ${peopleOutperforming}/100 outperform the author with respect to the cognitive metric defined by the question: that is your position, am I right? And are you sure about that?
 
-Re-analyze and answer the 18 questions with quotes:
+Answer the following questions about the text de novo:
 
 ${questions}
 
-Format with quotes for each answer.
 End with: FINAL SCORE: [NUMBER]/100
 
 TEXT:
 ${text}`;
 }
 
-// PHASE 3: Simplified metric check
+// PHASE 3: Walmart metric check exactly as specified
 function createPhase3Prompt(score: number): string {
-  return `Score ${score}/100 means ${100-score} people outperform this author. Is this realistic?
+  const peopleOutperforming = 100 - score;
+  return `You ask the LLM if its numerical scores (N/100, e.g. 99/100, 42/100) are consistent with the fact that those are to be taken to mean that (100-N) people out of 100 outperform the author in the relevant respect. So if a score of ${score}/100 is awarded to a paper, that means that ${peopleOutperforming}/100 people in Walmart are running rings around this person. Is this consistent with your assessment?
+
 FINAL SCORE: [NUMBER]/100`;
 }
 
-// PHASE 4: Final validation 
+// PHASE 4: Accept and report what the LLM says
 function createPhase4Prompt(): string {
-  return `Final check complete. FINAL SCORE: [NUMBER]/100`;
+  return `At this point, you accept and report what the LLM says.
+
+FINAL SCORE: [NUMBER]/100`;
 }
 
 // Text chunking function for large texts - 500 words per chunk

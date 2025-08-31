@@ -635,20 +635,19 @@ export async function registerRoutes(app: Express): Promise<Express> {
       
       const { executeComprehensiveProtocol } = await import('./services/fourPhaseProtocol');
       
-      // Create a custom streaming version that sends updates
+      // Create a streaming version that shows each phase
       try {
-        res.write(`📊 PHASE 1: Initial Analysis\n`);
-        res.write(`Analyzing ${text.length} characters with full protocol...\n\n`);
+        res.write(`📊 PHASE 1: Answering 28 Questions\n`);
+        res.write(`Analyzing ${text.length} characters with the complete 4-phase protocol...\n\n`);
         
-        const result = await executeComprehensiveProtocol(
+        // Import and run a modified version that can stream updates
+        const { executeStreamingComprehensiveProtocol } = await import('./services/streamingProtocol');
+        
+        await executeStreamingComprehensiveProtocol(
           text,
-          actualProvider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek'
+          actualProvider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek',
+          res
         );
-        
-        res.write(`✅ Analysis Complete!\n\n`);
-        res.write(`📈 Final Score: ${result.overallScore}/100\n\n`);
-        res.write(`📄 DETAILED ANALYSIS:\n\n`);
-        res.write(result.formattedReport || result.analysis);
         
       } catch (error: any) {
         res.write(`❌ ERROR: ${error.message}\n`);
