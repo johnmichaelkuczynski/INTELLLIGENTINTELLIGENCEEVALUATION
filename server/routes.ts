@@ -1103,7 +1103,7 @@ START WITH SUMMARY AND CATEGORY, then answer questions. End with conclusion.
 PROVIDE A FINAL VALIDATED SCORE OUT OF 100 IN THE FORMAT: SCORE: X/100
 `.trim();
 
-      // Stream from OpenAI
+      // Stream from OpenAI with immediate flushing
       if (provider === 'openai') {
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
@@ -1142,8 +1142,11 @@ PROVIDE A FINAL VALIDATED SCORE OUT OF 100 IN THE FORMAT: SCORE: X/100
                 const parsed = JSON.parse(data);
                 const content = parsed.choices?.[0]?.delta?.content || '';
                 if (content) {
-                  // Stream the raw content immediately
                   res.write(content);
+                  // Force immediate transmission
+                  if (typeof res.flush === 'function') {
+                    res.flush();
+                  }
                 }
               } catch (e) {
                 // Skip invalid JSON

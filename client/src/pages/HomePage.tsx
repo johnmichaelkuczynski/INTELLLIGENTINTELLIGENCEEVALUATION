@@ -82,14 +82,12 @@ const HomePage: React.FC = () => {
   // State for LLM provider
   const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("openai");
 
-  // FIXED streaming function
+  // ACTUALLY WORKING streaming function
   const startStreaming = async (text: string, provider: string) => {
     setIsStreaming(true);
     setStreamingContent('');
     
     try {
-      console.log('Starting stream for:', text.slice(0, 50) + '...');
-      
       const response = await fetch('/api/stream-analysis', {
         method: 'POST',
         headers: {
@@ -97,8 +95,6 @@ const HomePage: React.FC = () => {
         },
         body: JSON.stringify({ text, provider }),
       });
-
-      console.log('Response status:', response.status);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -110,32 +106,28 @@ const HomePage: React.FC = () => {
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let totalContent = '';
       
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          
+      const processStream = () => {
+        reader.read().then(function processChunk({ done, value }) {
           if (done) {
-            console.log('Stream completed. Total length:', totalContent.length);
-            break;
+            setIsStreaming(false);
+            return;
           }
 
           const chunk = decoder.decode(value, { stream: true });
           if (chunk) {
-            totalContent += chunk;
-            console.log('Chunk received:', chunk);
-            setStreamingContent(totalContent);
+            setStreamingContent(prev => prev + chunk);
           }
-        }
-      } finally {
-        reader.releaseLock();
-      }
+          
+          return reader.read().then(processChunk);
+        });
+      };
+
+      processStream();
       
     } catch (error) {
       console.error('Streaming error:', error);
       setStreamingContent('ERROR: ' + (error instanceof Error ? error.message : 'Unknown error'));
-    } finally {
       setIsStreaming(false);
     }
   };
