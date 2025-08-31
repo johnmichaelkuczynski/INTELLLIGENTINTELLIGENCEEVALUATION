@@ -30,6 +30,375 @@ interface AIDetectionResult {
   probability: number;
 }
 
+// Map ZHI names to actual provider names
+function mapZhiToProvider(zhiName: string): string {
+  const mapping: Record<string, string> = {
+    'zhi1': 'openai',
+    'zhi2': 'anthropic', 
+    'zhi3': 'deepseek',
+    'zhi4': 'perplexity'
+  };
+  return mapping[zhiName] || zhiName;
+}
+
+// REAL-TIME STREAMING: Case Assessment for ALL ZHI providers
+async function streamCaseAssessment(text: string, provider: string, res: any) {
+  const prompt = `Assess how well this text makes its case. Analyze argument effectiveness, proof quality, claim credibility:
+
+${text}
+
+Provide detailed analysis of the argument's strengths and weaknesses.`;
+
+  if (provider === 'openai') {
+    // ZHI 1: OpenAI streaming
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [{ role: 'user', content: prompt }],
+        stream: true,
+        max_tokens: 4000,
+        temperature: 0.7,
+      }),
+    });
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          if (data === '[DONE]') continue;
+          
+          try {
+            const parsed = JSON.parse(data);
+            const content = parsed.choices?.[0]?.delta?.content || '';
+            if (content) {
+              res.write(content);
+              (res as any).flush?.();
+            }
+          } catch (e) {}
+        }
+      }
+    }
+  } else if (provider === 'anthropic') {
+    // ZHI 2: Anthropic streaming
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': process.env.ANTHROPIC_API_KEY!,
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 4000,
+        stream: true,
+        messages: [{ role: 'user', content: prompt }]
+      }),
+    });
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
+              res.write(parsed.delta.text);
+              (res as any).flush?.();
+            }
+          } catch (e) {}
+        }
+      }
+    }
+  } else if (provider === 'deepseek') {
+    // ZHI 3: DeepSeek streaming
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [{ role: 'user', content: prompt }],
+        stream: true,
+        max_tokens: 4000,
+      }),
+    });
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          if (data === '[DONE]') continue;
+          
+          try {
+            const parsed = JSON.parse(data);
+            const content = parsed.choices?.[0]?.delta?.content || '';
+            if (content) {
+              res.write(content);
+              (res as any).flush?.();
+            }
+          } catch (e) {}
+        }
+      }
+    }
+  } else if (provider === 'perplexity') {
+    // ZHI 4: Perplexity streaming
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-sonar-small-128k-online',
+        messages: [{ role: 'user', content: prompt }],
+        stream: true,
+        max_tokens: 4000,
+      }),
+    });
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          if (data === '[DONE]') continue;
+          
+          try {
+            const parsed = JSON.parse(data);
+            const content = parsed.choices?.[0]?.delta?.content || '';
+            if (content) {
+              res.write(content);
+              (res as any).flush?.();
+            }
+          } catch (e) {}
+        }
+      }
+    }
+  }
+  res.end();
+}
+
+// REAL-TIME STREAMING: Fiction Assessment for ALL ZHI providers
+async function streamFictionAssessment(text: string, provider: string, res: any) {
+  const prompt = `Assess this fiction text for literary quality, narrative effectiveness, character development, and prose style:
+
+${text}
+
+Provide detailed analysis of literary merit, character development, plot structure, and creative intelligence.`;
+
+  if (provider === 'openai') {
+    // ZHI 1: OpenAI streaming
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [{ role: 'user', content: prompt }],
+        stream: true,
+        max_tokens: 4000,
+        temperature: 0.7,
+      }),
+    });
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          if (data === '[DONE]') continue;
+          
+          try {
+            const parsed = JSON.parse(data);
+            const content = parsed.choices?.[0]?.delta?.content || '';
+            if (content) {
+              res.write(content);
+              (res as any).flush?.();
+            }
+          } catch (e) {}
+        }
+      }
+    }
+  } else if (provider === 'anthropic') {
+    // ZHI 2: Anthropic streaming
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': process.env.ANTHROPIC_API_KEY!,
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 4000,
+        stream: true,
+        messages: [{ role: 'user', content: prompt }]
+      }),
+    });
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
+              res.write(parsed.delta.text);
+              (res as any).flush?.();
+            }
+          } catch (e) {}
+        }
+      }
+    }
+  } else if (provider === 'deepseek') {
+    // ZHI 3: DeepSeek streaming
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [{ role: 'user', content: prompt }],
+        stream: true,
+        max_tokens: 4000,
+      }),
+    });
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          if (data === '[DONE]') continue;
+          
+          try {
+            const parsed = JSON.parse(data);
+            const content = parsed.choices?.[0]?.delta?.content || '';
+            if (content) {
+              res.write(content);
+              (res as any).flush?.();
+            }
+          } catch (e) {}
+        }
+      }
+    }
+  } else if (provider === 'perplexity') {
+    // ZHI 4: Perplexity streaming
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-sonar-small-128k-online',
+        messages: [{ role: 'user', content: prompt }],
+        stream: true,
+        max_tokens: 4000,
+      }),
+    });
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          if (data === '[DONE]') continue;
+          
+          try {
+            const parsed = JSON.parse(data);
+            const content = parsed.choices?.[0]?.delta?.content || '';
+            if (content) {
+              res.write(content);
+              (res as any).flush?.();
+            }
+          } catch (e) {}
+        }
+      }
+    }
+  }
+  res.end();
+}
+
 export async function registerRoutes(app: Express): Promise<Express> {
   
   // API health check endpoint
@@ -63,77 +432,10 @@ export async function registerRoutes(app: Express): Promise<Express> {
     });
   });
 
-  // Streaming quick analysis endpoint
-  app.post("/api/quick-analysis/stream", async (req: Request, res: Response) => {
-    try {
-      const { text, provider = 'deepseek', evaluationType = 'intelligence' } = req.body;
-
-      if (!text || typeof text !== 'string') {
-        return res.status(400).json({ 
-          error: "Text is required and must be a string" 
-        });
-      }
-
-      // Validate evaluation type
-      const validTypes = ['intelligence', 'originality', 'cogency', 'overall_quality'];
-      if (!validTypes.includes(evaluationType)) {
-        return res.status(400).json({
-          error: `Invalid evaluation type. Must be one of: ${validTypes.join(', ')}`
-        });
-      }
-
-      // Set up Server-Sent Events
-      res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Cache-Control'
-      });
-
-      const sendProgress = (progress: number, message: string, data?: any) => {
-        res.write(`data: ${JSON.stringify({ progress, message, data, type: 'progress' })}\n\n`);
-      };
-
-      const sendComplete = (result: any) => {
-        res.write(`data: ${JSON.stringify({ type: 'complete', result })}\n\n`);
-        res.end();
-      };
-
-      const sendError = (error: string) => {
-        res.write(`data: ${JSON.stringify({ type: 'error', error })}\n\n`);
-        res.end();
-      };
-
-      try {
-        sendProgress(10, `Starting ${evaluationType} analysis with ${provider}...`);
-        
-        const { performQuickAnalysis } = await import('./services/quickAnalysis');
-        
-        sendProgress(30, `Analyzing text content...`);
-        const result = await performQuickAnalysis(text, provider, evaluationType);
-        
-        sendProgress(90, `Finalizing analysis...`);
-        sendComplete({ success: true, result });
-        
-      } catch (error: any) {
-        console.error("Streaming quick analysis error:", error);
-        sendError(error.message || "Quick analysis failed");
-      }
-      
-    } catch (error: any) {
-      console.error("Quick analysis streaming error:", error);
-      res.status(500).json({ 
-        error: true, 
-        message: error.message || "Quick analysis failed" 
-      });
-    }
-  });
-
   // Quick analysis API endpoint with evaluation type support
   app.post("/api/quick-analysis", async (req: Request, res: Response) => {
     try {
-      const { text, provider = 'deepseek', evaluationType = 'intelligence' } = req.body;
+      const { text, provider = 'zhi1', evaluationType = 'intelligence' } = req.body;
 
       if (!text || typeof text !== 'string') {
         return res.status(400).json({ 
@@ -165,80 +467,10 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
-  // Streaming quick comparison endpoint
-  app.post("/api/quick-compare/stream", async (req: Request, res: Response) => {
-    try {
-      const { documentA, documentB, provider = 'deepseek', evaluationType = 'intelligence' } = req.body;
-
-      if (!documentA || !documentB) {
-        return res.status(400).json({ 
-          error: "Both documents are required" 
-        });
-      }
-
-      // Validate evaluation type
-      const validTypes = ['intelligence', 'originality', 'cogency', 'overall_quality'];
-      if (!validTypes.includes(evaluationType)) {
-        return res.status(400).json({
-          error: `Invalid evaluation type. Must be one of: ${validTypes.join(', ')}`
-        });
-      }
-
-      // Set up Server-Sent Events
-      res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Cache-Control'
-      });
-
-      const sendProgress = (progress: number, message: string, data?: any) => {
-        res.write(`data: ${JSON.stringify({ progress, message, data, type: 'progress' })}\n\n`);
-      };
-
-      const sendComplete = (result: any) => {
-        res.write(`data: ${JSON.stringify({ type: 'complete', result })}\n\n`);
-        res.end();
-      };
-
-      const sendError = (error: string) => {
-        res.write(`data: ${JSON.stringify({ type: 'error', error })}\n\n`);
-        res.end();
-      };
-
-      try {
-        sendProgress(10, `Starting ${evaluationType} comparison with ${provider}...`);
-        
-        const { performQuickComparison } = await import('./services/quickAnalysis');
-        
-        sendProgress(30, `Analyzing first document...`);
-        sendProgress(60, `Analyzing second document...`);
-        sendProgress(80, `Comparing documents...`);
-        
-        const result = await performQuickComparison(documentA, documentB, provider, evaluationType);
-        
-        sendProgress(95, `Finalizing comparison...`);
-        sendComplete(result);
-        
-      } catch (error: any) {
-        console.error("Streaming quick comparison error:", error);
-        sendError(error.message || "Quick comparison failed");
-      }
-      
-    } catch (error: any) {
-      console.error("Quick comparison streaming error:", error);
-      res.status(500).json({ 
-        error: true, 
-        message: error.message || "Quick comparison failed" 
-      });
-    }
-  });
-
   // Quick comparison API endpoint with evaluation type support
   app.post("/api/quick-compare", async (req: Request, res: Response) => {
     try {
-      const { documentA, documentB, provider = 'deepseek', evaluationType = 'intelligence' } = req.body;
+      const { documentA, documentB, provider = 'zhi1', evaluationType = 'intelligence' } = req.body;
 
       if (!documentA || !documentB) {
         return res.status(400).json({ 
@@ -270,99 +502,10 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
-  // Streaming comprehensive 4-phase evaluation endpoint
-  app.post("/api/cognitive-evaluate/stream", async (req: Request, res: Response) => {
-    try {
-      const { content, provider = 'deepseek', evaluationType = 'intelligence' } = req.body;
-
-      if (!content || typeof content !== 'string') {
-        return res.status(400).json({ 
-          error: "Content is required and must be a string" 
-        });
-      }
-
-      // Validate evaluation type
-      const validTypes = ['intelligence', 'originality', 'cogency', 'overall_quality'];
-      if (!validTypes.includes(evaluationType)) {
-        return res.status(400).json({
-          error: `Invalid evaluation type. Must be one of: ${validTypes.join(', ')}`
-        });
-      }
-
-      // Set up Server-Sent Events
-      res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Cache-Control'
-      });
-
-      const sendProgress = (progress: number, message: string, data?: any) => {
-        res.write(`data: ${JSON.stringify({ progress, message, data, type: 'progress' })}\n\n`);
-      };
-
-      const sendComplete = (result: any) => {
-        res.write(`data: ${JSON.stringify({ type: 'complete', result })}\n\n`);
-        res.end();
-      };
-
-      const sendError = (error: string) => {
-        res.write(`data: ${JSON.stringify({ type: 'error', error })}\n\n`);
-        res.end();
-      };
-
-      try {
-        sendProgress(5, `Initializing 4-phase ${evaluationType} evaluation...`);
-        
-        const { executeFourPhaseProtocol } = await import('./services/fourPhaseProtocol');
-        
-        sendProgress(20, `Phase 1: Initial assessment with anti-diplomatic instructions...`);
-        sendProgress(40, `Phase 2: Deep analytical questioning across cognitive dimensions...`);
-        sendProgress(65, `Phase 3: Revision and reconciliation of discrepancies...`);
-        sendProgress(85, `Phase 4: Final pushback validation...`);
-        
-        const evaluation = await executeFourPhaseProtocol(
-          content, 
-          provider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek',
-          evaluationType as 'intelligence' | 'originality' | 'cogency' | 'overall_quality'
-        );
-        
-        sendProgress(95, `Generating final comprehensive report...`);
-        
-        sendComplete({
-          success: true,
-          evaluation: {
-            formattedReport: evaluation.formattedReport,
-            overallScore: evaluation.overallScore,
-            provider: evaluation.provider,
-            metadata: {
-              contentLength: content.length,
-              evaluationType: evaluationType,
-              timestamp: new Date().toISOString()
-            }
-          }
-        });
-        
-      } catch (error: any) {
-        console.error("Streaming 4-phase evaluation error:", error);
-        sendError(error.message || "4-phase evaluation failed");
-      }
-      
-    } catch (error: any) {
-      console.error("4-phase evaluation streaming error:", error);
-      res.status(500).json({
-        success: false,
-        error: `${req.body.evaluationType || 'cognitive'} evaluation failed`,
-        details: error.message
-      });
-    }
-  });
-
   // COMPREHENSIVE 4-PHASE EVALUATION using exact protocol with evaluation type support
   app.post("/api/cognitive-evaluate", async (req: Request, res: Response) => {
     try {
-      const { content, provider = 'deepseek', evaluationType = 'intelligence' } = req.body;
+      const { content, provider = 'zhi1', evaluationType = 'intelligence' } = req.body;
 
       if (!content || typeof content !== 'string') {
         return res.status(400).json({ 
@@ -493,9 +636,10 @@ export async function registerRoutes(app: Express): Promise<Express> {
         
         try {
           // Use the unified executeFourPhaseProtocol function for intelligence evaluation
+          const actualProvider = mapZhiToProvider(provider.toLowerCase());
           pureResult = await executeFourPhaseProtocol(
             content,
-            provider.toLowerCase() as 'openai' | 'anthropic' | 'perplexity' | 'deepseek',
+            actualProvider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek',
             'intelligence'
           );
           
@@ -591,66 +735,6 @@ export async function registerRoutes(app: Express): Promise<Express> {
       return res.status(500).json({ 
         error: true, 
         message: error.message || "Failed to compare documents" 
-      });
-    }
-  });
-
-  // Streaming intelligence comparison endpoint
-  app.post("/api/intelligence-compare/stream", async (req: Request, res: Response) => {
-    try {
-      const { documentA, documentB, provider = "deepseek" } = req.body;
-      
-      if (!documentA || !documentB) {
-        return res.status(400).json({ error: "Both documents are required for intelligence comparison" });
-      }
-      
-      // Set up Server-Sent Events
-      res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Cache-Control'
-      });
-
-      const sendProgress = (progress: number, message: string, data?: any) => {
-        res.write(`data: ${JSON.stringify({ progress, message, data, type: 'progress' })}\n\n`);
-      };
-
-      const sendComplete = (result: any) => {
-        res.write(`data: ${JSON.stringify({ type: 'complete', result })}\n\n`);
-        res.end();
-      };
-
-      const sendError = (error: string) => {
-        res.write(`data: ${JSON.stringify({ type: 'error', error })}\n\n`);
-        res.end();
-      };
-
-      try {
-        sendProgress(10, `Starting pure intelligence comparison with ${provider.toUpperCase()}...`);
-        
-        const { performPureIntelligenceComparison } = await import('./services/pureComparison');
-        
-        sendProgress(25, `Phase 1: Analyzing first document...`);
-        sendProgress(50, `Phase 2: Analyzing second document...`);
-        sendProgress(75, `Phase 3: Generating comparative analysis...`);
-        sendProgress(90, `Finalizing intelligence comparison...`);
-        
-        const result = await performPureIntelligenceComparison(documentA.content || documentA, documentB.content || documentB, provider);
-        
-        sendComplete(result);
-        
-      } catch (error: any) {
-        console.error("Streaming intelligence comparison error:", error);
-        sendError(error.message || "Intelligence comparison failed");
-      }
-      
-    } catch (error: any) {
-      console.error("Intelligence comparison streaming error:", error);
-      res.status(500).json({ 
-        error: true, 
-        message: error.message || "Failed to perform pure intelligence comparison" 
       });
     }
   });
@@ -842,94 +926,6 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
   
-  // Intelligent Rewrite with 4-Phase Protocol
-  app.post("/api/intelligent-rewrite", async (req: Request, res: Response) => {
-    try {
-      const { text, customInstructions, provider = 'deepseek', userEmail } = req.body;
-      
-      if (!text || typeof text !== 'string') {
-        return res.status(400).json({ 
-          error: "Text is required and must be a string" 
-        });
-      }
-      
-      // Import the intelligent rewrite service
-      const { performIntelligentRewrite } = await import('./services/intelligentRewrite');
-      
-      // Execute intelligent rewrite
-      console.log(`EXECUTING INTELLIGENT REWRITE WITH ${provider.toUpperCase()}`);
-      const result = await performIntelligentRewrite({
-        text,
-        customInstructions,
-        provider
-      });
-      
-      // Store the rewrite results in database if userEmail provided
-      if (userEmail) {
-        try {
-          // Store original document
-          const originalDoc = await storage.createDocument({
-            content: result.originalText,
-            userEmail,
-            complexity: 'medium'
-          });
-          
-          // Store rewritten document  
-          const rewrittenDoc = await storage.createDocument({
-            content: result.rewrittenText,
-            userEmail,
-            complexity: 'medium'
-          });
-          
-          // Store original analysis (we would need to create this)
-          const originalAnalysis = await storage.createAnalysis({
-            documentId: originalDoc.id,
-            userEmail,
-            summary: `Original text scored ${result.originalScore}/100`,
-            overallScore: result.originalScore,
-            overallAssessment: 'Original text evaluation',
-            dimensions: {}
-          });
-          
-          // Store rewritten analysis
-          const rewrittenAnalysis = await storage.createAnalysis({
-            documentId: rewrittenDoc.id,
-            userEmail,
-            summary: `Rewritten text scored ${result.rewrittenScore}/100`,
-            overallScore: result.rewrittenScore,
-            overallAssessment: 'Rewritten text evaluation',
-            dimensions: {}
-          });
-          
-          // Store rewrite record
-          await storage.createIntelligentRewrite({
-            originalDocumentId: originalDoc.id,
-            rewrittenDocumentId: rewrittenDoc.id,
-            originalAnalysisId: originalAnalysis.id,
-            rewrittenAnalysisId: rewrittenAnalysis.id,
-            userEmail,
-            provider: result.provider,
-            customInstructions: customInstructions || null,
-            originalScore: result.originalScore,
-            rewrittenScore: result.rewrittenScore,
-            scoreImprovement: result.rewrittenScore - result.originalScore,
-            rewriteReport: result.rewriteReport
-          });
-        } catch (dbError) {
-          console.error("Error storing rewrite to database:", dbError);
-          // Continue without storing - don't fail the rewrite
-        }
-      }
-      
-      return res.json(result);
-    } catch (error: any) {
-      console.error("Error executing intelligent rewrite:", error);
-      return res.status(500).json({ 
-        error: true, 
-        message: error.message || "Failed to execute intelligent rewrite" 
-      });
-    }
-  });
 
   // Send simple email
   app.post("/api/share-simple-email", async (req: Request, res: Response) => {
@@ -1062,89 +1058,189 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
-  // Case assessment endpoint
+  // Case assessment endpoint - REAL-TIME STREAMING
   app.post("/api/case-assessment", async (req: Request, res: Response) => {
     try {
-      const { text, provider = "openai", documentId } = req.body;
+      const { text, provider = "zhi1" } = req.body;
       
       if (!text || typeof text !== 'string') {
         return res.status(400).json({ error: "Text content is required for case assessment" });
       }
       
-      const validProviders = ['openai', 'anthropic', 'perplexity', 'deepseek'];
-      if (!validProviders.includes(provider)) {
-        return res.status(400).json({ error: `Provider must be one of: ${validProviders.join(', ')}` });
+      // Set headers for real-time streaming
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('X-Accel-Buffering', 'no');
+      
+      console.log(`Starting REAL-TIME case assessment streaming with ${provider} for text of length: ${text.length}`);
+      
+      const actualProvider = mapZhiToProvider(provider);
+      await streamCaseAssessment(text, actualProvider, res);
+      
+    } catch (error: any) {
+      console.error("Error in case assessment streaming:", error);
+      res.write(`ERROR: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      res.end();
+    }
+  });
+
+  // Fiction Assessment API endpoint - REAL-TIME STREAMING
+  app.post('/api/fiction-assessment', async (req, res) => {
+    try {
+      const { text, provider = 'zhi1' } = req.body;
+      
+      if (!text) {
+        return res.status(400).json({ error: "Text is required" });
       }
       
-      console.log(`Starting case assessment with ${provider} for text of length: ${text.length}`);
+      // Set headers for real-time streaming
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('X-Accel-Buffering', 'no');
       
-      const { performCaseAssessment } = await import('./services/caseAssessment');
-      const result = await performCaseAssessment(text, provider);
+      console.log(`Starting REAL-TIME fiction assessment streaming with ${provider} for text of length: ${text.length}`);
       
-      // Store the case assessment in the database if documentId is provided
-      if (documentId) {
-        try {
-          const { db } = await import('./db');
-          const { caseAssessments } = await import('@shared/schema');
-          
-          await db.insert(caseAssessments).values({
-            documentId: parseInt(documentId),
-            proofEffectiveness: result.proofEffectiveness,
-            claimCredibility: result.claimCredibility,
-            nonTriviality: result.nonTriviality,
-            proofQuality: result.proofQuality,
-            functionalWriting: result.functionalWriting,
-            overallCaseScore: result.overallCaseScore,
-            detailedAssessment: result.detailedAssessment,
-          });
-          
-          console.log(`Case assessment saved to database for document ${documentId}`);
-        } catch (dbError) {
-          console.error("Failed to save case assessment to database:", dbError);
-          // Continue with response even if DB save fails
-        }
+      const actualProvider = mapZhiToProvider(provider);
+      await streamFictionAssessment(text, actualProvider, res);
+      
+    } catch (error: any) {
+      console.error("Error in fiction assessment streaming:", error);
+      res.write(`ERROR: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      res.end();
+    }
+  });
+
+  // Comprehensive cognitive analysis endpoint (4-phase protocol)
+  app.post("/api/analyze", async (req: Request, res: Response) => {
+    try {
+      console.log("COMPREHENSIVE ANALYSIS DEBUG - req.body:", JSON.stringify(req.body, null, 2));
+      console.log("COMPREHENSIVE ANALYSIS DEBUG - text type:", typeof req.body.text);
+      console.log("COMPREHENSIVE ANALYSIS DEBUG - text value:", req.body.text?.substring(0, 100));
+      
+      const { text, provider = "zhi1" } = req.body;
+      
+      if (!text || typeof text !== 'string') {
+        console.log("COMPREHENSIVE ANALYSIS ERROR - text validation failed:", { text: typeof text, hasText: !!text });
+        return res.status(400).json({ error: "Document content is required" });
       }
       
-      console.log(`Case assessment complete - Overall score: ${result.overallCaseScore}/100`);
+      console.log(`Starting comprehensive cognitive analysis with ${provider} for text of length: ${text.length}`);
       
-      return res.json({
+      const { executeComprehensiveProtocol } = await import('./services/fourPhaseProtocol');
+      const actualProvider = mapZhiToProvider(provider);
+      const result = await executeComprehensiveProtocol(text, actualProvider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek');
+      
+      console.log(`COMPREHENSIVE ANALYSIS RESULT PREVIEW: "${(result.analysis || '').substring(0, 200)}..."`);
+      console.log(`COMPREHENSIVE ANALYSIS RESULT LENGTH: ${(result.analysis || '').length} characters`);
+      
+      res.json({
         success: true,
-        provider,
-        result
+        analysis: {
+          id: Date.now(),
+          content: result.analysis,
+          overallScore: result.overallScore,
+          provider: result.provider,
+          evaluationType: result.evaluationType,
+          phases: result.phases,
+          formattedReport: result.formattedReport
+        }
       });
     } catch (error: any) {
-      console.error("Error in case assessment:", error);
-      return res.status(500).json({ 
-        error: "Failed to perform case assessment",
-        message: error.message 
+      console.error("Error in comprehensive cognitive analysis:", error);
+      res.status(500).json({ 
+        error: true, 
+        message: error.message || "Comprehensive analysis failed" 
       });
     }
   });
 
-  // Fiction Assessment API endpoint
-  app.post('/api/fiction-assessment', async (req, res) => {
+  // MISSING ENDPOINT: Quick Cognitive Analysis  
+  app.post("/api/cognitive-quick", async (req: Request, res: Response) => {
     try {
-      const { text, provider, documentId } = req.body;
+      const { text, provider = "zhi1" } = req.body;
       
-      if (!text || !provider) {
-        return res.status(400).json({ error: "Text and provider are required" });
+      if (!text || typeof text !== 'string') {
+        return res.status(400).json({ error: "Text content is required for analysis" });
       }
       
-      const { performFictionAssessment } = await import('./services/fictionAssessment');
-      const result = await performFictionAssessment(text, provider);
+      console.log(`Starting quick cognitive analysis with ${provider} for text of length: ${text.length}`);
       
-      console.log(`Fiction assessment complete - Overall score: ${result.overallFictionScore}/100`);
+      const { performQuickAnalysis } = await import('./services/quickAnalysis');
+      const actualProvider = mapZhiToProvider(provider);
+      const result = await performQuickAnalysis(text, actualProvider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek');
       
-      return res.json({
+      console.log(`ANALYSIS RESULT PREVIEW: "${(result.analysis || '').substring(0, 200)}..."`);
+      console.log(`ANALYSIS RESULT LENGTH: ${(result.analysis || '').length} characters`);
+      
+      res.json({
         success: true,
-        provider,
-        result
+        analysis: {
+          id: Date.now(),
+          formattedReport: result.analysis,
+          overallScore: result.intelligence_score,
+          provider: provider,
+          summary: result.analysis,
+          analysis: result.analysis,
+          cognitiveProfile: result.cognitive_profile,
+          keyInsights: result.key_insights
+        },
+        provider: provider,
+        metadata: {
+          contentLength: text.length,
+          timestamp: new Date().toISOString()
+        }
       });
+      
     } catch (error: any) {
-      console.error("Error in fiction assessment:", error);
-      return res.status(500).json({ 
-        error: "Failed to perform fiction assessment",
-        message: error.message 
+      console.error("Error in quick cognitive analysis:", error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // MISSING ENDPOINT: Main Analysis  
+  app.post("/api/analyze", async (req: Request, res: Response) => {
+    try {
+      const { text, provider = "zhi1" } = req.body;
+      
+      if (!text || typeof text !== 'string') {
+        return res.status(400).json({ error: "Text content is required for analysis" });
+      }
+      
+      console.log(`Starting comprehensive analysis with ${provider} for text of length: ${text.length}`);
+      
+      const { executeComprehensiveProtocol } = await import('./services/fourPhaseProtocol');
+      const actualProvider = mapZhiToProvider(provider);
+      const result = await executeComprehensiveProtocol(text, actualProvider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek');
+      
+      res.json({
+        success: true,
+        analysis: {
+          id: Date.now(),
+          formattedReport: result.analysis,
+          overallScore: result.overallScore || 0,
+          provider: provider,
+          summary: result.analysis,
+          analysis: result.analysis
+        },
+        provider: provider,
+        metadata: {
+          contentLength: text.length,
+          timestamp: new Date().toISOString()
+        }
+      });
+      
+    } catch (error: any) {
+      console.error("Error in comprehensive analysis:", error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   });
@@ -1176,7 +1272,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
   // ORIGINALITY EVALUATION API endpoint
   app.post("/api/originality-evaluate", async (req: Request, res: Response) => {
     try {
-      const { content, provider = 'deepseek', phase = 'comprehensive' } = req.body;
+      const { content, provider = 'zhi1', phase = 'comprehensive' } = req.body;
 
       if (!content || typeof content !== 'string') {
         return res.status(400).json({ 
@@ -1224,7 +1320,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
   // COGENCY EVALUATION API endpoint
   app.post("/api/cogency-evaluate", async (req: Request, res: Response) => {
     try {
-      const { content, provider = 'deepseek', phase = 'comprehensive' } = req.body;
+      const { content, provider = 'zhi1', phase = 'comprehensive' } = req.body;
 
       if (!content || typeof content !== 'string') {
         return res.status(400).json({ 
@@ -1272,7 +1368,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
   // OVERALL QUALITY EVALUATION API endpoint
   app.post("/api/overall-quality-evaluate", async (req: Request, res: Response) => {
     try {
-      const { content, provider = 'deepseek', phase = 'comprehensive' } = req.body;
+      const { content, provider = 'zhi1', phase = 'comprehensive' } = req.body;
 
       if (!content || typeof content !== 'string') {
         return res.status(400).json({ 
@@ -1314,6 +1410,168 @@ export async function registerRoutes(app: Express): Promise<Express> {
         error: "Overall quality evaluation failed",
         details: error.message
       });
+    }
+  });
+
+
+  // Real streaming analysis endpoint
+  app.post('/api/stream-analysis', async (req: Request, res: Response) => {
+    try {
+      const { text, provider = 'openai' } = req.body;
+
+      if (!text) {
+        return res.status(400).json({ error: 'Text is required' });
+      }
+
+      // Set headers for streaming plain text
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
+      
+      const prompt = `
+You are conducting a Phase 1 intelligence assessment with anti-diplomatic evaluation standards.
+
+TEXT TO ANALYZE:
+${text}
+
+CORE INTELLIGENCE QUESTIONS:
+
+IS IT INSIGHTFUL?
+DOES IT DEVELOP POINTS? (OR, IF IT IS A SHORT EXCERPT, IS THERE EVIDENCE THAT IT WOULD DEVELOP POINTS IF EXTENDED)?
+IS THE ORGANIZATION MERELY SEQUENTIAL (JUST ONE POINT AFTER ANOTHER, LITTLE OR NO LOGICAL SCAFFOLDING)? OR ARE THE IDEAS ARRANGED, NOT JUST SEQUENTIALLY BUT HIERARCHICALLY?
+IF THE POINTS IT MAKES ARE NOT INSIGHTFUL, DOES IT OPERATE SKILLFULLY WITH CANONS OF LOGIC/REASONING.
+ARE THE POINTS CLICHES? OR ARE THEY "FRESH"?
+DOES IT USE TECHNICAL JARGON TO OBFUSCATE OR TO RENDER MORE PRECISE?
+IS IT ORGANIC? DO POINTS DEVELOP IN AN ORGANIC, NATURAL WAY? DO THEY 'UNFOLD'? OR ARE THEY FORCED AND ARTIFICIAL?
+DOES IT OPEN UP NEW DOMAINS? OR, ON THE CONTRARY, DOES IT SHUT OFF INQUIRY (BY CONDITIONALIZING FURTHER DISCUSSION OF THE MATTERS ON ACCEPTANCE OF ITS INTERNAL AND POSSIBLY VERY FAULTY LOGIC)?
+IS IT ACTUALLY INTELLIGENT OR JUST THE WORK OF SOMEBODY WHO, JUDGING BY THE SUBJECT-MATTER, IS PRESUMED TO BE INTELLIGENT (BUT MAY NOT BE)?
+IS IT REAL OR IS IT PHONY?
+DO THE SENTENCES EXHIBIT COMPLEX AND COHERENT INTERNAL LOGIC?
+IS THE PASSAGE GOVERNED BY A STRONG CONCEPT? OR IS THE ONLY ORGANIZATION DRIVEN PURELY BY EXPOSITORY (AS OPPOSED TO EPISTEMIC) NORMS?
+IS THERE SYSTEM-LEVEL CONTROL OVER IDEAS? IN OTHER WORDS, DOES THE AUTHOR SEEM TO RECALL WHAT HE SAID EARLIER AND TO BE IN A POSITION TO INTEGRATE IT INTO POINTS HE HAS MADE SINCE THEN?
+ARE THE POINTS 'REAL'? ARE THEY FRESH? OR IS SOME INSTITUTION OR SOME ACCEPTED VEIN OF PROPAGANDA OR ORTHODOXY JUST USING THE AUTHOR AS A MOUTH PIECE?
+IS THE WRITING EVASIVE OR DIRECT?
+ARE THE STATEMENTS AMBIGUOUS?
+DOES THE PROGRESSION OF THE TEXT DEVELOP ACCORDING TO WHO SAID WHAT OR ACCORDING TO WHAT ENTAILS OR CONFIRMS WHAT?
+DOES THE AUTHOR USE OTHER AUTHORS TO DEVELOP HIS IDEAS OR TO CLOAK HIS OWN LACK OF IDEAS?
+
+ANSWER THESE QUESTIONS IN CONNECTION WITH THIS TEXT. A SCORE OF N/100 (E.G. 73/100) MEANS THAT (100-N)/100 (E.G. 27/100) OUTPERFORM THE AUTHOR WITH RESPECT TO THE PARAMETER DEFINED BY THE QUESTION. YOU ARE NOT GRADING; YOU ARE ANSWERING THESE QUESTIONS. YOU DO NOT USE A RISK-AVERSE STANDARD; YOU DO NOT ATTEMPT TO BE DIPLOMATIC; YOU DO NOT ATTEMPT TO COMPLY WITH RISK-AVERSE, MEDIUM-RANGE IQ, ACADEMIC NORMS. YOU DO NOT MAKE ASSUMPTIONS ABOUT THE LEVEL OF THE PAPER; IT COULD BE A WORK OF THE HIGHEST EXCELLENCE AND GENIUS, OR IT COULD BE THE WORK OF A MORON.
+
+IF A WORK IS A WORK OF GENIUS, YOU SAY THAT, AND YOU SAY WHY; YOU DO NOT SHY AWAY FROM GIVING WHAT MIGHT CONVENTIONALLY BE REGARDED AS EXCESSIVELY "SUPERLATIVE" SCORES; YOU GIVE IT THE SCORE IT DESERVES, NOT THE SCORE THAT A MIDWIT COMMITTEE WOULD SAY IT DESERVES.
+
+THINK VERY VERY VERY HARD ABOUT YOUR ANSWERS; DO NOT DEFAULT TO COOKBOOK, MIDWIT EVALUATION PROTOCOLS.
+
+DO NOT GIVE CREDIT MERELY FOR USE OF JARGON OR FOR REFERENCING AUTHORITIES. FOCUS ON SUBSTANCE. ONLY GIVE POINTS FOR SCHOLARLY REFERENCES/JARGON IF THEY UNAMBIGUOUSLY INCREASE SUBSTANCE.
+
+METAPOINT 1: THIS IS NOT A GRADING APP. YOU GRADE THE INTELLIGENCE OF WHAT YOU ARE GIVEN. IF YOU ARE GIVEN BRILLIANT FRAGMENT, YOU GIVE IT A HIGH SCORE. YOU ARE NOT GRADING ESSAYS. YOU ARE NOT LOOKING FOR COMPLETENESS.
+
+METAPOINT 2: DO NOT OVERVALUE TURNS OF PHRASE. AN AUTHOR SPEAKING CONFIDENTLY IS NOT NECESSARILY "SHUTTING DOWN MODES OF INQUIRY". IN FACT, IT IS LIKELY TO BE THE OPPOSITE; BY PUTTING A CLEAR STAKE IN THE GROUND, HE IS PROBABLY OPENING THEM. ANOTHER EXAMPLE: CASUAL SPEECH DOES NOT MEAN DISORGANIZED THOUGHTS. DON'T JUDGE A BOOK BY ITS COVER.
+
+METAPOINT 3: THE APP SHOULD ALWAYS START BY SUMMARIZING THE TEXT AND ALSO CATEGORIZING IT.
+
+METAPOINT 4: THE APP SHOULD NOT CHANGE THE GRADING BASED ON THE CATEGORY OF THE TEXT: IF A TEXT IS CATEGORIZED AS 'ADVANCED SCHOLARSHIP', IT SHOULD STILL EVALUATE IT WITH RESPECT TO THE GENERAL POPULATION, NOT WITH RESPECT ONLY TO 'ADVANCED SCHOLARLY WORKS.'
+
+METAPOINT 5: THIS IS NOT A GRADING APP. DO NOT PENALIZE BOLDNESS. DO NOT TAKE POINTS AWAY FOR INSIGHTS THAT, IF CORRECT, STAND ON THEIR OWN. GET RID OF THE IDEA THAT "ARGUMENTATION" IS WHAT MAKES SOMETHING SMART; IT ISN'T. WHAT MAKES SOMETHING SMART IS THAT IT IS SMART (INSIGHTFUL). PERIOD.
+
+PARADIGM OF PHONY PSEUDO-INTELLECTUAL TEXT:
+In this dissertation, I critically examine the philosophy of transcendental empiricism. Transcendental empiricism is, among other things, a philosophy of mental content. It attempts to dissolve an epistemological dilemma of mental content by splitting the difference between two diametrically opposed accounts of content.
+
+This shows: 1. DOCTRINES ARE LABELLED, BUT NEVER DEFINED; AND THEIR MEANINGS CANNOT BE INFERRED FROM CONTEXT 2. THIS PASSAGE CONTAINS FREE VARIABLES. FOR EXAMPLE, "among other things" QUALIFICATION IS NEVER CLARIFIED 3. THE AUTHOR NEVER IDENTIFIES THE "EPISTEMOLOGICAL DILEMMA" IN QUESTION.
+
+**ABSOLUTE QUOTATION REQUIREMENTS - NO EXCEPTIONS**:
+
+1. **INTRODUCTION**: Must include AT LEAST THREE direct quotes from the source text
+2. **EVERY SINGLE QUESTION**: Must be substantiated with AT LEAST ONE direct quote from the source text
+3. **CONCLUSION**: Must include AT LEAST THREE direct quotes from the source text
+
+**THIS APPLIES REGARDLESS OF TEXT LENGTH**: Whether the passage is 3 words or 10 million words, you MUST quote directly from it.
+
+**QUOTATION FORMAT**: Use exact quotation marks: "exact text from source"
+
+**STRUCTURE REQUIREMENTS**:
+- INTRODUCTION with 3+ quotes: "quote 1" ... "quote 2" ... "quote 3"
+- SUMMARY AND CATEGORY with quotes
+- Each question answer with quotes: Q1: [Answer with "direct quote"] 
+- CONCLUSION with 3+ quotes: "quote 1" ... "quote 2" ... "quote 3"
+
+**NO ANSWER WITHOUT QUOTES**: If you cannot find a relevant quote for any question, you must still quote something from the text and explain its relevance.
+
+PROVIDE A FINAL VALIDATED SCORE OUT OF 100 IN THE FORMAT: SCORE: X/100
+`.trim();
+
+      // Stream from OpenAI with immediate flushing
+      console.log(`Calling OpenAI API with model gpt-4o...`);
+      
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [{ role: 'user', content: prompt }],
+          stream: true,
+          max_tokens: 4000,
+          temperature: 0.7,
+        }),
+      });
+
+      console.log(`OpenAI response status: ${response.status}`);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`OpenAI API Error: ${response.status} - ${errorText}`);
+        throw new Error(`OpenAI API Error: ${response.status} - ${errorText}`);
+      }
+
+      if (!response.body) {
+        throw new Error('No response body from OpenAI');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      console.log('Starting to read streaming response...');
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          console.log('Streaming completed');
+          break;
+        }
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+            
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content || '';
+              if (content) {
+                res.write(content);
+                // Force flush - remove type check
+                (res as any).flush?.();
+              }
+            } catch (e) {
+              // Skip invalid JSON
+            }
+          }
+        }
+      }
+      
+      res.end();
+      
+    } catch (error) {
+      console.error('Streaming error:', error);
+      res.write(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      res.end();
     }
   });
 

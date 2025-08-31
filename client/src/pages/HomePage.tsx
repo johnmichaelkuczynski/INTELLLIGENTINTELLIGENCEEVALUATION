@@ -12,13 +12,11 @@ import CaseAssessmentModal from "@/components/CaseAssessmentModal";
 import { DocumentComparisonModal } from "@/components/DocumentComparisonModal";
 import { FictionAssessmentModal } from "@/components/FictionAssessmentModal";
 import { FictionComparisonModal } from "@/components/FictionComparisonModal";
-import IntelligentRewriteModal from "@/components/IntelligentRewriteModal";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Brain, Trash2, FileEdit, BrainCircuit, Loader2, Zap, Clock, Activity } from "lucide-react";
-import { analyzeDocument, compareDocuments, checkForAI, analyzeDocumentStreaming, compareDocumentsStreaming } from "@/lib/analysis";
+import { Brain, Trash2, FileEdit, Loader2, Zap, Clock } from "lucide-react";
+import { analyzeDocument, compareDocuments, checkForAI } from "@/lib/analysis";
 import { AnalysisMode, DocumentInput as DocumentInputType, AIDetectionResult, DocumentAnalysis, DocumentComparison } from "@/lib/types";
 
 const HomePage: React.FC = () => {
@@ -42,11 +40,6 @@ const HomePage: React.FC = () => {
   // State for loading indicators
   const [isAnalysisLoading, setIsAnalysisLoading] = useState(false);
   const [isAICheckLoading, setIsAICheckLoading] = useState(false);
-  
-  // State for streaming progress
-  const [analysisProgress, setAnalysisProgress] = useState(0);
-  const [analysisMessage, setAnalysisMessage] = useState("");
-  const [isStreaming, setIsStreaming] = useState(false);
 
   // State for showing results section
   const [showResults, setShowResults] = useState(false);
@@ -75,13 +68,71 @@ const HomePage: React.FC = () => {
   const [isFictionAssessmentLoading, setIsFictionAssessmentLoading] = useState(false);
   const [fictionAssessmentResult, setFictionAssessmentResult] = useState<any>(null);
   
-  // State for intelligent rewrite
-  const [showRewriteModal, setShowRewriteModal] = useState(false);
   
-
+  // Streaming state for real-time analysis
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingContent, setStreamingContent] = useState('');
   
   // State for LLM provider
-  const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("deepseek");
+  const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("zhi1");
+
+  // FIXED streaming function
+  const startStreaming = async (text: string, provider: string) => {
+    console.log('startStreaming called with:', { text: text.slice(0, 50), provider });
+    
+    try {
+      console.log('Making fetch request to /api/stream-analysis...');
+      
+      const response = await fetch('/api/stream-analysis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text, provider }),
+      });
+
+      console.log('Response received:', response.status, response.statusText);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      if (!response.body) {
+        throw new Error('No response body');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      
+      console.log('Starting to read stream...');
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) {
+          console.log('Stream ended');
+          setIsStreaming(false);
+          break;
+        }
+
+        const chunk = decoder.decode(value, { stream: true });
+        console.log('Received chunk:', chunk);
+        
+        if (chunk) {
+          setStreamingContent(prev => {
+            const newContent = prev + chunk;
+            console.log('Updated content length:', newContent.length);
+            return newContent;
+          });
+        }
+      }
+      
+    } catch (error) {
+      console.error('Streaming error:', error);
+      setStreamingContent('ERROR: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      setIsStreaming(false);
+    }
+  };
   const [apiStatus, setApiStatus] = useState<{
     openai: boolean;
     anthropic: boolean;
@@ -156,24 +207,34 @@ const HomePage: React.FC = () => {
     }
   };
 
-  // Handler for case assessment
+  // Handler for case assessment - REAL-TIME STREAMING
   const handleCaseAssessment = async () => {
     if (!documentA.content.trim()) {
       alert("Please enter some text to assess how well it makes its case.");
       return;
     }
 
-    // Check if the selected provider is available
-    if (selectedProvider !== "all" && !apiStatus[selectedProvider as keyof typeof apiStatus]) {
+    // Check if the selected provider is available (map ZHI names to original API names)
+    const apiKeyMapping: Record<string, string> = {
+      'zhi1': 'openai',
+      'zhi2': 'anthropic', 
+      'zhi3': 'deepseek',
+      'zhi4': 'perplexity'
+    };
+    const actualApiKey = apiKeyMapping[selectedProvider] || selectedProvider;
+    if (selectedProvider !== "all" && !apiStatus[actualApiKey as keyof typeof apiStatus]) {
       alert(`The ${selectedProvider} API key is not configured or is invalid. Please select a different provider or ensure the API key is properly set.`);
       return;
     }
 
+    // Start REAL-TIME streaming for case assessment
+    setIsStreaming(true);
+    setStreamingContent('');
     setIsCaseAssessmentLoading(true);
     setCaseAssessmentResult(null);
 
     try {
-      const provider = selectedProvider === "all" ? "openai" : selectedProvider;
+      const provider = selectedProvider === "all" ? "zhi1" : selectedProvider;
       
       const response = await fetch('/api/case-assessment', {
         method: 'POST',
@@ -182,8 +243,7 @@ const HomePage: React.FC = () => {
         },
         body: JSON.stringify({
           text: documentA.content,
-          provider: provider,
-          documentId: analysisA?.id || null
+          provider: provider
         }),
       });
 
@@ -191,15 +251,58 @@ const HomePage: React.FC = () => {
         throw new Error(`Case assessment failed: ${response.statusText}`);
       }
 
-      const data = await response.json();
-      setCaseAssessmentResult(data.result);
-      setCaseAssessmentModalOpen(true);
+      // REAL-TIME STREAMING: Read response token by token
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let fullResponse = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        fullResponse += chunk;
+        setStreamingContent(fullResponse); // Show each token as it arrives
+      }
+
+      // Parse the case assessment response to extract scores
+      const parseScores = (text: string) => {
+        const extractScore = (pattern: string): number => {
+          const regex = new RegExp(`${pattern}[:\\s]*(\\d+)(?:/100)?`, 'i');
+          const match = text.match(regex);
+          return match ? parseInt(match[1]) : 0;
+        };
+
+        return {
+          proofEffectiveness: extractScore('PROOF EFFECTIVENESS'),
+          claimCredibility: extractScore('CLAIM CREDIBILITY'),
+          nonTriviality: extractScore('NON-TRIVIALITY'),
+          proofQuality: extractScore('PROOF QUALITY'),
+          functionalWriting: extractScore('FUNCTIONAL WRITING'),
+          overallCaseScore: extractScore('OVERALL CASE SCORE'),
+          detailedAssessment: fullResponse
+        };
+      };
+
+      const caseAssessmentData = parseScores(fullResponse);
+      setCaseAssessmentResult(caseAssessmentData);
+      
+      // INTEGRATE CASE ASSESSMENT INTO MAIN ANALYSIS
+      if (analysisA) {
+        setAnalysisA({
+          ...analysisA,
+          caseAssessment: caseAssessmentData
+        });
+      }
+      
+      // NO POPUP - Results are now in main report only
       
     } catch (error) {
       console.error("Error performing case assessment:", error);
       alert("Failed to assess document case. Please try again.");
     } finally {
       setIsCaseAssessmentLoading(false);
+      setIsStreaming(false);
     }
   };
 
@@ -210,8 +313,15 @@ const HomePage: React.FC = () => {
       return;
     }
 
-    // Check if the selected provider is available
-    if (selectedProvider !== "all" && !apiStatus[selectedProvider as keyof typeof apiStatus]) {
+    // Check if the selected provider is available (map ZHI names to original API names)
+    const apiKeyMapping: Record<string, string> = {
+      'zhi1': 'openai',
+      'zhi2': 'anthropic', 
+      'zhi3': 'deepseek',
+      'zhi4': 'perplexity'
+    };
+    const actualApiKey = apiKeyMapping[selectedProvider] || selectedProvider;
+    if (selectedProvider !== "all" && !apiStatus[actualApiKey as keyof typeof apiStatus]) {
       alert(`The ${selectedProvider} API key is not configured or is invalid. Please select a different provider or ensure the API key is properly set.`);
       return;
     }
@@ -220,7 +330,7 @@ const HomePage: React.FC = () => {
     setComparisonResult(null);
 
     try {
-      const provider = selectedProvider === "all" ? "openai" : selectedProvider;
+      const provider = selectedProvider === "all" ? "zhi1" : selectedProvider;
       
       const response = await fetch('/api/compare', {
         method: 'POST',
@@ -250,7 +360,7 @@ const HomePage: React.FC = () => {
     }
   };
 
-  // Handler for fiction assessment
+  // Handler for fiction assessment - REAL-TIME STREAMING
   const handleFictionAssessment = async (documentId: "A" | "B") => {
     const document = documentId === "A" ? documentA : documentB;
     if (!document.content.trim()) {
@@ -258,17 +368,27 @@ const HomePage: React.FC = () => {
       return;
     }
 
-    // Check if the selected provider is available
-    if (selectedProvider !== "all" && !apiStatus[selectedProvider as keyof typeof apiStatus]) {
+    // Check if the selected provider is available (map ZHI names to original API names)
+    const apiKeyMapping: Record<string, string> = {
+      'zhi1': 'openai',
+      'zhi2': 'anthropic', 
+      'zhi3': 'deepseek',
+      'zhi4': 'perplexity'
+    };
+    const actualApiKey = apiKeyMapping[selectedProvider] || selectedProvider;
+    if (selectedProvider !== "all" && !apiStatus[actualApiKey as keyof typeof apiStatus]) {
       alert(`The ${selectedProvider} API key is not configured or is invalid. Please select a different provider or ensure the API key is properly set.`);
       return;
     }
 
+    // Start REAL-TIME streaming for fiction assessment
+    setIsStreaming(true);
+    setStreamingContent('');
     setIsFictionAssessmentLoading(true);
     setFictionAssessmentResult(null);
 
     try {
-      const provider = selectedProvider === "all" ? "deepseek" : selectedProvider;
+      const provider = selectedProvider === "all" ? "zhi1" : selectedProvider;
       
       const response = await fetch('/api/fiction-assessment', {
         method: 'POST',
@@ -285,16 +405,59 @@ const HomePage: React.FC = () => {
         throw new Error(`Fiction assessment failed: ${response.statusText}`);
       }
 
-      const data = await response.json();
-      setFictionAssessmentResult(data.result);
+      // REAL-TIME STREAMING: Read response token by token
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let fullResponse = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        fullResponse += chunk;
+        setStreamingContent(fullResponse); // Show each token as it arrives
+      }
+
+      // Parse the fiction assessment response to extract scores
+      const parseFictionScores = (text: string) => {
+        const extractScore = (pattern: string): number => {
+          const regex = new RegExp(`${pattern}[:\\s]*(\\d+)(?:/100)?`, 'i');
+          const match = text.match(regex);
+          return match ? parseInt(match[1]) : 0;
+        };
+
+        return {
+          worldCoherence: extractScore('WORLD COHERENCE'),
+          emotionalPlausibility: extractScore('EMOTIONAL PLAUSIBILITY'),
+          thematicDepth: extractScore('THEMATIC DEPTH'),
+          narrativeStructure: extractScore('NARRATIVE STRUCTURE'),
+          proseControl: extractScore('PROSE CONTROL'),
+          overallFictionScore: extractScore('OVERALL FICTION SCORE'),
+          detailedAssessment: fullResponse
+        };
+      };
+
+      const fictionAssessmentData = parseFictionScores(fullResponse);
+      setFictionAssessmentResult(fictionAssessmentData);
       setCurrentFictionDocument(documentId);
-      setFictionAssessmentModalOpen(true);
+      
+      // INTEGRATE FICTION ASSESSMENT INTO MAIN ANALYSIS
+      if (analysisA) {
+        setAnalysisA({
+          ...analysisA,
+          fictionAssessment: fictionAssessmentData
+        });
+      }
+      
+      // NO POPUP - Results are now in main report only
       
     } catch (error) {
       console.error("Error performing fiction assessment:", error);
       alert(`Fiction assessment with ${selectedProvider} failed: ${error instanceof Error ? error.message : "Unknown error"}`);
     } finally {
       setIsFictionAssessmentLoading(false);
+      setIsStreaming(false);
     }
   };
 
@@ -308,7 +471,7 @@ const HomePage: React.FC = () => {
     setFictionComparisonModalOpen(true);
   };
 
-  // Handler for analyzing documents
+  // Handler for analyzing documents - FIXED MAIN ANALYSIS
   const handleAnalyze = async () => {
     if (!documentA.content.trim()) {
       alert("Please enter some text in Document A.");
@@ -320,92 +483,94 @@ const HomePage: React.FC = () => {
       return;
     }
     
-    // Check if the selected provider is available
-    if (selectedProvider !== "all" && !apiStatus[selectedProvider as keyof typeof apiStatus]) {
+    // Check if the selected provider is available (map ZHI names to original API names)
+    const apiKeyMapping: Record<string, string> = {
+      'zhi1': 'openai',
+      'zhi2': 'anthropic', 
+      'zhi3': 'deepseek',
+      'zhi4': 'perplexity'
+    };
+    const actualApiKey = apiKeyMapping[selectedProvider] || selectedProvider;
+    if (selectedProvider !== "all" && !apiStatus[actualApiKey as keyof typeof apiStatus]) {
       alert(`The ${selectedProvider} API key is not configured or is invalid. Please select a different provider or ensure the API key is properly set.`);
       return;
     }
 
+    // FIXED: Use proper analysis for single document mode
+    if (mode === "single") {
+      setShowResults(true);
+      setIsAnalysisLoading(true);
+      
+      try {
+        const provider = selectedProvider === "all" ? "zhi1" : selectedProvider;
+        const endpoint = analysisType === "quick" ? '/api/cognitive-quick' : '/api/analyze';
+        
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: documentA.content,
+            provider: provider
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Analysis failed: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        setAnalysisA(data.analysis || data.result);
+        
+      } catch (error) {
+        console.error("Error analyzing document:", error);
+        alert(`Analysis with ${selectedProvider} failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+      } finally {
+        setIsAnalysisLoading(false);
+      }
+      return;
+    }
+    
+    // Regular analysis logic for comparison mode
     setShowResults(true);
     setIsAnalysisLoading(true);
-    setIsStreaming(true);
-    setAnalysisProgress(0);
-    setAnalysisMessage("Initializing...");
     
     try {
-      const provider = selectedProvider === "all" ? "deepseek" : selectedProvider;
-      
-      if (mode === "single") {
-        // Use streaming analysis for both quick and comprehensive
-        const result = await analyzeDocumentStreaming(
-          documentA,
-          provider,
-          analysisType,
-          "intelligence",
-          (progress, message) => {
-            setAnalysisProgress(progress);
-            setAnalysisMessage(message);
-          }
-        );
+      // Two-document mode: use existing comparison logic for now
+      if (analysisType === "quick") {
+        const provider = selectedProvider === "all" ? "zhi1" : selectedProvider;
         
-        // Handle different result formats
-        if (analysisType === "quick") {
-          setAnalysisA({
-            id: Date.now(),
-            formattedReport: (result as any).analysis || result.formattedReport,
-            overallScore: (result as any).intelligence_score || result.overallScore,
-            provider: result.provider,
-            summary: (result as any).key_insights || result.summary,
-            analysis: (result as any).cognitive_profile || result.analysis
-          });
-        } else {
-          setAnalysisA(result);
+        const response = await fetch('/api/quick-compare', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            documentA: documentA.content,
+            documentB: documentB.content,
+            provider: provider
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Quick comparison failed: ${response.statusText}`);
         }
-        
-        setAnalysisB(null);
-        setComparison(null);
+
+        const data = await response.json();
+        setAnalysisA(data.analysisA);
+        setAnalysisB(data.analysisB);
+        setComparison(data.comparison);
       } else {
-        // Use streaming comparison for both quick and comprehensive
-        const results = await compareDocumentsStreaming(
-          documentA,
-          documentB,
-          provider,
-          analysisType,
-          "intelligence",
-          (progress, message) => {
-            setAnalysisProgress(progress);
-            setAnalysisMessage(message);
-          }
-        );
-        
-        if (analysisType === "quick") {
-          setAnalysisA(results.analysisA);
-          setAnalysisB(results.analysisB);
-          setComparison(results.comparison);
-        } else {
-          setAnalysisA(results.analysisA);
-          setAnalysisB(results.analysisB);
-          setComparison(results.comparison);
-        }
+        // Use the comprehensive comparison (existing logic)
+        console.log(`Comparing with ${selectedProvider}...`);
+        const results = await compareDocuments(documentA, documentB, selectedProvider);
+        setAnalysisA(results.analysisA);
+        setAnalysisB(results.analysisB);
+        setComparison(results.comparison);
       }
-      
-      setAnalysisProgress(100);
-      setAnalysisMessage("Analysis complete!");
-      
     } catch (error) {
-      console.error("Error analyzing documents:", error);
+      console.error("Error comparing documents:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      alert(`Analysis with ${selectedProvider} failed: ${errorMessage}\n\nPlease verify that the ${selectedProvider} API key is correctly configured.`);
-      setAnalysisProgress(0);
-      setAnalysisMessage("");
+      alert(`Comparison with ${selectedProvider} failed: ${errorMessage}\n\nPlease verify that the ${selectedProvider} API key is correctly configured.`);
     } finally {
       setIsAnalysisLoading(false);
-      setIsStreaming(false);
-      // Keep progress visible for a moment before clearing
-      setTimeout(() => {
-        setAnalysisProgress(0);
-        setAnalysisMessage("");
-      }, 2000);
     }
   };
   
@@ -422,7 +587,9 @@ const HomePage: React.FC = () => {
     setAnalysisB(null);
     setComparison(null);
     
-
+    // Clear streaming content
+    setIsStreaming(false);
+    setStreamingContent('');
     
     // Reset UI states
     setShowResults(false);
@@ -499,19 +666,19 @@ const HomePage: React.FC = () => {
               <div className="flex flex-wrap gap-2">
                 <div className={`px-3 py-1 rounded-full text-xs font-medium flex items-center ${apiStatus.openai ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                   <span className={`h-2 w-2 rounded-full mr-1.5 ${apiStatus.openai ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                  ZHI 2: {apiStatus.openai ? 'Active' : 'Inactive'}
+                  ZHI 1: {apiStatus.openai ? 'Active' : 'Inactive'}
                 </div>
                 <div className={`px-3 py-1 rounded-full text-xs font-medium flex items-center ${apiStatus.anthropic ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                   <span className={`h-2 w-2 rounded-full mr-1.5 ${apiStatus.anthropic ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                  ZHI 1: {apiStatus.anthropic ? 'Active' : 'Inactive'}
-                </div>
-                <div className={`px-3 py-1 rounded-full text-xs font-medium flex items-center ${apiStatus.perplexity ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                  <span className={`h-2 w-2 rounded-full mr-1.5 ${apiStatus.perplexity ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                  ZHI 4: {apiStatus.perplexity ? 'Active' : 'Inactive'}
+                  ZHI 2: {apiStatus.anthropic ? 'Active' : 'Inactive'}
                 </div>
                 <div className={`px-3 py-1 rounded-full text-xs font-medium flex items-center ${apiStatus.deepseek ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                   <span className={`h-2 w-2 rounded-full mr-1.5 ${apiStatus.deepseek ? 'bg-green-500' : 'bg-red-500'}`}></span>
                   ZHI 3: {apiStatus.deepseek ? 'Active' : 'Inactive'}
+                </div>
+                <div className={`px-3 py-1 rounded-full text-xs font-medium flex items-center ${apiStatus.perplexity ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                  <span className={`h-2 w-2 rounded-full mr-1.5 ${apiStatus.perplexity ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                  ZHI 4: {apiStatus.perplexity ? 'Active' : 'Inactive'}
                 </div>
               </div>
               <p className="mt-2 text-xs text-gray-500">All API providers are active and ready to use. Each offers different analysis capabilities.</p>
@@ -540,22 +707,6 @@ const HomePage: React.FC = () => {
           />
         )}
 
-        {/* Streaming Progress Indicator */}
-        {isStreaming && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-            <div className="flex items-center gap-3 mb-2">
-              <Activity className="h-5 w-5 text-blue-600 animate-pulse" />
-              <span className="text-sm font-medium text-blue-800">
-                {analysisMessage || "Processing..."}
-              </span>
-            </div>
-            <Progress value={analysisProgress} className="w-full" />
-            <div className="text-xs text-blue-600 mt-1">
-              {analysisProgress}% complete
-            </div>
-          </div>
-        )}
-
         {/* Analysis Buttons */}
         <div className="flex justify-center gap-4">
           <Button
@@ -563,30 +714,12 @@ const HomePage: React.FC = () => {
             className="px-6 py-3 bg-blue-600 text-white rounded-md font-semibold hover:bg-blue-700 flex items-center"
             disabled={isAnalysisLoading}
           >
-            {isStreaming ? (
-              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-            ) : (
-              <Brain className="h-5 w-5 mr-2" />
-            )}
+            <Brain className="h-5 w-5 mr-2" />
             <span>
-              {isStreaming 
-                ? "Analyzing..." 
-                : (mode === "single" ? "Analyze Document" : "Analyze Both Documents")
-              }
+              {isAnalysisLoading ? "Analyzing..." : (mode === "single" ? "Analyze" : "Analyze Both Documents")}
             </span>
           </Button>
           
-          {/* Smart Rewrite Button - only for single document mode */}
-          {mode === "single" && (
-            <Button
-              onClick={() => setShowRewriteModal(true)}
-              className="px-6 py-3 bg-green-600 text-white rounded-md font-semibold hover:bg-green-700 flex items-center"
-              disabled={!documentA.content.trim()}
-            >
-              <BrainCircuit className="h-5 w-5 mr-2" />
-              <span>Smart Rewrite</span>
-            </Button>
-          )}
 
           {/* Case Assessment Button - only for single document mode */}
           {mode === "single" && (
@@ -654,7 +787,7 @@ const HomePage: React.FC = () => {
             disabled={isAnalysisLoading}
           >
             <Trash2 className="h-5 w-5 mr-2" />
-            <span>Reset Everything</span>
+            <span>New Analysis / Clear All</span>
           </Button>
         </div>
       </div>
@@ -710,14 +843,7 @@ const HomePage: React.FC = () => {
 
 
 
-      {/* Case Assessment Modal */}
-      <CaseAssessmentModal
-        isOpen={caseAssessmentModalOpen}
-        onClose={() => setCaseAssessmentModalOpen(false)}
-        result={caseAssessmentResult}
-        provider={selectedProvider === "all" ? "OpenAI" : selectedProvider}
-        documentTitle={documentA.filename || "Document"}
-      />
+      {/* Case Assessment Modal - REMOVED: Results now show in main report only */}
 
       {/* Document Comparison Modal */}
       <DocumentComparisonModal
@@ -735,15 +861,7 @@ const HomePage: React.FC = () => {
         isLoading={isAICheckLoading}
       />
 
-      {/* Fiction Assessment Modal */}
-      <FictionAssessmentModal
-        isOpen={fictionAssessmentModalOpen}
-        onClose={() => setFictionAssessmentModalOpen(false)}
-        documentContent={currentFictionDocument === "A" ? documentA.content : documentB.content}
-        documentTitle={currentFictionDocument === "A" ? (documentA.filename || "Document A") : (documentB.filename || "Document B")}
-        result={fictionAssessmentResult}
-        selectedProvider={selectedProvider === "all" ? "deepseek" : selectedProvider}
-      />
+      {/* Fiction Assessment Modal - REMOVED: Results now show in main report only */}
 
       {/* Fiction Comparison Modal */}
       <FictionComparisonModal
@@ -759,12 +877,40 @@ const HomePage: React.FC = () => {
         }}
       />
 
-      {/* Intelligent Rewrite Modal */}
-      <IntelligentRewriteModal
-        isOpen={showRewriteModal}
-        onClose={() => setShowRewriteModal(false)}
-        originalText={documentA.content}
-      />
+
+
+      {/* Inline Streaming Results Area */}
+      {(isStreaming || streamingContent) && (
+        <div className="mx-4 mb-6">
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Brain className="h-5 w-5 text-blue-600" />
+              <h3 className="text-lg font-semibold text-blue-900">
+                🎯 Intelligence Analysis
+                {isStreaming && <span className="ml-2 text-sm font-normal text-blue-600">Streaming...</span>}
+              </h3>
+            </div>
+            <div className="bg-white rounded-md p-4 border border-blue-100 min-h-[200px]">
+              <div className="prose prose-sm max-w-none text-gray-800 whitespace-pre-wrap font-mono text-sm leading-relaxed">
+                {streamingContent}
+                {isStreaming && <span className="inline-block w-2 h-4 bg-blue-500 animate-pulse ml-1">|</span>}
+              </div>
+            </div>
+            {streamingContent && !isStreaming && (
+              <div className="mt-4 flex justify-end">
+                <Button 
+                  onClick={() => setStreamingContent('')}
+                  variant="outline"
+                  size="sm"
+                  className="text-gray-600 hover:text-gray-800"
+                >
+                  New Analysis
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Chat Dialog - Always visible below everything */}
       <ChatDialog 

@@ -31,24 +31,28 @@ export async function performIntelligentRewrite(request: IntelligentRewriteReque
   console.log(`Original score: ${originalScore}/100`);
   
   // Step 2: Create rewrite instructions
-  const defaultInstructions = `Rewrite the following text to score significantly higher on a 4-phase intelligence evaluation while preserving existing content as much as possible.
+  const defaultInstructions = `You are rewriting text to score 98-100/100 on a sophisticated 4-phase intelligence evaluation. This evaluation specifically looks for:
 
-OPTIMIZATION CRITERIA:
-- Enhance logical scaffolding and hierarchical organization
-- Make implicit reasoning chains explicit  
-- Improve semantic compression and inferential clarity
-- Strengthen conceptual precision without unnecessary jargon
-- Ensure organic development of ideas
-- Preserve semantic density - never add words without adding value
-- Maintain or enhance recursive logical structures (A→B→C→A*)
-- Sharpen operational definitions
-- Reveal underlying inferential frameworks
+CRITICAL SUCCESS FACTORS (what scores 95-100):
+1. NOVEL ABSTRACTION: Introduce genuinely new conceptual distinctions or frameworks that weren't obvious before
+2. INFERENTIAL CONTROL: Make every logical step crystal clear with explicit reasoning chains 
+3. SEMANTIC COMPRESSION: Pack maximum meaning into minimal words - every sentence must carry heavy conceptual load
+4. RECURSIVE STRUCTURE: Create arguments that loop back and strengthen themselves (A supports B supports C supports A*)
+5. OPERATIONAL PRECISION: Define terms with surgical precision - no vague concepts allowed
+6. HIERARCHICAL ORGANIZATION: Clear logical progression from foundation to implications
+7. COGNITIVE RISK: Make bold, non-obvious claims that require sophisticated reasoning to defend
 
-STRICT REQUIREMENTS:
-- Preserve all core content, arguments, and conclusions
-- Maintain the author's voice and style
-- Keep similar length (no bloating with filler words)
-- Focus on structural and logical improvements, not stylistic flourishes`;
+SPECIFIC REWRITE TACTICS:
+- Add explicit "because" and "therefore" chains showing logical connections
+- Introduce precise technical distinctions (like "presentations vs representations")
+- Create nested logical structures where each point builds on and reinforces others
+- Use precise philosophical/technical language where it adds conceptual clarity
+- Make implicit assumptions explicit and defend them
+- Show how conclusions loop back to strengthen premises
+- Add brief explanations of why obvious alternatives fail
+
+PRESERVE: Core arguments, conclusions, overall thesis
+ENHANCE: Logical rigor, conceptual precision, inferential transparency`;
 
   const finalInstructions = customInstructions 
     ? `${defaultInstructions}\n\nADDITIONAL CUSTOM INSTRUCTIONS:\n${customInstructions}\n\nNote: Balance custom instructions with the intelligence optimization criteria above.`
@@ -60,6 +64,8 @@ STRICT REQUIREMENTS:
 
 ORIGINAL TEXT:
 ${text}
+
+CRITICAL: Output ONLY the rewritten text. NO commentary, NO explanations, NO preamble like "Here's a rewrite..." Just the pure rewritten text starting immediately.
 
 REWRITTEN TEXT:`;
 
@@ -77,6 +83,16 @@ REWRITTEN TEXT:`;
       });
       
       rewrittenText = completion.choices[0]?.message?.content || '';
+      
+      // Strip out AI commentary bullshit  
+      rewrittenText = rewrittenText
+        .replace(/^Here's.*?rewrite.*?:/i, '')
+        .replace(/^This.*?version.*?:/i, '')
+        .replace(/^The following.*?:/i, '')
+        .replace(/^Below.*?:/i, '')
+        .replace(/^\*\*.*?\*\*:?/gm, '')
+        .replace(/^--+/gm, '')
+        .trim();
     } else if (provider === 'anthropic') {
       const Anthropic = (await import('@anthropic-ai/sdk')).default;
       const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -89,6 +105,16 @@ REWRITTEN TEXT:`;
       });
       
       rewrittenText = completion.content[0]?.type === 'text' ? completion.content[0].text : '';
+      
+      // Strip out AI commentary bullshit
+      rewrittenText = rewrittenText
+        .replace(/^Here's.*?rewrite.*?:/i, '')
+        .replace(/^This.*?version.*?:/i, '')
+        .replace(/^The following.*?:/i, '')
+        .replace(/^Below.*?:/i, '')
+        .replace(/^\*\*.*?\*\*:?/gm, '')
+        .replace(/^--+/gm, '')
+        .trim();
     } else if (provider === 'perplexity') {
       const response = await fetch('https://api.perplexity.ai/chat/completions', {
         method: 'POST',

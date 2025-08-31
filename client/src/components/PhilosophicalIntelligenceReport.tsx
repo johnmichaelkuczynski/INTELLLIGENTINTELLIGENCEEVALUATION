@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DocumentAnalysis } from '@/lib/types';
 import { MultiProviderResults } from './MultiProviderResults';
 import { cleanAIResponse } from '@/lib/textUtils';
-import { Brain, TrendingUp, Target, Zap, Eye, Lightbulb, Maximize2 } from 'lucide-react';
-import IntelligenceReportModal from './IntelligenceReportModal';
+import { Brain, TrendingUp, Target, Zap, Eye, Lightbulb, Maximize2, Scale } from 'lucide-react';
 
 // Provider name mapping
 const getProviderDisplayName = (provider: string): string => {
@@ -177,7 +176,6 @@ function formatEnhancedAnalysis(text: string) {
 }
 
 const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportProps> = ({ analysis, analysisMode = "comprehensive" }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
   
   // Check if the analysis contains multiple provider results
   const hasMultipleProviders = analysis.analysisResults && Array.isArray(analysis.analysisResults) && analysis.analysisResults.length > 0;
@@ -187,8 +185,10 @@ const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportP
     return <MultiProviderResults results={analysis.analysisResults || []} />;
   }
   
-  // Extract data from the formatted report
-  const formattedReport = analysis.formattedReport || analysis.report || "";
+  // Extract data from the formatted report - CHECK ALL POSSIBLE FIELDS
+  const formattedReport = analysis.formattedReport || analysis.analysis || analysis.report || analysis.summary || "";
+  console.log("IMMEDIATE DEBUG - formattedReport length:", formattedReport?.length);
+  console.log("IMMEDIATE DEBUG - formattedReport first 500 chars:", formattedReport?.substring(0, 500));
   const cleanedReport = cleanAIResponse(formattedReport);
   
   // Use ONLY the final score from 4-phase protocol - no text extraction needed
@@ -199,6 +199,9 @@ const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportP
   const finalVerdict = extractFinalVerdict(cleanedReport);
   const highlights = extractHighlights(cleanedReport);
   const provider = analysis.provider || "AI";
+  
+  // Case assessment data (HOW WELL DOES IT MAKE ITS CASE)
+  const caseAssessment = analysis.caseAssessment || null;
 
   // If no structured content is available, display the raw report in an enhanced format
   const hasStructuredContent = executiveSummary || dimensions.length > 0 || comparativePlacement || finalVerdict;
@@ -229,39 +232,173 @@ const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportP
                   <div className="text-blue-100 text-sm">4-Phase Protocol Final Score</div>
                 </div>
               )}
-              <Button 
-                onClick={() => setIsModalOpen(true)}
-                variant="outline"
-                className="bg-white/10 hover:bg-white/20 border-white/30 text-white backdrop-blur-sm"
-              >
-                <Maximize2 className="w-4 h-4 mr-2" />
-                Full Report
-              </Button>
             </div>
           </div>
         </CardHeader>
         <CardContent className="p-8">
-          {/* Enhanced Content Display */}
-          {!hasStructuredContent ? (
-            <div className="space-y-6">
-              <div className="prose prose-lg dark:prose-invert max-w-none">
-                {formatEnhancedAnalysis(cleanedReport)}
-              </div>
-            </div>
-          ) : executiveSummary ? (
+          {/* DIRECT ANALYSIS DISPLAY - NO POPUP */}
+          <div className="space-y-6">
             <div className="prose prose-lg dark:prose-invert max-w-none">
-              {executiveSummary.split('\n').map((paragraph, index) => {
-                if (!paragraph.trim()) return null;
-                return (
-                  <p key={index} className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
-                    {paragraph}
-                  </p>
-                );
-              })}
+              {formattedReport ? (
+                <div>
+                  <div className="mb-4 p-2 bg-red-100 text-red-800 text-xs">
+                    DEBUG: Report length: {formattedReport.length} chars
+                  </div>
+                  {/* DIRECT RAW DISPLAY - NO FORMATTING FUNCTION */}
+                  <div className="space-y-4">
+                    {formattedReport.split('\n').map((line: string, index: number) => {
+                      if (!line.trim()) return null;
+                      
+                      // Questions ending with ?
+                      if (line.trim().endsWith('?')) {
+                        return (
+                          <div key={index} className="bg-blue-50 border-l-4 border-blue-500 p-4 my-4 rounded-r-lg">
+                            <h4 className="font-semibold text-blue-800 text-lg">{line.trim()}</h4>
+                          </div>
+                        );
+                      }
+                      
+                      // Lines with quotes
+                      if (line.includes('"')) {
+                        return (
+                          <blockquote key={index} className="border-l-4 border-amber-400 bg-amber-50 p-6 my-6 rounded-r-lg shadow-sm">
+                            <div className="text-amber-800 font-medium text-lg italic">
+                              {line.trim()}
+                            </div>
+                          </blockquote>
+                        );
+                      }
+                      
+                      // Regular lines
+                      return (
+                        <p key={index} className="mb-3 text-slate-700 leading-relaxed text-base">
+                          {line.trim()}
+                        </p>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No analysis content available</p>
+                </div>
+              )}
             </div>
-          ) : null}
+          </div>
         </CardContent>
       </Card>
+
+      {/* Case Assessment Scores - HOW WELL DOES IT MAKE ITS CASE */}
+      {caseAssessment && (
+        <Card className="bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 border-2 border-orange-200 dark:border-orange-700">
+          <CardHeader className="bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-t-lg">
+            <CardTitle className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                <Scale className="w-5 h-5" />
+              </div>
+              How Well Does It Make Its Case?
+              <Badge className="bg-white/20 text-white text-lg px-3 py-1">
+                {caseAssessment.overallCaseScore || 0}/100
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border">
+                <div className="text-sm text-gray-600 dark:text-gray-400">Proof Effectiveness</div>
+                <div className="text-2xl font-bold text-orange-600">{caseAssessment.proofEffectiveness || 0}/100</div>
+                <div className="text-xs text-gray-500">How effectively it proves its claims</div>
+              </div>
+              <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border">
+                <div className="text-sm text-gray-600 dark:text-gray-400">Claim Credibility</div>
+                <div className="text-2xl font-bold text-orange-600">{caseAssessment.claimCredibility || 0}/100</div>
+                <div className="text-xs text-gray-500">Whether claims are credible and worth proving</div>
+              </div>
+              <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border">
+                <div className="text-sm text-gray-600 dark:text-gray-400">Non-Triviality</div>
+                <div className="text-2xl font-bold text-orange-600">{caseAssessment.nonTriviality || 0}/100</div>
+                <div className="text-xs text-gray-500">Significance and importance of conclusions</div>
+              </div>
+              <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border">
+                <div className="text-sm text-gray-600 dark:text-gray-400">Proof Quality</div>
+                <div className="text-2xl font-bold text-orange-600">{caseAssessment.proofQuality || 0}/100</div>
+                <div className="text-xs text-gray-500">Logical rigor and reasoning structure</div>
+              </div>
+              <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border">
+                <div className="text-sm text-gray-600 dark:text-gray-400">Functional Writing</div>
+                <div className="text-2xl font-bold text-orange-600">{caseAssessment.functionalWriting || 0}/100</div>
+                <div className="text-xs text-gray-500">Clarity, organization, and accessibility</div>
+              </div>
+            </div>
+            {caseAssessment.detailedAssessment && (
+              <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border">
+                <h4 className="font-semibold mb-3 text-orange-700 dark:text-orange-300">Detailed Case Assessment</h4>
+                <div className="prose prose-sm max-w-none text-gray-700 dark:text-gray-300">
+                  <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                    {caseAssessment.detailedAssessment}
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Fiction Assessment Scores - FICTION QUALITY EVALUATION */}
+      {analysis.fictionAssessment && (
+        <Card className="bg-gradient-to-br from-pink-50 to-purple-50 dark:from-pink-950 dark:to-purple-950 border-2 border-pink-200 dark:border-pink-700">
+          <CardHeader className="bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-t-lg">
+            <CardTitle className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                <Lightbulb className="w-5 h-5" />
+              </div>
+              Fiction Assessment
+              <Badge className="bg-white/20 text-white text-lg px-3 py-1">
+                {analysis.fictionAssessment.overallFictionScore || 0}/100
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border">
+                <div className="text-sm text-gray-600 dark:text-gray-400">World Coherence</div>
+                <div className="text-2xl font-bold text-pink-600">{analysis.fictionAssessment.worldCoherence || 0}/100</div>
+                <div className="text-xs text-gray-500">Consistency and believability of the fictional world</div>
+              </div>
+              <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border">
+                <div className="text-sm text-gray-600 dark:text-gray-400">Emotional Plausibility</div>
+                <div className="text-2xl font-bold text-pink-600">{analysis.fictionAssessment.emotionalPlausibility || 0}/100</div>
+                <div className="text-xs text-gray-500">Authenticity of characters' emotions and reactions</div>
+              </div>
+              <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border">
+                <div className="text-sm text-gray-600 dark:text-gray-400">Thematic Depth</div>
+                <div className="text-2xl font-bold text-pink-600">{analysis.fictionAssessment.thematicDepth || 0}/100</div>
+                <div className="text-xs text-gray-500">Meaningful exploration of underlying themes</div>
+              </div>
+              <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border">
+                <div className="text-sm text-gray-600 dark:text-gray-400">Narrative Structure</div>
+                <div className="text-2xl font-bold text-pink-600">{analysis.fictionAssessment.narrativeStructure || 0}/100</div>
+                <div className="text-xs text-gray-500">Effectiveness of story construction and pacing</div>
+              </div>
+              <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border">
+                <div className="text-sm text-gray-600 dark:text-gray-400">Prose Control</div>
+                <div className="text-2xl font-bold text-pink-600">{analysis.fictionAssessment.proseControl || 0}/100</div>
+                <div className="text-xs text-gray-500">Mastery of language and writing craft</div>
+              </div>
+            </div>
+            {analysis.fictionAssessment.detailedAssessment && (
+              <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border">
+                <h4 className="font-semibold mb-3 text-pink-700 dark:text-pink-300">Detailed Fiction Assessment</h4>
+                <div className="prose prose-sm max-w-none text-gray-700 dark:text-gray-300">
+                  <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                    {analysis.fictionAssessment.detailedAssessment}
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Detailed Cognitive Dimensions */}
       {dimensions.length > 0 && (
@@ -419,13 +556,6 @@ const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportP
         </div>
       </div>
 
-      {/* Intelligence Report Modal */}
-      <IntelligenceReportModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        analysis={analysis}
-        analysisMode={analysisMode}
-      />
     </div>
   );
 };
