@@ -1202,6 +1202,74 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
+  // MISSING ENDPOINT: Quick Cognitive Analysis  
+  app.post("/api/cognitive-quick", async (req: Request, res: Response) => {
+    try {
+      const { text, provider = "zhi1" } = req.body;
+      
+      if (!text || typeof text !== 'string') {
+        return res.status(400).json({ error: "Text content is required for analysis" });
+      }
+      
+      console.log(`Starting quick cognitive analysis with ${provider} for text of length: ${text.length}`);
+      
+      const { performQuickAnalysis } = await import('./services/quickAnalysis');
+      const actualProvider = mapZhiToProvider(provider);
+      const result = await performQuickAnalysis(text, actualProvider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek');
+      
+      res.json({
+        success: true,
+        analysis: result,
+        provider: provider,
+        metadata: {
+          contentLength: text.length,
+          timestamp: new Date().toISOString()
+        }
+      });
+      
+    } catch (error: any) {
+      console.error("Error in quick cognitive analysis:", error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // MISSING ENDPOINT: Main Analysis  
+  app.post("/api/analyze", async (req: Request, res: Response) => {
+    try {
+      const { text, provider = "zhi1" } = req.body;
+      
+      if (!text || typeof text !== 'string') {
+        return res.status(400).json({ error: "Text content is required for analysis" });
+      }
+      
+      console.log(`Starting comprehensive analysis with ${provider} for text of length: ${text.length}`);
+      
+      const { performComprehensiveAnalysis } = await import('./services/comprehensiveAnalysis');
+      const actualProvider = mapZhiToProvider(provider);
+      const result = await performComprehensiveAnalysis(text, actualProvider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek');
+      
+      res.json({
+        success: true,
+        analysis: result,
+        provider: provider,
+        metadata: {
+          contentLength: text.length,
+          timestamp: new Date().toISOString()
+        }
+      });
+      
+    } catch (error: any) {
+      console.error("Error in comprehensive analysis:", error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Fiction Comparison API endpoint  
   app.post('/api/fiction-compare', async (req, res) => {
     try {
