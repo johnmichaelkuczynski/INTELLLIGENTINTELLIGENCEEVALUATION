@@ -310,8 +310,8 @@ const IntelligenceReportModal: React.FC<IntelligenceReportModalProps> = ({ isOpe
   const provider = analysis.provider || "AI";
   
   // Check if we have phase-by-phase data for comprehensive reports
-  const hasPhaseData = analysis.phases && analysisMode === "comprehensive";
-  const phases = analysis.phases;
+  const hasPhaseData = (analysis as any).phases && analysisMode === "comprehensive";
+  const phases = (analysis as any).phases;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
