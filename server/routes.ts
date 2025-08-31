@@ -1098,15 +1098,23 @@ In this dissertation, I critically examine the philosophy of transcendental empi
 
 This shows: 1. DOCTRINES ARE LABELLED, BUT NEVER DEFINED; AND THEIR MEANINGS CANNOT BE INFERRED FROM CONTEXT 2. THIS PASSAGE CONTAINS FREE VARIABLES. FOR EXAMPLE, "among other things" QUALIFICATION IS NEVER CLARIFIED 3. THE AUTHOR NEVER IDENTIFIES THE "EPISTEMOLOGICAL DILEMMA" IN QUESTION.
 
-START WITH SUMMARY AND CATEGORY, then answer questions with MANDATORY DIRECT QUOTES from the source text.
+**ABSOLUTE QUOTATION REQUIREMENTS - NO EXCEPTIONS**:
 
-**CRITICAL REQUIREMENT**: Every single answer MUST include at least one direct quote from the text in quotation marks like this: "exact text from source"
+1. **INTRODUCTION**: Must include AT LEAST THREE direct quotes from the source text
+2. **EVERY SINGLE QUESTION**: Must be substantiated with AT LEAST ONE direct quote from the source text
+3. **CONCLUSION**: Must include AT LEAST THREE direct quotes from the source text
 
-**QUOTE REQUIREMENT EXAMPLES**:
-- Q1: INSIGHTFUL? The text shows insight when it states "exact quote here" which demonstrates...
-- Q2: DEVELOPS POINTS? Yes, the author develops the point by writing "another exact quote" which shows...
+**THIS APPLIES REGARDLESS OF TEXT LENGTH**: Whether the passage is 3 words or 10 million words, you MUST quote directly from it.
 
-MANDATORY: End conclusion with supporting quotes from the text.
+**QUOTATION FORMAT**: Use exact quotation marks: "exact text from source"
+
+**STRUCTURE REQUIREMENTS**:
+- INTRODUCTION with 3+ quotes: "quote 1" ... "quote 2" ... "quote 3"
+- SUMMARY AND CATEGORY with quotes
+- Each question answer with quotes: Q1: [Answer with "direct quote"] 
+- CONCLUSION with 3+ quotes: "quote 1" ... "quote 2" ... "quote 3"
+
+**NO ANSWER WITHOUT QUOTES**: If you cannot find a relevant quote for any question, you must still quote something from the text and explain its relevance.
 
 PROVIDE A FINAL VALIDATED SCORE OUT OF 100 IN THE FORMAT: SCORE: X/100
 `.trim();
