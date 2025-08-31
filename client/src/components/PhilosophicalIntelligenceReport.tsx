@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { DocumentAnalysis } from '@/lib/types';
 import { MultiProviderResults } from './MultiProviderResults';
 import { cleanAIResponse } from '@/lib/textUtils';
-import { Brain, TrendingUp, Target, Zap, Eye, Lightbulb, Maximize2 } from 'lucide-react';
+import { Brain, TrendingUp, Target, Zap, Eye, Lightbulb, Maximize2, Scale } from 'lucide-react';
 
 // Provider name mapping
 const getProviderDisplayName = (provider: string): string => {
@@ -199,6 +199,9 @@ const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportP
   const finalVerdict = extractFinalVerdict(cleanedReport);
   const highlights = extractHighlights(cleanedReport);
   const provider = analysis.provider || "AI";
+  
+  // Case assessment data (HOW WELL DOES IT MAKE ITS CASE)
+  const caseAssessment = analysis.caseAssessment || null;
 
   // If no structured content is available, display the raw report in an enhanced format
   const hasStructuredContent = executiveSummary || dimensions.length > 0 || comparativePlacement || finalVerdict;
@@ -284,6 +287,62 @@ const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportP
           </div>
         </CardContent>
       </Card>
+
+      {/* Case Assessment Scores - HOW WELL DOES IT MAKE ITS CASE */}
+      {caseAssessment && (
+        <Card className="bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 border-2 border-orange-200 dark:border-orange-700">
+          <CardHeader className="bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-t-lg">
+            <CardTitle className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                <Scale className="w-5 h-5" />
+              </div>
+              How Well Does It Make Its Case?
+              <Badge className="bg-white/20 text-white text-lg px-3 py-1">
+                {caseAssessment.overallCaseScore || 0}/100
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border">
+                <div className="text-sm text-gray-600 dark:text-gray-400">Proof Effectiveness</div>
+                <div className="text-2xl font-bold text-orange-600">{caseAssessment.proofEffectiveness || 0}/100</div>
+                <div className="text-xs text-gray-500">How effectively it proves its claims</div>
+              </div>
+              <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border">
+                <div className="text-sm text-gray-600 dark:text-gray-400">Claim Credibility</div>
+                <div className="text-2xl font-bold text-orange-600">{caseAssessment.claimCredibility || 0}/100</div>
+                <div className="text-xs text-gray-500">Whether claims are credible and worth proving</div>
+              </div>
+              <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border">
+                <div className="text-sm text-gray-600 dark:text-gray-400">Non-Triviality</div>
+                <div className="text-2xl font-bold text-orange-600">{caseAssessment.nonTriviality || 0}/100</div>
+                <div className="text-xs text-gray-500">Significance and importance of conclusions</div>
+              </div>
+              <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border">
+                <div className="text-sm text-gray-600 dark:text-gray-400">Proof Quality</div>
+                <div className="text-2xl font-bold text-orange-600">{caseAssessment.proofQuality || 0}/100</div>
+                <div className="text-xs text-gray-500">Logical rigor and reasoning structure</div>
+              </div>
+              <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border">
+                <div className="text-sm text-gray-600 dark:text-gray-400">Functional Writing</div>
+                <div className="text-2xl font-bold text-orange-600">{caseAssessment.functionalWriting || 0}/100</div>
+                <div className="text-xs text-gray-500">Clarity, organization, and accessibility</div>
+              </div>
+            </div>
+            {caseAssessment.detailedAssessment && (
+              <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border">
+                <h4 className="font-semibold mb-3 text-orange-700 dark:text-orange-300">Detailed Case Assessment</h4>
+                <div className="prose prose-sm max-w-none text-gray-700 dark:text-gray-300">
+                  <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                    {caseAssessment.detailedAssessment}
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Detailed Cognitive Dimensions */}
       {dimensions.length > 0 && (

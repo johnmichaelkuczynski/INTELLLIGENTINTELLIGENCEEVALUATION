@@ -268,8 +268,35 @@ const HomePage: React.FC = () => {
         setStreamingContent(fullResponse); // Show each token as it arrives
       }
 
-      setCaseAssessmentResult(fullResponse);
-      setCaseAssessmentModalOpen(true);
+      // Parse the case assessment response to extract scores
+      const parseScores = (text: string) => {
+        const extractScore = (pattern: string): number => {
+          const regex = new RegExp(`${pattern}[:\\s]*(\\d+)(?:/100)?`, 'i');
+          const match = text.match(regex);
+          return match ? parseInt(match[1]) : 0;
+        };
+
+        return {
+          proofEffectiveness: extractScore('PROOF EFFECTIVENESS'),
+          claimCredibility: extractScore('CLAIM CREDIBILITY'),
+          nonTriviality: extractScore('NON-TRIVIALITY'),
+          proofQuality: extractScore('PROOF QUALITY'),
+          functionalWriting: extractScore('FUNCTIONAL WRITING'),
+          overallCaseScore: extractScore('OVERALL CASE SCORE'),
+          detailedAssessment: fullResponse
+        };
+      };
+
+      const caseAssessmentData = parseScores(fullResponse);
+      setCaseAssessmentResult(caseAssessmentData);
+      
+      // INTEGRATE CASE ASSESSMENT INTO MAIN ANALYSIS
+      if (analysisA) {
+        setAnalysisA({
+          ...analysisA,
+          caseAssessment: caseAssessmentData
+        });
+      }
       
     } catch (error) {
       console.error("Error performing case assessment:", error);
