@@ -523,7 +523,7 @@ const HomePage: React.FC = () => {
           >
             <Brain className="h-5 w-5 mr-2" />
             <span>
-              {mode === "single" ? "Analyze Document" : "Analyze Both Documents"}
+              {isAnalysisLoading ? "Analyzing..." : (mode === "single" ? "🚀 Real-Time Analysis" : "Analyze Both Documents")}
             </span>
           </Button>
           

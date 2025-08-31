@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -72,18 +72,7 @@ export function StreamingAnalysisModal({
     }
   }, [streamedContent]);
 
-  // Reset state when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setStreamingState('idle');
-      setStreamedContent('');
-      setCurrentPhase(1);
-      setFinalScore(null);
-      setAbortController(null);
-    }
-  }, [isOpen]);
-
-  const startStreaming = async () => {
+  const startStreaming = useCallback(async () => {
     if (streamingState === 'streaming') return;
 
     const controller = new AbortController();
@@ -126,10 +115,12 @@ export function StreamingAnalysisModal({
         
         if (done) break;
         
-        buffer += decoder.decode(value, { stream: true });
+        // Decode the chunk
+        const chunk = decoder.decode(value, { stream: true });
+        buffer += chunk;
         
-        // Extract complete content from buffer
-        setStreamedContent(prev => prev + decoder.decode(value, { stream: true }));
+        // Update content immediately with the new chunk
+        setStreamedContent(prev => prev + chunk);
         
         // Check for phase markers in comprehensive mode
         if (mode === 'comprehensive') {
@@ -176,7 +167,23 @@ export function StreamingAnalysisModal({
         });
       }
     }
-  };
+  }, [text, provider, mode, streamingState, toast]);
+
+  // Reset state when modal opens and auto-start streaming
+  useEffect(() => {
+    if (isOpen) {
+      setStreamingState('idle');
+      setStreamedContent('');
+      setCurrentPhase(1);
+      setFinalScore(null);
+      setAbortController(null);
+      
+      // Auto-start streaming when modal opens
+      setTimeout(() => {
+        startStreaming();
+      }, 500); // Small delay for modal to fully open
+    }
+  }, [isOpen, startStreaming]);
 
   const stopStreaming = () => {
     if (abortController) {
@@ -223,9 +230,9 @@ export function StreamingAnalysisModal({
           {/* Control buttons */}
           <div className="flex items-center gap-3">
             {streamingState === 'idle' && (
-              <Button onClick={startStreaming} className="flex items-center gap-2">
+              <Button onClick={startStreaming} className="flex items-center gap-2" disabled>
                 <Play className="h-4 w-4" />
-                Start Analysis
+                Auto-Starting...
               </Button>
             )}
             
