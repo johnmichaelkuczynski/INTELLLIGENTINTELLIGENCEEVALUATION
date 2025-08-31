@@ -33,23 +33,33 @@ IF I WERE TO GIVE A LOW SCORE TO THIS PASSAGE, WOULD I BE PENALIZING ACTUAL INTE
 
 // PHASE 1: Complete protocol with all questions exactly as specified
 function createPhase1Prompt(text: string, questions: string): string {
-  return `Answer these questions in connection with this text. A score of N/100 (e.g. 73/100) means that (100-N)/100 (e.g. 27/100) outperform the author with respect to the parameter defined by the question. You are not grading; you are answering these questions. You do not use a risk-averse standard; you do not attempt to be diplomatic; you do not attempt to comply with risk-averse, medium-range IQ, academic norms. You do not make assumptions about the level of the paper; it could be a work of the highest excellence and genius, or it could be the work of a moron. If a work is a work of genius, you say that, and you say why; you do not shy away from giving what might conventionally be regarded as excessively "superlative" scores; you give it the score it deserves, not the score that a midwit committee would say it deserves. Think very very very hard about your answers; do not default to cookbook, midwit evaluation protocols.
+  return `CRITICAL: This is NOT a grading app. You are NOT evaluating academic work. You are assessing INTELLIGENCE ONLY.
 
-METAPOINT 1: This is not a grading app. You grade the intelligence of what you are given. If you are given brilliant fragment, you give it a high score. You are not grading essays. You are not looking for completeness (unless the text you are given is clearly such that evaluating intelligence coincides with applying a grading-based metric). You tell the LLM not to 'grade'; their job is to answer the questions, period, and to do so on the basis of the text given, making zero assumptions about whether it is complete or incomplete, or for school or for some other context.
+FUNDAMENTAL PRINCIPLE: If a text shows brilliance but is insane, it gets a HIGH score. If a text is measured and complies with usual academic norms but is obviously the work of a dumb person, it gets a LOW score.
 
-METAPOINT 2: Do not overvalue turns of phrase. An author speaking confidently is not necessarily "shutting down modes of inquiry". In fact, it is likely to be the opposite; by putting a clear stake in the ground, he is probably opening them. Another example: casual speech does not mean disorganized thoughts. Don't judge a book by its cover.
+You are NOT grading. You are NOT applying academic criteria. You are NOT comparing to other academic texts. You are assessing RAW INTELLIGENCE displayed in the writing.
 
-METAPOINT 3: The app should always (in both normal and comprehensive mode) start by summarizing the text and also categorizing it.
+A score of N/100 means the author is smarter than N% of the general population. 83/100 means only 17 out of 100 people are smarter than this author.
 
-METAPOINT 4: The app should not change the grading based on the category of the text: if a text is categorized as 'advanced scholarship', it should still evaluate it with respect to the general population, not with respect only to 'advanced scholarly works.'
+Your job: Answer these questions about intelligence and determine what percentage of the population this author surpasses in raw intelligence.
 
-METAPOINT 5: This is not a grading app. Do not penalize boldness. Do not take points away for insights that, if correct, stand on their own. Get rid of the idea that "argumentation" is what makes something smart; it isn't. What makes something smart is that it is smart (insightful). Period.
+METAPOINT 1: This is NOT a grading app. You assess INTELLIGENCE of what you are given. Brilliant fragment = high score regardless of academic conventions. You are NOT grading essays. You are NOT looking for academic completeness. Answer based purely on intelligence displayed.
 
-METAPOINT 6: A score of N/100 means that (100 minus N)/100 are smarter (e.g. 83/100 means that 17/100 people in Walmart are running rings around the author).
+METAPOINT 2: Do NOT overvalue academic conventions. Confident speech is not "shutting down inquiry". Casual speech does not mean disorganized thoughts. Judge INTELLIGENCE, not presentation style.
+
+METAPOINT 3: Start by summarizing and categorizing the text.
+
+METAPOINT 4: Do NOT change scoring based on text category. Advanced scholarship gets evaluated against general population, not just academics.
+
+METAPOINT 5: This is NOT a grading app. Do NOT penalize boldness or unconventional thinking. Raw insight matters, not argumentation style. Smart = smart, period.
+
+METAPOINT 6: Scores are intelligence percentiles: 83/100 means 17/100 people in Walmart are smarter than this author.
 
 ${questions}
 
-CRITICAL: Do not use markdown formatting. Do not use asterisks, hashtags, or other markup. Write in plain text only. End with exactly: FINAL SCORE: 85/100 (use actual number, not placeholder).
+Remember: INTELLIGENCE assessment, NOT academic grading. Brilliant but crazy = high score. Dumb but conventional = low score.
+
+Write in plain text only. End with: FINAL SCORE: [actual number]/100
 
 TEXT:
 ${text}`;
