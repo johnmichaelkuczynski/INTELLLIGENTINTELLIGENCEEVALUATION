@@ -505,13 +505,14 @@ const HomePage: React.FC = () => {
         const provider = selectedProvider === "all" ? "zhi1" : selectedProvider;
         const endpoint = analysisType === "quick" ? '/api/cognitive-quick' : '/api/analyze';
         
+        const requestBody = analysisType === "quick" 
+          ? { text: documentA.content, provider: provider }
+          : { content: documentA.content, provider: provider };
+        
         const response = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            text: documentA.content,
-            provider: provider
-          }),
+          body: JSON.stringify(requestBody),
         });
 
         if (!response.ok) {
