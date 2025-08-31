@@ -948,7 +948,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
       const result = await performIntelligentRewrite({
         text,
         customInstructions,
-        provider: actualProvider
+        provider: actualProvider as any
       });
       
       // Store the rewrite results in database if userEmail provided
