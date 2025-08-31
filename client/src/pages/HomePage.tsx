@@ -72,12 +72,9 @@ const HomePage: React.FC = () => {
   // State for intelligent rewrite
   const [showRewriteModal, setShowRewriteModal] = useState(false);
   
-  // State for inline streaming
+  // Streaming state for real-time analysis
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
-  
-  
-
   
   // State for LLM provider
   const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("openai");
@@ -107,21 +104,16 @@ const HomePage: React.FC = () => {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       
-      let buffer = '';
-      
       while (true) {
         const { done, value } = await reader.read();
         
         if (done) {
-          if (buffer) {
-            setStreamingContent(prev => prev + buffer);
-          }
           setIsStreaming(false);
           break;
         }
 
         const chunk = decoder.decode(value, { stream: true });
-        // Immediately display each chunk as it arrives - no buffering
+        // Immediately display each chunk as it arrives - REAL streaming
         if (chunk) {
           setStreamingContent(prev => prev + chunk);
         }
@@ -442,7 +434,7 @@ const HomePage: React.FC = () => {
     
     // Clear streaming content
     setIsStreaming(false);
-    setStreamingContent("");
+    setStreamingContent('');
     
     // Reset UI states
     setShowResults(false);
