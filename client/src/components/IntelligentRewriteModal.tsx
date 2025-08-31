@@ -31,7 +31,7 @@ const IntelligentRewriteModal: React.FC<IntelligentRewriteModalProps> = ({
   originalText
 }) => {
   const [customInstructions, setCustomInstructions] = useState('');
-  const [provider, setProvider] = useState('zhi1');
+  const [provider, setProvider] = useState('zhi2');
   const [isRewriting, setIsRewriting] = useState(false);
   const [result, setResult] = useState<IntelligentRewriteResult | null>(null);
   const { toast } = useToast();
@@ -139,7 +139,7 @@ const IntelligentRewriteModal: React.FC<IntelligentRewriteModalProps> = ({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="zhi1">Zhi 1 (Recommended)</SelectItem>
+                      <SelectItem value="zhi1">Zhi 1</SelectItem>
                       <SelectItem value="zhi2">Zhi 2</SelectItem>
                       <SelectItem value="zhi3">Zhi 3</SelectItem>
                       <SelectItem value="zhi4">Zhi 4</SelectItem>
