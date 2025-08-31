@@ -940,12 +940,15 @@ export async function registerRoutes(app: Express): Promise<Express> {
       // Import the intelligent rewrite service
       const { performIntelligentRewrite } = await import('./services/intelligentRewrite');
       
+      // Map ZHI provider to actual provider name
+      const actualProvider = mapZhiToProvider(provider);
+      
       // Execute intelligent rewrite
-      console.log(`EXECUTING INTELLIGENT REWRITE WITH ${provider.toUpperCase()}`);
+      console.log(`EXECUTING INTELLIGENT REWRITE WITH ${actualProvider.toUpperCase()}`);
       const result = await performIntelligentRewrite({
         text,
         customInstructions,
-        provider
+        provider: actualProvider
       });
       
       // Store the rewrite results in database if userEmail provided
