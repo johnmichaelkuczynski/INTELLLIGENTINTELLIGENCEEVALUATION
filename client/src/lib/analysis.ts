@@ -73,7 +73,7 @@ export async function analyzeDocument(
           id: 0,
           documentId: 0,
           provider: `${provider} (Error)`,
-          formattedReport: `**Analysis Error**\n\nWe encountered an issue while analyzing your text: ${error.message || "Unknown error"}\n\nPlease try again or select a different AI provider.`,
+          formattedReport: `**Analysis Error**\n\nWe encountered an issue while analyzing your text: ${error instanceof Error ? error.message : "Unknown error"}\n\nPlease try again or select a different AI provider.`,
           overallScore: 0,
           surface: {
             grammar: 0, 
@@ -119,7 +119,7 @@ export async function analyzeDocument(
           id: 0,
           documentId: 0,
           provider: `${provider} (Error)`,
-          formattedReport: `**Analysis Error**\n\nWe encountered an issue while analyzing your text: ${error.message || "Unknown error"}\n\nPlease try again or select a different AI provider.`,
+          formattedReport: `**Analysis Error**\n\nWe encountered an issue while analyzing your text: ${error instanceof Error ? error.message : "Unknown error"}\n\nPlease try again or select a different AI provider.`,
           overallScore: 0,
           surface: {
             grammar: 0, 
@@ -146,7 +146,7 @@ export async function analyzeDocument(
       id: 0,
       documentId: 0,
       provider: `${provider} (Error)`,
-      formattedReport: `**Analysis Error**\n\nWe encountered an issue while analyzing your text: ${error.message || "Unknown error"}\n\nPlease try again or select a different AI provider.`,
+      formattedReport: `**Analysis Error**\n\nWe encountered an issue while analyzing your text: ${error instanceof Error ? error.message : "Unknown error"}\n\nPlease try again or select a different AI provider.`,
       overallScore: 0,
       surface: {
         grammar: 0, 
