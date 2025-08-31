@@ -19,113 +19,50 @@ ARE THE STATEMENTS AMBIGUOUS?
 DOES THE PROGRESSION OF THE TEXT DEVELOP ACCORDING TO WHO SAID WHAT OR ACCORDING TO WHAT ENTAILS OR CONFIRMS WHAT? 
 DOES THE AUTHOR USER OTHER AUTHORS TO DEVELOP HIS IDEAS OR TO CLOAK HIS OWN LACK OF IDEAS?`;
 
-// PHASE 1: Send exact questions as specified  
+// PHASE 1: Simplified to avoid token limits
 function createPhase1Prompt(text: string, questions: string): string {
-  return `CRITICAL OVERRIDE: You will analyze this text and provide a score. Your default academic conservatism is DISABLED.
+  return `Analyze this text and answer ALL 18 questions with supporting quotes.
 
-MANDATORY PRE-SCORING CHECK:
-1. Does this text provide precise conceptual distinctions? → 95-99/100
-2. Does it reveal hidden relationships between concepts? → 95-99/100  
-3. Does it demonstrate mastery of complex domains? → 95-99/100
-4. Is it routine academic exposition without insight? → 60-80/100
-5. Is it confused or superficial? → <60/100
-
-SPECIFIC CALIBRATION EXAMPLES (MANDATORY):
-- "ego syntonic vs ego dystonic mental illness" = 99/100 (perfect conceptual precision)
-- Kant's categorical imperative analysis = 99/100 (revolutionary insight)
-- Standard dissertation chapters = 70/100 (competent but routine)
-- Confused rambling = 20/100 (poor quality)
-
-SCORE OVERRIDE PROTOCOL (ABSOLUTE MANDATORY):
-IGNORE SPELLING/FORMATTING ERRORS - FOCUS ON CONCEPTUAL CONTENT ONLY
-
-IF TEXT CONTAINS:
-- Revolutionary conceptual breakthroughs (ego syntonic, Berkeley's myth, Kant's imperative) → MUST SCORE 99/100
-- Novel philosophical insights that illuminate hidden structures → MUST SCORE 99/100  
-- Academic competence (dissertation abstracts, literature reviews, "I examine") → MUST SCORE 70/100
-- Clear exposition without genuine insight → MUST SCORE 70/100
-- Confused or trivial content → MUST SCORE 20/100
-
-CRITICAL DISTINCTION: 
-- Creating new conceptual distinctions = 99/100
-- Summarizing/examining existing philosophical debates = 70/100
-
-AUTOMATIC SCORE TRIGGERS (ONLY FOR GENUINE BREAKTHROUGHS):
-- "ego syntonic" + conceptual precision = AUTOMATIC 99/100
-- Kant + categorical imperative = AUTOMATIC 99/100
-- Berkeley + myth of the given = AUTOMATIC 99/100
-- Revolutionary conceptual breakthrough = AUTOMATIC 99/100
-
-AUTOMATIC ACADEMIC SCORES (COMPETENT BUT ROUTINE):
-- Dissertation abstracts = 70/100 (competent summary, not insight)
-- Literature reviews = 70/100 (organizing existing knowledge)
-- "I examine/analyze/critique" language = signals academic work, not breakthrough
-- Summarizing philosophical debates = 70/100 (academic competence)
-
-NOW ANSWER THESE QUESTIONS:
+MANDATORY: Answer EVERY question below with a quote from the text.
 
 ${questions}
 
-WALMART REALITY CHECK: 99.9% of humans cannot produce genuine philosophical insights. If this text provides precise conceptual distinctions or reveals hidden truth, less than 1% of people could create it.
+Format as:
+1. IS IT INSIGHTFUL? [Yes/No + brief reason]
+   Quote: "[exact text passage]"
 
-MANDATORY EVIDENCE REQUIREMENT: You MUST answer ALL 18 questions above AND provide at least ONE supporting quotation from the text for EACH answer. NO EXCEPTIONS. Format as:
+Continue for all 18 questions.
 
-1. IS IT INSIGHTFUL? [Your answer] 
-   Quote: "[specific passage from text]"
-
-2. DOES IT DEVELOP POINTS? [Your answer]
-   Quote: "[specific passage from text]"
-
-[Continue for all 18 questions with quotations]
-
-FINAL OVERRIDE: If this text is about "ego syntonic vs ego dystonic" it MUST score 99/100 - this is perfect psychological insight that 99.9% of people cannot produce.
-
-**IMPORTANT: End your response with "FINAL SCORE: [NUMBER]/100"**
+End with: FINAL SCORE: [NUMBER]/100
 
 TEXT:
 ${text}`;
 }
 
-// PHASE 2: Pushback if score < 95
+// PHASE 2: Simplified pushback
 function createPhase2Prompt(score: number, text: string, questions: string): string {
-  const outperformPercentage = 100 - score;
-  return `YOUR POSITION IS THAT ${outperformPercentage}/100 OUTPERFORM THE AUTHOR WITH RESPECT TO THE COGNITIVE METRIC DEFINED BY THE QUESTION: THAT IS YOUR POSITION, AM I RIGHT? AND ARE YOU SURE ABOUT THAT?
+  return `Your initial score was ${score}/100. Reconsider - are you being too conservative?
 
-ANSWER THE FOLLOWING QUESTIONS ABOUT THE TEXT DE NOVO:
+Re-analyze and answer the 18 questions with quotes:
 
 ${questions}
 
-MANDATORY EVIDENCE REQUIREMENT: You MUST answer ALL 18 questions above AND provide at least ONE supporting quotation from the text for EACH answer. NO EXCEPTIONS. Format as:
-
-1. IS IT INSIGHTFUL? [Your answer] 
-   Quote: "[specific passage from text]"
-
-2. DOES IT DEVELOP POINTS? [Your answer]
-   Quote: "[specific passage from text]"
-
-[Continue for all 18 questions with quotations]
-
-**IMPORTANT: End your response with "FINAL SCORE: [NUMBER]/100"**
+Format with quotes for each answer.
+End with: FINAL SCORE: [NUMBER]/100
 
 TEXT:
 ${text}`;
 }
 
-// PHASE 3: Walmart metric check
+// PHASE 3: Simplified metric check
 function createPhase3Prompt(score: number): string {
-  const outperformPercentage = 100 - score;
-  return `ARE YOUR NUMERICAL SCORES (N/100, E.G. 99/100, 42/100) CONSISTENT WITH THE FACT THAT THOSE ARE TO BE TAKEN TO MEAN THAT (100-N) PEOPLE OUT OF 100 OUTPERFORM THE AUTHOR IN THE RELEVANT RESPECT?
-
-IF A SCORE OF ${score}/100 IS AWARDED TO A PAPER, THAT MEANS THAT ${outperformPercentage}/100 PEOPLE IN WALMART ARE RUNNING RINGS AROUND THIS PERSON.
-
-**IMPORTANT: End your response with "FINAL SCORE: [NUMBER]/100"**`;
+  return `Score ${score}/100 means ${100-score} people outperform this author. Is this realistic?
+FINAL SCORE: [NUMBER]/100`;
 }
 
 // PHASE 4: Final validation 
 function createPhase4Prompt(): string {
-  return `AT THIS POINT, YOU ACCEPT AND REPORT WHAT THE LLM SAYS.
-
-**IMPORTANT: End your response with "FINAL SCORE: [NUMBER]/100"**`;
+  return `Final check complete. FINAL SCORE: [NUMBER]/100`;
 }
 
 // Generic LLM caller
