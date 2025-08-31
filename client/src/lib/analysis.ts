@@ -24,15 +24,8 @@ export async function analyzeDocumentStreaming(
     const endpoint = analysisType === "quick" 
       ? "/api/quick-analysis/stream" 
       : "/api/cognitive-evaluate/stream";
-    
-    const eventSource = new EventSource(
-      `${endpoint}?` + new URLSearchParams({
-        provider,
-        evaluationType
-      })
-    );
 
-    // Set up POST request for streaming
+    // Set up fetch with streaming response
     fetch(endpoint, {
       method: 'POST',
       headers: {
@@ -45,12 +38,17 @@ export async function analyzeDocumentStreaming(
         evaluationType
       })
     }).then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       if (!response.body) {
         throw new Error('No response body');
       }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
+      let buffer = '';
 
       function readStream() {
         reader.read().then(({ done, value }) => {
@@ -58,8 +56,11 @@ export async function analyzeDocumentStreaming(
             return;
           }
 
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n');
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\\n');
+          
+          // Keep the last incomplete line in buffer
+          buffer = lines.pop() || '';
 
           for (const line of lines) {
             if (line.startsWith('data: ')) {
@@ -70,14 +71,14 @@ export async function analyzeDocumentStreaming(
                   onProgress?.(data.progress, data.message);
                   onPartialData?.(data.data);
                 } else if (data.type === 'complete') {
-                  resolve(data.result.result || data.result.evaluation);
+                  resolve(data.result.result || data.result.evaluation || data.result);
                   return;
                 } else if (data.type === 'error') {
                   reject(new Error(data.error));
                   return;
                 }
               } catch (e) {
-                // Ignore parsing errors for incomplete chunks
+                console.warn('Failed to parse SSE message:', line);
               }
             }
           }
