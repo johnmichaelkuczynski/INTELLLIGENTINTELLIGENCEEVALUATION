@@ -82,7 +82,7 @@ const HomePage: React.FC = () => {
 
   
   // State for LLM provider
-  const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("deepseek");
+  const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("openai");
   const [apiStatus, setApiStatus] = useState<{
     openai: boolean;
     anthropic: boolean;
