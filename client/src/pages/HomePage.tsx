@@ -12,11 +12,10 @@ import CaseAssessmentModal from "@/components/CaseAssessmentModal";
 import { DocumentComparisonModal } from "@/components/DocumentComparisonModal";
 import { FictionAssessmentModal } from "@/components/FictionAssessmentModal";
 import { FictionComparisonModal } from "@/components/FictionComparisonModal";
-import IntelligentRewriteModal from "@/components/IntelligentRewriteModal";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Trash2, FileEdit, BrainCircuit, Loader2, Zap, Clock } from "lucide-react";
+import { Brain, Trash2, FileEdit, Loader2, Zap, Clock } from "lucide-react";
 import { analyzeDocument, compareDocuments, checkForAI } from "@/lib/analysis";
 import { AnalysisMode, DocumentInput as DocumentInputType, AIDetectionResult, DocumentAnalysis, DocumentComparison } from "@/lib/types";
 
@@ -69,8 +68,6 @@ const HomePage: React.FC = () => {
   const [isFictionAssessmentLoading, setIsFictionAssessmentLoading] = useState(false);
   const [fictionAssessmentResult, setFictionAssessmentResult] = useState<any>(null);
   
-  // State for intelligent rewrite
-  const [showRewriteModal, setShowRewriteModal] = useState(false);
   
   // Streaming state for real-time analysis
   const [isStreaming, setIsStreaming] = useState(false);
@@ -723,17 +720,6 @@ const HomePage: React.FC = () => {
             </span>
           </Button>
           
-          {/* Smart Rewrite Button - only for single document mode */}
-          {mode === "single" && (
-            <Button
-              onClick={() => setShowRewriteModal(true)}
-              className="px-6 py-3 bg-green-600 text-white rounded-md font-semibold hover:bg-green-700 flex items-center"
-              disabled={!documentA.content.trim()}
-            >
-              <BrainCircuit className="h-5 w-5 mr-2" />
-              <span>Smart Rewrite</span>
-            </Button>
-          )}
 
           {/* Case Assessment Button - only for single document mode */}
           {mode === "single" && (
@@ -891,12 +877,6 @@ const HomePage: React.FC = () => {
         }}
       />
 
-      {/* Intelligent Rewrite Modal */}
-      <IntelligentRewriteModal
-        isOpen={showRewriteModal}
-        onClose={() => setShowRewriteModal(false)}
-        originalText={documentA.content}
-      />
 
 
       {/* Inline Streaming Results Area */}
