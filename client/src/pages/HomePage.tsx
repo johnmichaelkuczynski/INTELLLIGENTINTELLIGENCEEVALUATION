@@ -79,12 +79,13 @@ const HomePage: React.FC = () => {
   // State for LLM provider
   const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("openai");
 
-  // REAL streaming that actually works
+  // FIXED streaming function
   const startStreaming = async (text: string, provider: string) => {
-    setIsStreaming(true);
-    setStreamingContent('');
+    console.log('startStreaming called with:', { text: text.slice(0, 50), provider });
     
     try {
+      console.log('Making fetch request to /api/stream-analysis...');
+      
       const response = await fetch('/api/stream-analysis', {
         method: 'POST',
         headers: {
@@ -92,6 +93,8 @@ const HomePage: React.FC = () => {
         },
         body: JSON.stringify({ text, provider }),
       });
+
+      console.log('Response received:', response.status, response.statusText);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -104,18 +107,26 @@ const HomePage: React.FC = () => {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       
+      console.log('Starting to read stream...');
+      
       while (true) {
         const { done, value } = await reader.read();
         
         if (done) {
+          console.log('Stream ended');
           setIsStreaming(false);
           break;
         }
 
         const chunk = decoder.decode(value, { stream: true });
-        // Immediately display each chunk as it arrives - REAL streaming
+        console.log('Received chunk:', chunk);
+        
         if (chunk) {
-          setStreamingContent(prev => prev + chunk);
+          setStreamingContent(prev => {
+            const newContent = prev + chunk;
+            console.log('Updated content length:', newContent.length);
+            return newContent;
+          });
         }
       }
       
@@ -218,25 +229,9 @@ const HomePage: React.FC = () => {
     try {
       const provider = selectedProvider === "all" ? "openai" : selectedProvider;
       
-      const response = await fetch('/api/case-assessment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: documentA.content,
-          provider: provider,
-          documentId: analysisA?.id || null
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Case assessment failed: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      setCaseAssessmentResult(data.result);
-      setCaseAssessmentModalOpen(true);
+      // Use streaming for case assessment too
+      await startStreaming(documentA.content, provider);
+      return;
       
     } catch (error) {
       console.error("Error performing case assessment:", error);
@@ -371,6 +366,9 @@ const HomePage: React.FC = () => {
 
     // Use streaming for single document mode
     if (mode === "single") {
+      console.log("Starting streaming analysis...");
+      setIsStreaming(true);
+      setStreamingContent('');
       await startStreaming(documentA.content, selectedProvider);
       return;
     }

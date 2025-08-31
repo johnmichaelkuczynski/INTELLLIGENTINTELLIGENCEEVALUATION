@@ -776,7 +776,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
-  // Case assessment endpoint
+  // Case assessment endpoint - STREAMING VERSION
   app.post("/api/case-assessment", async (req: Request, res: Response) => {
     try {
       const { text, provider = "openai", documentId } = req.body;
@@ -785,57 +785,83 @@ export async function registerRoutes(app: Express): Promise<Express> {
         return res.status(400).json({ error: "Text content is required for case assessment" });
       }
       
-      const validProviders = ['openai', 'anthropic', 'perplexity', 'deepseek'];
-      if (!validProviders.includes(provider)) {
-        return res.status(400).json({ error: `Provider must be one of: ${validProviders.join(', ')}` });
-      }
+      // Set headers for streaming
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('X-Accel-Buffering', 'no');
       
-      console.log(`Starting case assessment with ${provider} for text of length: ${text.length}`);
+      console.log(`Starting STREAMING case assessment with ${provider} for text of length: ${text.length}`);
       
-      const { performCaseAssessment } = await import('./services/caseAssessment');
-      const result = await performCaseAssessment(text, provider);
-      
-      // Store the case assessment in the database if documentId is provided
-      if (documentId) {
-        try {
-          const { db } = await import('./db');
-          const { caseAssessments } = await import('@shared/schema');
-          
-          await db.insert(caseAssessments).values({
-            documentId: parseInt(documentId),
-            proofEffectiveness: result.proofEffectiveness,
-            claimCredibility: result.claimCredibility,
-            nonTriviality: result.nonTriviality,
-            proofQuality: result.proofQuality,
-            functionalWriting: result.functionalWriting,
-            overallCaseScore: result.overallCaseScore,
-            detailedAssessment: result.detailedAssessment,
-          });
-          
-          console.log(`Case assessment saved to database for document ${documentId}`);
-        } catch (dbError) {
-          console.error("Failed to save case assessment to database:", dbError);
-          // Continue with response even if DB save fails
+      const prompt = `Assess how well this text makes its case. Analyze argument effectiveness, proof quality, claim credibility:
+
+${text}
+
+Provide detailed streaming analysis of the argument's strengths and weaknesses.`;
+
+      // Stream from OpenAI with immediate flushing (same pattern as stream-analysis)
+      if (provider === 'openai') {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4',
+            messages: [{ role: 'user', content: prompt }],
+            stream: true,
+            max_tokens: 4000,
+          }),
+        });
+
+        if (!response.body) {
+          throw new Error('No response body');
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') continue;
+              
+              try {
+                const parsed = JSON.parse(data);
+                const content = parsed.choices?.[0]?.delta?.content || '';
+                if (content) {
+                  res.write(content);
+                  if (typeof res.flush === 'function') {
+                    res.flush();
+                  }
+                }
+              } catch (e) {
+                // Skip invalid JSON
+              }
+            }
+          }
         }
       }
       
-      console.log(`Case assessment complete - Overall score: ${result.overallCaseScore}/100`);
+      res.end();
       
-      return res.json({
-        success: true,
-        provider,
-        result
-      });
     } catch (error: any) {
       console.error("Error in case assessment:", error);
-      return res.status(500).json({ 
-        error: "Failed to perform case assessment",
-        message: error.message 
-      });
+      res.write(`ERROR: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      res.end();
     }
   });
 
-  // Fiction Assessment API endpoint
+  // Fiction Assessment API endpoint - STREAMING VERSION
   app.post('/api/fiction-assessment', async (req, res) => {
     try {
       const { text, provider, documentId } = req.body;
@@ -844,22 +870,79 @@ export async function registerRoutes(app: Express): Promise<Express> {
         return res.status(400).json({ error: "Text and provider are required" });
       }
       
-      const { performFictionAssessment } = await import('./services/fictionAssessment');
-      const result = await performFictionAssessment(text, provider);
+      // Set headers for streaming
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('X-Accel-Buffering', 'no');
       
-      console.log(`Fiction assessment complete - Overall score: ${result.overallFictionScore}/100`);
+      console.log(`Starting STREAMING fiction assessment with ${provider} for text of length: ${text.length}`);
       
-      return res.json({
-        success: true,
-        provider,
-        result
-      });
+      const prompt = `Assess this fiction text for literary quality, narrative effectiveness, character development, and prose style:
+
+${text}
+
+Provide detailed streaming analysis of the fiction's strengths and weaknesses.`;
+
+      // Stream from OpenAI with immediate flushing
+      if (provider === 'openai') {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4',
+            messages: [{ role: 'user', content: prompt }],
+            stream: true,
+            max_tokens: 4000,
+          }),
+        });
+
+        if (!response.body) {
+          throw new Error('No response body');
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') continue;
+              
+              try {
+                const parsed = JSON.parse(data);
+                const content = parsed.choices?.[0]?.delta?.content || '';
+                if (content) {
+                  res.write(content);
+                  if (typeof res.flush === 'function') {
+                    res.flush();
+                  }
+                }
+              } catch (e) {
+                // Skip invalid JSON
+              }
+            }
+          }
+        }
+      }
+      
+      res.end();
+      
     } catch (error: any) {
       console.error("Error in fiction assessment:", error);
-      return res.status(500).json({ 
-        error: "Failed to perform fiction assessment",
-        message: error.message 
-      });
+      res.write(`ERROR: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      res.end();
     }
   });
 
@@ -1120,53 +1203,65 @@ PROVIDE A FINAL VALIDATED SCORE OUT OF 100 IN THE FORMAT: SCORE: X/100
 `.trim();
 
       // Stream from OpenAI with immediate flushing
-      if (provider === 'openai') {
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'gpt-4',
-            messages: [{ role: 'user', content: prompt }],
-            stream: true,
-            max_tokens: 4000,
-          }),
-        });
+      console.log(`Calling OpenAI API with model gpt-4o...`);
+      
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [{ role: 'user', content: prompt }],
+          stream: true,
+          max_tokens: 4000,
+          temperature: 0.7,
+        }),
+      });
 
-        if (!response.body) {
-          throw new Error('No response body');
+      console.log(`OpenAI response status: ${response.status}`);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`OpenAI API Error: ${response.status} - ${errorText}`);
+        throw new Error(`OpenAI API Error: ${response.status} - ${errorText}`);
+      }
+
+      if (!response.body) {
+        throw new Error('No response body from OpenAI');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      console.log('Starting to read streaming response...');
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          console.log('Streaming completed');
+          break;
         }
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split('\n');
-
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
-              if (data === '[DONE]') continue;
-              
-              try {
-                const parsed = JSON.parse(data);
-                const content = parsed.choices?.[0]?.delta?.content || '';
-                if (content) {
-                  res.write(content);
-                  // Force immediate transmission
-                  if (typeof res.flush === 'function') {
-                    res.flush();
-                  }
-                }
-              } catch (e) {
-                // Skip invalid JSON
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+            
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content || '';
+              if (content) {
+                res.write(content);
+                // Force flush - remove type check
+                (res as any).flush?.();
               }
+            } catch (e) {
+              // Skip invalid JSON
             }
           }
         }
