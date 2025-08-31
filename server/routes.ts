@@ -926,7 +926,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
   
-  // Intelligent Rewrite with 4-Phase Protocol
+  // REAL-TIME STREAMING Intelligent Rewrite with 4-Phase Protocol  
   app.post("/api/intelligent-rewrite", async (req: Request, res: Response) => {
     try {
       const { text, customInstructions, provider = 'zhi1', userEmail } = req.body;
@@ -937,84 +937,37 @@ export async function registerRoutes(app: Express): Promise<Express> {
         });
       }
       
-      // Import the intelligent rewrite service
-      const { performIntelligentRewrite } = await import('./services/intelligentRewrite');
-      
       // Map ZHI provider to actual provider name
       const actualProvider = mapZhiToProvider(provider);
       
-      // Execute intelligent rewrite
-      console.log(`EXECUTING INTELLIGENT REWRITE WITH ${actualProvider.toUpperCase()}`);
-      const result = await performIntelligentRewrite({
+      console.log(`EXECUTING REAL-TIME STREAMING REWRITE WITH ${actualProvider.toUpperCase()}`);
+      
+      // Set up Server-Sent Events for real-time streaming
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Cache-Control'
+      });
+
+      // Import streaming rewrite service
+      const { performStreamingIntelligentRewrite } = await import('./services/streamingIntelligentRewrite');
+      
+      // Execute streaming rewrite
+      await performStreamingIntelligentRewrite({
         text,
         customInstructions,
-        provider: actualProvider as any
-      });
-      
-      // Store the rewrite results in database if userEmail provided
-      if (userEmail) {
-        try {
-          // Store original document
-          const originalDoc = await storage.createDocument({
-            content: result.originalText,
-            userEmail,
-            complexity: 'medium'
-          });
-          
-          // Store rewritten document  
-          const rewrittenDoc = await storage.createDocument({
-            content: result.rewrittenText,
-            userEmail,
-            complexity: 'medium'
-          });
-          
-          // Store original analysis (we would need to create this)
-          const originalAnalysis = await storage.createAnalysis({
-            documentId: originalDoc.id,
-            userEmail,
-            summary: `Original text scored ${result.originalScore}/100`,
-            overallScore: result.originalScore,
-            overallAssessment: 'Original text evaluation',
-            dimensions: {}
-          });
-          
-          // Store rewritten analysis
-          const rewrittenAnalysis = await storage.createAnalysis({
-            documentId: rewrittenDoc.id,
-            userEmail,
-            summary: `Rewritten text scored ${result.rewrittenScore}/100`,
-            overallScore: result.rewrittenScore,
-            overallAssessment: 'Rewritten text evaluation',
-            dimensions: {}
-          });
-          
-          // Store rewrite record
-          await storage.createIntelligentRewrite({
-            originalDocumentId: originalDoc.id,
-            rewrittenDocumentId: rewrittenDoc.id,
-            originalAnalysisId: originalAnalysis.id,
-            rewrittenAnalysisId: rewrittenAnalysis.id,
-            userEmail,
-            provider: result.provider,
-            customInstructions: customInstructions || null,
-            originalScore: result.originalScore,
-            rewrittenScore: result.rewrittenScore,
-            scoreImprovement: result.rewrittenScore - result.originalScore,
-            rewriteReport: result.rewriteReport
-          });
-        } catch (dbError) {
-          console.error("Error storing rewrite to database:", dbError);
-          // Continue without storing - don't fail the rewrite
+        provider: actualProvider as any,
+        onChunk: (chunk: string, type: 'originalScore' | 'rewriteChunk' | 'finalScore' | 'complete') => {
+          res.write(`data: ${JSON.stringify({ type, chunk })}\n\n`);
         }
-      }
-      
-      return res.json(result);
-    } catch (error: any) {
-      console.error("Error executing intelligent rewrite:", error);
-      return res.status(500).json({ 
-        error: true, 
-        message: error.message || "Failed to execute intelligent rewrite" 
       });
+      
+    } catch (error: any) {
+      console.error("Error executing streaming rewrite:", error);
+      res.write(`data: ${JSON.stringify({ type: 'complete', chunk: `ERROR: ${error.message}` })}\n\n`);
+      res.end();
     }
   });
 

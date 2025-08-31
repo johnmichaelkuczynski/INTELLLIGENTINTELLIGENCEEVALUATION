@@ -36,6 +36,10 @@ const IntelligentRewriteModal: React.FC<IntelligentRewriteModalProps> = ({
   const [result, setResult] = useState<IntelligentRewriteResult | null>(null);
   const { toast } = useToast();
 
+  const [streamingText, setStreamingText] = useState('');
+  const [originalScore, setOriginalScore] = useState<number | null>(null);
+  const [finalScore, setFinalScore] = useState<number | null>(null);
+
   const handleRewrite = async () => {
     if (!originalText.trim()) {
       toast({
@@ -48,9 +52,12 @@ const IntelligentRewriteModal: React.FC<IntelligentRewriteModalProps> = ({
 
     setIsRewriting(true);
     setResult(null);
+    setStreamingText('');
+    setOriginalScore(null);
+    setFinalScore(null);
 
     try {
-      console.log(`Starting intelligent rewrite with ${provider}`);
+      console.log(`Starting REAL-TIME streaming rewrite with ${provider}`);
       
       const response = await fetch('/api/intelligent-rewrite', {
         method: 'POST',
@@ -68,20 +75,62 @@ const IntelligentRewriteModal: React.FC<IntelligentRewriteModalProps> = ({
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const rewriteResult = await response.json() as IntelligentRewriteResult;
-      console.log('Intelligent rewrite completed:', rewriteResult);
-      setResult(rewriteResult);
+      // Handle streaming response
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
 
-      toast({
-        title: "Rewrite completed!",
-        description: `Score improved from ${rewriteResult.originalScore}/100 to ${rewriteResult.rewrittenScore}/100 (${rewriteResult.rewrittenScore > rewriteResult.originalScore ? '+' : ''}${rewriteResult.rewrittenScore - rewriteResult.originalScore} points)`,
-      });
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+            
+            try {
+              const parsed = JSON.parse(data);
+              
+              if (parsed.type === 'originalScore') {
+                // No score tracking - just status updates
+              } else if (parsed.type === 'rewriteChunk') {
+                setStreamingText(prev => prev + parsed.chunk);
+              } else if (parsed.type === 'finalScore') {
+                // Rewrite completed
+              } else if (parsed.type === 'complete') {
+                // Rewrite complete
+                toast({
+                  title: "LIVE STREAMING REWRITE COMPLETED!",
+                  description: `Rewritten text is ready`,
+                });
+                
+                // Set final result
+                setResult({
+                  originalText,
+                  rewrittenText: streamingText,
+                  originalScore: 0,
+                  rewrittenScore: 0,
+                  provider,
+                  instructions: customInstructions || 'Default intelligence optimization',
+                  rewriteReport: 'Real-time streaming rewrite completed'
+                });
+                break;
+              }
+            } catch (e) {
+              console.error('Error parsing streaming data:', e);
+            }
+          }
+        }
+      }
 
     } catch (error: any) {
-      console.error('Error during intelligent rewrite:', error);
+      console.error('Error during streaming rewrite:', error);
       toast({
-        title: "Rewrite failed",
-        description: error.message || "Failed to rewrite text. Please try again.",
+        title: "Streaming rewrite failed",
+        description: error.message || "Failed to stream rewrite. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -109,8 +158,31 @@ const IntelligentRewriteModal: React.FC<IntelligentRewriteModalProps> = ({
         </DialogHeader>
 
         <div className="space-y-6">
+          {/* REAL-TIME STREAMING DISPLAY */}
+          {isRewriting && (
+            <div className="space-y-4">
+              <div className="bg-green-50 border border-green-200 rounded-md p-4">
+                <h4 className="text-sm font-medium text-green-900 flex items-center gap-1.5 mb-2">
+                  <Brain className="h-4 w-4 animate-pulse" />
+                  LIVE STREAMING REWRITE - REAL TIME
+                </h4>
+                <div className="space-y-3">
+                  {streamingText && (
+                    <div className="bg-white border rounded p-3 max-h-80 overflow-y-auto">
+                      <div className="text-sm font-medium text-gray-700 mb-2">LIVE STREAMING REWRITTEN TEXT:</div>
+                      <div className="text-sm text-gray-900 whitespace-pre-wrap">
+                        {streamingText}
+                        <span className="animate-pulse text-blue-500">|</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Instructions Section */}
-          {!result && (
+          {!result && !isRewriting && (
             <div className="space-y-4">
               <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
                 <h4 className="text-sm font-medium text-blue-900 flex items-center gap-1.5 mb-2">
