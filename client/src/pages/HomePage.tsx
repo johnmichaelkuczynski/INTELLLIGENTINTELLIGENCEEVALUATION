@@ -82,7 +82,7 @@ const HomePage: React.FC = () => {
   // State for LLM provider
   const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("openai");
 
-  // Streaming function - REAL streaming word by word
+  // Real-time streaming using Server-Sent Events
   const startStreaming = async (text: string, provider: string) => {
     setIsStreaming(true);
     setStreamingContent('');
@@ -92,6 +92,7 @@ const HomePage: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'text/event-stream',
         },
         body: JSON.stringify({ text, provider }),
       });
@@ -106,38 +107,30 @@ const HomePage: React.FC = () => {
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-
-      let buffer = '';
       
-      const processStream = async () => {
-        while (true) {
-          const { done, value } = await reader.read();
-          
-          if (done) {
-            if (buffer) {
-              setStreamingContent(prev => prev + buffer);
-            }
-            break;
-          }
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-          const chunk = decoder.decode(value, { stream: true });
-          buffer += chunk;
-          
-          // Process complete words from buffer
-          const words = buffer.split(' ');
-          if (words.length > 1) {
-            const completeWords = words.slice(0, -1).join(' ') + ' ';
-            buffer = words[words.length - 1]; // Keep the last incomplete word
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
             
-            setStreamingContent(prev => prev + completeWords);
-            
-            // Small delay to make streaming visible
-            await new Promise(resolve => setTimeout(resolve, 50));
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.content) {
+                setStreamingContent(prev => prev + parsed.content);
+              }
+            } catch (e) {
+              // Skip invalid JSON
+            }
           }
         }
-      };
-
-      await processStream();
+      }
       
     } catch (error) {
       console.error('Streaming error:', error);
