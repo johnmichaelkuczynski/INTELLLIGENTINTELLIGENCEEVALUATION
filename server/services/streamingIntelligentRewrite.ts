@@ -1,6 +1,4 @@
-import { executeFourPhaseProtocol } from './fourPhaseProtocol';
-
-type LLMProvider = 'openai' | 'anthropic' | 'perplexity' | 'deepseek';
+import { LLMProvider } from '../lib/types';
 
 interface StreamingRewriteRequest {
   text: string;
@@ -12,52 +10,17 @@ interface StreamingRewriteRequest {
 export async function performStreamingIntelligentRewrite(request: StreamingRewriteRequest): Promise<void> {
   const { text, customInstructions, provider, onChunk } = request;
   
-  console.log(`Starting REAL-TIME streaming rewrite with ${provider}`);
+  console.log(`EXECUTING INTELLIGENT REWRITE WITH ${provider.toUpperCase()}`);
   
-  onChunk('Starting rewrite...', 'originalScore');
-  
-  // Create rewrite instructions
-  const defaultInstructions = `You are rewriting text to score 98-100/100 on a sophisticated 4-phase intelligence evaluation. This evaluation specifically looks for:
+  const rewritePrompt = `Rewrite the following text to be more intelligent, sophisticated, and well-reasoned. Make it sound like it was written by someone with deep expertise and brilliant analytical thinking.
 
-CRITICAL SUCCESS FACTORS (what scores 95-100):
-1. NOVEL ABSTRACTION: Introduce genuinely new conceptual distinctions or frameworks that weren't obvious before
-2. INFERENTIAL CONTROL: Make every logical step crystal clear with explicit reasoning chains 
-3. SEMANTIC COMPRESSION: Pack maximum meaning into minimal words - every sentence must carry heavy conceptual load
-4. RECURSIVE STRUCTURE: Create arguments that loop back and strengthen themselves (A supports B supports C supports A*)
-5. OPERATIONAL PRECISION: Define terms with surgical precision - no vague concepts allowed
-6. HIERARCHICAL ORGANIZATION: Clear logical progression from foundation to implications
-7. COGNITIVE RISK: Make bold, non-obvious claims that require sophisticated reasoning to defend
+${customInstructions ? `Additional instructions: ${customInstructions}\n\n` : ''}
 
-SPECIFIC REWRITE TACTICS:
-- Add explicit "because" and "therefore" chains showing logical connections
-- Introduce precise technical distinctions (like "presentations vs representations")
-- Create nested logical structures where each point builds on and reinforces others
-- Use precise philosophical/technical language where it adds conceptual clarity
-- Make implicit assumptions explicit and defend them
-- Show how conclusions loop back to strengthen premises
-- Add brief explanations of why obvious alternatives fail
-
-PRESERVE: Core arguments, conclusions, overall thesis
-ENHANCE: Logical rigor, conceptual precision, inferential transparency`;
-
-  const finalInstructions = customInstructions 
-    ? `${defaultInstructions}\n\nADDITIONAL CUSTOM INSTRUCTIONS:\n${customInstructions}\n\nNote: Balance custom instructions with the intelligence optimization criteria above.`
-    : defaultInstructions;
-
-  // Start streaming the rewrite IMMEDIATELY
-  onChunk('', 'rewriteChunk');
-  
-  const rewritePrompt = `${finalInstructions}
-
-ORIGINAL TEXT:
+Text to rewrite:
 ${text}
 
-CRITICAL: Output ONLY the rewritten text. NO commentary, NO explanations, NO preamble like "Here's a rewrite..." Just the pure rewritten text starting immediately.
+Rewritten version:`;
 
-REWRITTEN TEXT:`;
-
-  let fullRewrittenText = '';
-  
   try {
     if (provider === 'openai') {
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -67,11 +30,11 @@ REWRITTEN TEXT:`;
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4o',
+          model: 'gpt-4',
           messages: [{ role: 'user', content: rewritePrompt }],
           stream: true,
-          max_tokens: 4000,
           temperature: 0.1,
+          max_tokens: 4000
         }),
       });
 
@@ -94,15 +57,7 @@ REWRITTEN TEXT:`;
               const parsed = JSON.parse(data);
               const content = parsed.choices?.[0]?.delta?.content || '';
               if (content) {
-                // Clean up any commentary that slips through
-                const cleanContent = content
-                  .replace(/^Here's.*?rewrite.*?:/i, '')
-                  .replace(/^This.*?version.*?:/i, '')
-                  .replace(/^The following.*?:/i, '')
-                  .replace(/^Below.*?:/i, '');
-                
-                fullRewrittenText += cleanContent;
-                onChunk(cleanContent, 'rewriteChunk');
+                onChunk(content, 'rewriteChunk');
               }
             } catch (e) {}
           }
@@ -123,37 +78,18 @@ REWRITTEN TEXT:`;
         if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
           const content = chunk.delta.text;
           if (content) {
-            // Clean up any commentary that slips through
-            const cleanContent = content
-              .replace(/^Here's.*?rewrite.*?:/i, '')
-              .replace(/^This.*?version.*?:/i, '')
-              .replace(/^The following.*?:/i, '')
-              .replace(/^Below.*?:/i, '');
-            
-            fullRewrittenText += cleanContent;
-            onChunk(cleanContent, 'rewriteChunk');
+            onChunk(content, 'rewriteChunk');
           }
         }
       }
     } else {
-      throw new Error(`Streaming not supported for provider: ${provider}`);
+      throw new Error(`Provider ${provider} not supported`);
     }
 
-    // Final cleanup of accumulated text
-    fullRewrittenText = fullRewrittenText
-      .replace(/^Here's.*?rewrite.*?:/i, '')
-      .replace(/^This.*?version.*?:/i, '')
-      .replace(/^The following.*?:/i, '')
-      .replace(/^Below.*?:/i, '')
-      .replace(/^\*\*.*?\*\*:?/gm, '')
-      .replace(/^--+/gm, '')
-      .trim();
-
-    onChunk('Rewrite completed!', 'finalScore');
     onChunk('complete', 'complete');
 
   } catch (error) {
-    console.error(`Error during streaming rewrite with ${provider}:`, error);
+    console.error(`Error during rewrite with ${provider}:`, error);
     onChunk(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`, 'complete');
   }
 }

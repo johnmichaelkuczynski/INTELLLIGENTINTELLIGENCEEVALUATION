@@ -103,8 +103,8 @@ const IntelligentRewriteModal: React.FC<IntelligentRewriteModalProps> = ({
               } else if (parsed.type === 'complete') {
                 // Rewrite complete
                 toast({
-                  title: "LIVE STREAMING REWRITE COMPLETED!",
-                  description: `Rewritten text is ready`,
+                  title: "Rewrite completed",
+                  description: `Text has been rewritten`,
                 });
                 
                 // Set final result
@@ -158,24 +158,12 @@ const IntelligentRewriteModal: React.FC<IntelligentRewriteModalProps> = ({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* REAL-TIME STREAMING DISPLAY */}
           {isRewriting && (
             <div className="space-y-4">
-              <div className="bg-green-50 border border-green-200 rounded-md p-4">
-                <h4 className="text-sm font-medium text-green-900 flex items-center gap-1.5 mb-2">
-                  <Brain className="h-4 w-4 animate-pulse" />
-                  LIVE STREAMING REWRITE - REAL TIME
-                </h4>
-                <div className="space-y-3">
-                  {streamingText && (
-                    <div className="bg-white border rounded p-3 max-h-80 overflow-y-auto">
-                      <div className="text-sm font-medium text-gray-700 mb-2">LIVE STREAMING REWRITTEN TEXT:</div>
-                      <div className="text-sm text-gray-900 whitespace-pre-wrap">
-                        {streamingText}
-                        <span className="animate-pulse text-blue-500">|</span>
-                      </div>
-                    </div>
-                  )}
+              <div className="bg-white border rounded p-3">
+                <div className="text-sm text-gray-900 whitespace-pre-wrap">
+                  {streamingText}
+                  <span className="animate-pulse text-blue-500">|</span>
                 </div>
               </div>
             </div>
