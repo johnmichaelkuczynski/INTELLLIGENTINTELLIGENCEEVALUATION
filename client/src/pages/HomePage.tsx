@@ -75,7 +75,7 @@ const HomePage: React.FC = () => {
 
   
   // State for LLM provider
-  const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("deepseek");
+  const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("openai");
   const [apiStatus, setApiStatus] = useState<{
     openai: boolean;
     anthropic: boolean;
@@ -262,7 +262,7 @@ const HomePage: React.FC = () => {
     setFictionAssessmentResult(null);
 
     try {
-      const provider = selectedProvider === "all" ? "deepseek" : selectedProvider;
+      const provider = selectedProvider === "all" ? "openai" : selectedProvider;
       
       const response = await fetch('/api/fiction-assessment', {
         method: 'POST',
@@ -327,7 +327,7 @@ const HomePage: React.FC = () => {
       if (mode === "single") {
         // Choose between quick and comprehensive analysis
         if (analysisType === "quick") {
-          const provider = selectedProvider === "all" ? "deepseek" : selectedProvider;
+          const provider = selectedProvider === "all" ? "openai" : selectedProvider;
           
           const response = await fetch('/api/quick-analysis', {
             method: 'POST',
@@ -364,7 +364,7 @@ const HomePage: React.FC = () => {
       } else {
         // Two-document mode: choose between quick and comprehensive
         if (analysisType === "quick") {
-          const provider = selectedProvider === "all" ? "deepseek" : selectedProvider;
+          const provider = selectedProvider === "all" ? "openai" : selectedProvider;
           
           const response = await fetch('/api/quick-compare', {
             method: 'POST',
@@ -712,7 +712,7 @@ const HomePage: React.FC = () => {
         documentContent={currentFictionDocument === "A" ? documentA.content : documentB.content}
         documentTitle={currentFictionDocument === "A" ? (documentA.filename || "Document A") : (documentB.filename || "Document B")}
         result={fictionAssessmentResult}
-        selectedProvider={selectedProvider === "all" ? "deepseek" : selectedProvider}
+        selectedProvider={selectedProvider === "all" ? "openai" : selectedProvider}
       />
 
       {/* Fiction Comparison Modal */}
