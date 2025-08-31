@@ -801,7 +801,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
       
       const { performCaseAssessment } = await import('./services/caseAssessment');
       const actualProvider = mapZhiToProvider(provider);
-      const result = await performCaseAssessment(text, actualProvider);
+      const result = await performCaseAssessment(text, actualProvider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek');
       
       res.json({
         success: true,
