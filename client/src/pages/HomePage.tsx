@@ -121,18 +121,9 @@ const HomePage: React.FC = () => {
         }
 
         const chunk = decoder.decode(value, { stream: true });
-        buffer += chunk;
-        
-        // Stream word by word
-        const words = buffer.split(' ');
-        if (words.length > 1) {
-          const wordsToShow = words.slice(0, -1).join(' ') + ' ';
-          buffer = words[words.length - 1];
-          
-          setStreamingContent(prev => prev + wordsToShow);
-          
-          // Small delay to see streaming effect
-          await new Promise(resolve => setTimeout(resolve, 30));
+        // Immediately display each chunk as it arrives - no buffering
+        if (chunk) {
+          setStreamingContent(prev => prev + chunk);
         }
       }
       

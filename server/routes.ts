@@ -1098,7 +1098,15 @@ In this dissertation, I critically examine the philosophy of transcendental empi
 
 This shows: 1. DOCTRINES ARE LABELLED, BUT NEVER DEFINED; AND THEIR MEANINGS CANNOT BE INFERRED FROM CONTEXT 2. THIS PASSAGE CONTAINS FREE VARIABLES. FOR EXAMPLE, "among other things" QUALIFICATION IS NEVER CLARIFIED 3. THE AUTHOR NEVER IDENTIFIES THE "EPISTEMOLOGICAL DILEMMA" IN QUESTION.
 
-START WITH SUMMARY AND CATEGORY, then answer questions. End with conclusion.
+START WITH SUMMARY AND CATEGORY, then answer questions with MANDATORY DIRECT QUOTES from the source text.
+
+**CRITICAL REQUIREMENT**: Every single answer MUST include at least one direct quote from the text in quotation marks like this: "exact text from source"
+
+**QUOTE REQUIREMENT EXAMPLES**:
+- Q1: INSIGHTFUL? The text shows insight when it states "exact quote here" which demonstrates...
+- Q2: DEVELOPS POINTS? Yes, the author develops the point by writing "another exact quote" which shows...
+
+MANDATORY: End conclusion with supporting quotes from the text.
 
 PROVIDE A FINAL VALIDATED SCORE OUT OF 100 IN THE FORMAT: SCORE: X/100
 `.trim();
