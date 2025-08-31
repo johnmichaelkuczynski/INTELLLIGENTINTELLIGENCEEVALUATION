@@ -124,7 +124,7 @@ const HomePage: React.FC = () => {
           const chunk = decoder.decode(value, { stream: true });
           if (chunk) {
             totalContent += chunk;
-            console.log('Received chunk:', chunk.length, 'chars');
+            console.log('Chunk received:', chunk);
             setStreamingContent(totalContent);
           }
         }
