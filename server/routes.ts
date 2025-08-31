@@ -30,6 +30,17 @@ interface AIDetectionResult {
   probability: number;
 }
 
+// Map ZHI names to actual provider names
+function mapZhiToProvider(zhiName: string): string {
+  const mapping: Record<string, string> = {
+    'zhi1': 'openai',
+    'zhi2': 'anthropic', 
+    'zhi3': 'deepseek',
+    'zhi4': 'perplexity'
+  };
+  return mapping[zhiName] || zhiName;
+}
+
 export async function registerRoutes(app: Express): Promise<Express> {
   
   // API health check endpoint
@@ -267,9 +278,10 @@ export async function registerRoutes(app: Express): Promise<Express> {
         
         try {
           // Use the unified executeFourPhaseProtocol function for intelligence evaluation
+          const actualProvider = mapZhiToProvider(provider.toLowerCase());
           pureResult = await executeFourPhaseProtocol(
             content,
-            provider.toLowerCase() as 'openai' | 'anthropic' | 'perplexity' | 'deepseek',
+            actualProvider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek',
             'intelligence'
           );
           
@@ -787,7 +799,9 @@ export async function registerRoutes(app: Express): Promise<Express> {
       
       console.log(`Starting case assessment with ${provider} for text of length: ${text.length}`);
       
-      const result = await performCaseAssessment(text, provider);
+      const { performCaseAssessment } = await import('./services/caseAssessment');
+      const actualProvider = mapZhiToProvider(provider);
+      const result = await performCaseAssessment(text, actualProvider);
       
       res.json({
         success: true,
@@ -820,7 +834,8 @@ export async function registerRoutes(app: Express): Promise<Express> {
       console.log(`Starting fiction assessment with ${provider} for text of length: ${text.length}`);
       
       const { performFictionAssessment } = await import('./services/fictionAssessment');
-      const result = await performFictionAssessment(text, provider);
+      const actualProvider = mapZhiToProvider(provider);
+      const result = await performFictionAssessment(text, actualProvider);
       
       res.json({
         success: true,

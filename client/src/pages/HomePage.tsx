@@ -77,7 +77,7 @@ const HomePage: React.FC = () => {
   const [streamingContent, setStreamingContent] = useState('');
   
   // State for LLM provider
-  const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("openai");
+  const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("zhi1");
 
   // FIXED streaming function
   const startStreaming = async (text: string, provider: string) => {
@@ -385,7 +385,7 @@ const HomePage: React.FC = () => {
       setIsAnalysisLoading(true);
       
       try {
-        const provider = selectedProvider === "all" ? "openai" : selectedProvider;
+        const provider = selectedProvider === "all" ? "zhi1" : selectedProvider;
         const endpoint = analysisType === "quick" ? '/api/cognitive-quick' : '/api/analyze';
         
         const response = await fetch(endpoint, {

@@ -54,46 +54,46 @@ const ProviderSelector: React.FC<ProviderSelectorProps> = ({
         </SelectTrigger>
         <SelectContent>
           <SelectItem 
-            value="openai" 
+            value="zhi1" 
             className="flex items-center" 
             disabled={!apiStatus.openai}
           >
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-green-600" />
-              <span>Zhi 1</span>
+              <span>ZHI 1</span>
               {!apiStatus.openai && <span className="text-xs text-red-500 ml-2">(Unavailable)</span>}
             </div>
           </SelectItem>
           <SelectItem 
-            value="anthropic" 
+            value="zhi2" 
             className="flex items-center"
             disabled={!apiStatus.anthropic}
           >
             <div className="flex items-center gap-2">
               <BrainCircuit className="h-4 w-4 text-purple-600" />
-              <span>Zhi 2</span>
+              <span>ZHI 2</span>
               {!apiStatus.anthropic && <span className="text-xs text-red-500 ml-2">(Unavailable)</span>}
             </div>
           </SelectItem>
           <SelectItem 
-            value="deepseek" 
+            value="zhi3" 
             className="flex items-center"
             disabled={!apiStatus.deepseek}
           >
             <div className="flex items-center gap-2">
               <BrainCircuit className="h-4 w-4 text-orange-600" />
-              <span>Zhi 3</span>
+              <span>ZHI 3</span>
               {!apiStatus.deepseek && <span className="text-xs text-red-500 ml-2">(Unavailable)</span>}
             </div>
           </SelectItem>
           <SelectItem 
-            value="perplexity" 
+            value="zhi4" 
             className="flex items-center"
             disabled={!apiStatus.perplexity}
           >
             <div className="flex items-center gap-2">
               <Bot className="h-4 w-4 text-blue-600" />
-              <span>Zhi 4</span>
+              <span>ZHI 4</span>
               {!apiStatus.perplexity && <span className="text-xs text-red-500 ml-2">(Unavailable)</span>}
             </div>
           </SelectItem>
