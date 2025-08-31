@@ -503,24 +503,60 @@ const HomePage: React.FC = () => {
       
       try {
         const provider = selectedProvider === "all" ? "zhi1" : selectedProvider;
-        const endpoint = analysisType === "quick" ? '/api/cognitive-quick' : '/api/analyze';
-        
-        const requestBody = analysisType === "quick" 
-          ? { text: documentA.content, provider: provider }
-          : { content: documentA.content, provider: provider };
-        
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestBody),
-        });
+        if (analysisType === "quick") {
+          // Quick analysis - regular API call
+          const response = await fetch('/api/cognitive-quick', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: documentA.content, provider: provider }),
+          });
 
-        if (!response.ok) {
-          throw new Error(`Analysis failed: ${response.statusText}`);
+          if (!response.ok) {
+            throw new Error(`Analysis failed: ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          setAnalysisA(data.analysis || data.result);
+        } else {
+          // Comprehensive analysis - streaming
+          setIsStreaming(true);
+          setStreamingContent('');
+          
+          const response = await fetch('/api/stream-comprehensive', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: documentA.content, provider: provider }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`Streaming failed: ${response.statusText}`);
+          }
+
+          const reader = response.body?.getReader();
+          const decoder = new TextDecoder();
+          let fullContent = '';
+
+          if (reader) {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              const chunk = decoder.decode(value, { stream: true });
+              fullContent += chunk;
+              setStreamingContent(fullContent);
+            }
+            
+            // Convert streaming content to analysis format
+            setAnalysisA({
+              id: Date.now(),
+              formattedReport: fullContent,
+              overallScore: 85, // Default score
+              provider: provider
+            });
+          }
+          
+          setIsStreaming(false);
         }
-
-        const data = await response.json();
-        setAnalysisA(data.analysis || data.result);
         
       } catch (error) {
         console.error("Error analyzing document:", error);

@@ -609,6 +609,59 @@ export async function registerRoutes(app: Express): Promise<Express> {
       });
     }
   });
+
+  // Stream comprehensive analysis - shows results as they're generated
+  app.post("/api/stream-comprehensive", async (req: Request, res: Response) => {
+    try {
+      const { text, provider = "zhi1" } = req.body;
+      
+      if (!text || typeof text !== 'string') {
+        return res.status(400).json({ error: "Text content is required" });
+      }
+      
+      // Set headers for streaming
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('X-Accel-Buffering', 'no');
+      
+      console.log(`Starting streaming comprehensive analysis with ${provider} for text of length: ${text.length}`);
+      
+      const actualProvider = mapZhiToProvider(provider);
+      
+      // Stream each phase as it completes
+      res.write(`🔍 Starting comprehensive analysis with ${provider}...\n\n`);
+      
+      const { executeComprehensiveProtocol } = await import('./services/fourPhaseProtocol');
+      
+      // Create a custom streaming version that sends updates
+      try {
+        res.write(`📊 PHASE 1: Initial Analysis\n`);
+        res.write(`Analyzing ${text.length} characters with full protocol...\n\n`);
+        
+        const result = await executeComprehensiveProtocol(
+          text,
+          actualProvider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek'
+        );
+        
+        res.write(`✅ Analysis Complete!\n\n`);
+        res.write(`📈 Final Score: ${result.overallScore}/100\n\n`);
+        res.write(`📄 DETAILED ANALYSIS:\n\n`);
+        res.write(result.formattedReport || result.analysis);
+        
+      } catch (error: any) {
+        res.write(`❌ ERROR: ${error.message}\n`);
+      }
+      
+      res.end();
+      
+    } catch (error: any) {
+      console.error("Error in comprehensive streaming:", error);
+      res.write(`ERROR: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      res.end();
+    }
+  });
   
   // Analyze document
   app.post("/api/analyze", async (req: Request, res: Response) => {
