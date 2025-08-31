@@ -1247,13 +1247,13 @@ export async function registerRoutes(app: Express): Promise<Express> {
       
       console.log(`Starting comprehensive analysis with ${provider} for text of length: ${text.length}`);
       
-      const { performComprehensiveAnalysis } = await import('./services/comprehensiveAnalysis');
+      const { executeComprehensiveProtocol } = await import('./services/fourPhaseProtocol');
       const actualProvider = mapZhiToProvider(provider);
-      const result = await performComprehensiveAnalysis(text, actualProvider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek');
+      const result = await executeComprehensiveProtocol(text, actualProvider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek');
       
       res.json({
         success: true,
-        analysis: result,
+        analysis: result.analysis,
         provider: provider,
         metadata: {
           contentLength: text.length,
