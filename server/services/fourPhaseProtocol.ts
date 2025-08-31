@@ -65,6 +65,28 @@ function createPhase4Prompt(): string {
   return `Final check complete. FINAL SCORE: [NUMBER]/100`;
 }
 
+// Text chunking function for large texts
+function chunkText(text: string, maxChunkSize: number = 2000): string[] {
+  const words = text.split(' ');
+  const chunks: string[] = [];
+  let currentChunk = '';
+  
+  for (const word of words) {
+    if ((currentChunk + ' ' + word).length > maxChunkSize && currentChunk.length > 0) {
+      chunks.push(currentChunk.trim());
+      currentChunk = word;
+    } else {
+      currentChunk += (currentChunk ? ' ' : '') + word;
+    }
+  }
+  
+  if (currentChunk.trim()) {
+    chunks.push(currentChunk.trim());
+  }
+  
+  return chunks;
+}
+
 // Generic LLM caller
 async function callLLMProvider(
   provider: 'openai' | 'anthropic' | 'perplexity' | 'deepseek',
@@ -193,31 +215,53 @@ export async function executeNormalProtocol(
   };
 }
 
-// COMPREHENSIVE PROTOCOL - All 4 phases
+// COMPREHENSIVE PROTOCOL - All 4 phases with chunking for high quality
 export async function executeComprehensiveProtocol(
   text: string,
   provider: 'openai' | 'anthropic' | 'perplexity' | 'deepseek'
 ): Promise<any> {
-  console.log(`EXACT 4-PHASE INTELLIGENCE EVALUATION: Analyzing ${text.length} characters with protocol`);
-  console.log(`EXECUTING YOUR EXACT 4-PHASE PROTOCOL FOR INTELLIGENCE WITH ${provider.toUpperCase()}`);
+  console.log(`CHUNKED 4-PHASE INTELLIGENCE EVALUATION: Analyzing ${text.length} characters with protocol`);
+  console.log(`EXECUTING CHUNKED 4-PHASE PROTOCOL FOR INTELLIGENCE WITH ${provider.toUpperCase()}`);
   
   const questions = EXACT_18_QUESTIONS;
   
-  // PHASE 1: Initial evaluation
-  console.log("PHASE 1: Ask questions and get initial score");
-  const phase1Prompt = createPhase1Prompt(text, questions);
-  const phase1Response = await callLLMProvider(provider, [
-    { role: 'user', content: phase1Prompt }
-  ]);
-  let phase1Score = extractScore(phase1Response);
+  // CHUNK THE TEXT FOR HIGH QUALITY ANALYSIS
+  const chunks = chunkText(text, 1500); // Smaller chunks for better analysis
+  console.log(`TEXT SPLIT INTO ${chunks.length} CHUNKS for comprehensive analysis`);
+  
+  let combinedAnalyses: string[] = [];
+  let chunkScores: number[] = [];
+  
+  // ANALYZE EACH CHUNK SEPARATELY
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i];
+    console.log(`PHASE 1 CHUNK ${i+1}/${chunks.length}: Analyzing ${chunk.length} characters`);
+    
+    const chunkPrompt = createPhase1Prompt(chunk, questions);
+    const chunkResponse = await callLLMProvider(provider, [
+      { role: 'user', content: chunkPrompt }
+    ]);
+    
+    combinedAnalyses.push(chunkResponse);
+    chunkScores.push(extractScore(chunkResponse));
+    
+    console.log(`CHUNK ${i+1} SCORE: ${chunkScores[i]}/100`);
+  }
+  
+  // COMBINE ALL CHUNK ANALYSES
+  const combinedText = combinedAnalyses.join('\n\n---CHUNK SEPARATOR---\n\n');
+  const averageScore = Math.round(chunkScores.reduce((a, b) => a + b, 0) / chunkScores.length);
+  let phase1Score = averageScore;
   
   let phase2Response = '';
   let phase2Score = phase1Score;
   
-  // PHASE 2: Pushback if score < 95
+  console.log(`PHASE 1 AVERAGE SCORE: ${phase1Score}/100 across ${chunks.length} chunks`);
+  
+  // PHASE 2: Pushback if score < 95 (using first chunk for efficiency)
   if (phase1Score < 95) {
-    console.log(`PHASE 2: Score ${phase1Score} < 95, applying pushback`);
-    const phase2Prompt = createPhase2Prompt(phase1Score, text, questions);
+    console.log(`PHASE 2: Score ${phase1Score} < 95, applying pushback to first chunk`);
+    const phase2Prompt = createPhase2Prompt(phase1Score, chunks[0], questions);
     phase2Response = await callLLMProvider(provider, [
       { role: 'user', content: phase2Prompt }
     ]);
@@ -267,8 +311,8 @@ export async function executeComprehensiveProtocol(
   const phases = {
     phase1: {
       score: phase1Score,
-      response: cleanResponse(phase1Response),
-      prompt: "Initial Intelligence Evaluation using exact 18-question protocol"
+      response: cleanResponse(combinedText),
+      prompt: "Chunked Intelligence Evaluation using exact 18-question protocol"
     },
     phase2: {
       score: phase2Score,
@@ -288,10 +332,10 @@ export async function executeComprehensiveProtocol(
   return {
     provider,
     overallScore: finalScore,
-    analysis: cleanResponse(phase1Response), // Main analysis from Phase 1
+    analysis: cleanResponse(combinedText), // Combined analysis from all chunks
     phases, // Detailed breakdown of all phases
     evaluationType: 'intelligence',
-    formattedReport: cleanResponse(phase1Response) // For compatibility
+    formattedReport: cleanResponse(combinedText) // Combined comprehensive analysis
   };
 }
 
