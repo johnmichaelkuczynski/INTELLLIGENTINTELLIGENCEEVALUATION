@@ -613,7 +613,11 @@ export async function registerRoutes(app: Express): Promise<Express> {
   // Analyze document
   app.post("/api/analyze", async (req: Request, res: Response) => {
     try {
+      console.log("DEBUG /api/analyze request body:", JSON.stringify(req.body, null, 2));
       const { content, provider = "all", requireProgress = false } = req.body;
+      
+      console.log("DEBUG content length:", content ? content.length : "UNDEFINED/NULL");
+      console.log("DEBUG provider:", provider);
       
       if (!content) {
         return res.status(400).json({ 
