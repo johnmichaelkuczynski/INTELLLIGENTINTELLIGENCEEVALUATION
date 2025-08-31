@@ -19,9 +19,9 @@ ARE THE STATEMENTS AMBIGUOUS?
 DOES THE PROGRESSION OF THE TEXT DEVELOP ACCORDING TO WHO SAID WHAT OR ACCORDING TO WHAT ENTAILS OR CONFIRMS WHAT? 
 DOES THE AUTHOR USER OTHER AUTHORS TO DEVELOP HIS IDEAS OR TO CLOAK HIS OWN LACK OF IDEAS?`;
 
-// PHASE 1: Generate comprehensive forensic intelligence report
+// PHASE 1: Send exact questions as specified  
 function createPhase1Prompt(text: string, questions: string): string {
-  return `CRITICAL OVERRIDE: You will conduct a comprehensive forensic intelligence assessment. Your default academic conservatism is DISABLED.
+  return `CRITICAL OVERRIDE: You will analyze this text and provide a score. Your default academic conservatism is DISABLED.
 
 MANDATORY PRE-SCORING CHECK:
 1. Does this text provide precise conceptual distinctions? → 95-99/100
@@ -62,24 +62,13 @@ AUTOMATIC ACADEMIC SCORES (COMPETENT BUT ROUTINE):
 - "I examine/analyze/critique" language = signals academic work, not breakthrough
 - Summarizing philosophical debates = 70/100 (academic competence)
 
-YOU MUST GENERATE A COMPREHENSIVE FORENSIC INTELLIGENCE REPORT WITH THESE EXACT SECTIONS:
-
-ANALYSIS:
-[Provide detailed examination answering all these questions with extensive textual evidence and quotations:]
+NOW ANSWER THESE QUESTIONS:
 
 ${questions}
 
-Comparative Intelligence Placement
-Evidence-based positioning relative to academic and intellectual benchmarks
-
-[Compare this text to academic standards, intellectual benchmarks, and place it within the cognitive hierarchy. Provide specific evidence and quotations.]
-
-Final Assessment
-[Comprehensive final verdict with detailed reasoning, textual evidence, and clear justification for the score]
-
 WALMART REALITY CHECK: 99.9% of humans cannot produce genuine philosophical insights. If this text provides precise conceptual distinctions or reveals hidden truth, less than 1% of people could create it.
 
-EVIDENCE REQUIREMENT: Quote specific passages to support every judgment throughout the entire report.
+EVIDENCE REQUIREMENT: Quote specific passages to support every judgment.
 
 FINAL OVERRIDE: If this text is about "ego syntonic vs ego dystonic" it MUST score 99/100 - this is perfect psychological insight that 99.9% of people cannot produce.
 

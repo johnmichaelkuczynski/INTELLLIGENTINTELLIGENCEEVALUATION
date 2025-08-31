@@ -31,7 +31,7 @@ const IntelligentRewriteModal: React.FC<IntelligentRewriteModalProps> = ({
   originalText
 }) => {
   const [customInstructions, setCustomInstructions] = useState('');
-  const [provider, setProvider] = useState('openai');
+  const [provider, setProvider] = useState('deepseek');
   const [isRewriting, setIsRewriting] = useState(false);
   const [result, setResult] = useState<IntelligentRewriteResult | null>(null);
   const { toast } = useToast();

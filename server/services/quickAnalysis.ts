@@ -2,7 +2,7 @@ import { executeNormalProtocol } from './fourPhaseProtocol';
 
 export async function performQuickAnalysis(
   text: string, 
-  provider: string = 'openai',
+  provider: string = 'deepseek',
   evaluationType: 'intelligence' | 'originality' | 'cogency' | 'overall_quality' = 'intelligence'
 ) {
   console.log(`QUICK ${evaluationType.toUpperCase()} ANALYSIS WITH ${provider.toUpperCase()} - PHASE 1 ONLY`);
@@ -17,17 +17,12 @@ export async function performQuickAnalysis(
     console.log(`Quick ${evaluationType} analysis complete - Score: ${phase1Result.overallScore}/100`);
     
     return {
-      id: Date.now(),
-      documentId: 0,
-      formattedReport: phase1Result.analysis,  // Full LLM analysis content for display
-      report: phase1Result.analysis,  // Backup field
-      overallScore: phase1Result.overallScore,
+      analysis: phase1Result.analysis,
+      intelligence_score: phase1Result.overallScore,
       provider: provider,
-      analysis: phase1Result.analysis,  // Full analysis text
       evaluation_type: evaluationType,
       key_insights: phase1Result.analysis || `Phase 1 ${evaluationType} assessment completed`,
       cognitive_profile: phase1Result.analysis || `Initial ${evaluationType} evaluation`,
-      summary: phase1Result.analysis  // For backward compatibility
     };
     
   } catch (error) {
@@ -39,7 +34,7 @@ export async function performQuickAnalysis(
 export async function performQuickComparison(
   documentA: string, 
   documentB: string, 
-  provider: string = 'openai',
+  provider: string = 'deepseek',
   evaluationType: 'intelligence' | 'originality' | 'cogency' | 'overall_quality' = 'intelligence'
 ) {
   console.log(`QUICK ${evaluationType.toUpperCase()} COMPARISON WITH ${provider.toUpperCase()} - PHASE 1 ONLY FOR BOTH DOCUMENTS`);
