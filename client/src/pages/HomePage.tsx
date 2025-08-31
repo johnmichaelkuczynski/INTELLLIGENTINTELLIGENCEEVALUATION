@@ -16,9 +16,8 @@ import IntelligentRewriteModal from "@/components/IntelligentRewriteModal";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Brain, Trash2, FileEdit, BrainCircuit, Loader2, Zap, Clock, Activity } from "lucide-react";
-import { analyzeDocument, compareDocuments, checkForAI, analyzeDocumentStreaming, compareDocumentsStreaming } from "@/lib/analysis";
+import { Brain, Trash2, FileEdit, BrainCircuit, Loader2, Zap, Clock } from "lucide-react";
+import { analyzeDocument, compareDocuments, checkForAI } from "@/lib/analysis";
 import { AnalysisMode, DocumentInput as DocumentInputType, AIDetectionResult, DocumentAnalysis, DocumentComparison } from "@/lib/types";
 
 const HomePage: React.FC = () => {
@@ -42,11 +41,6 @@ const HomePage: React.FC = () => {
   // State for loading indicators
   const [isAnalysisLoading, setIsAnalysisLoading] = useState(false);
   const [isAICheckLoading, setIsAICheckLoading] = useState(false);
-  
-  // State for streaming progress
-  const [analysisProgress, setAnalysisProgress] = useState(0);
-  const [analysisMessage, setAnalysisMessage] = useState("");
-  const [isStreaming, setIsStreaming] = useState(false);
 
   // State for showing results section
   const [showResults, setShowResults] = useState(false);
@@ -328,84 +322,83 @@ const HomePage: React.FC = () => {
 
     setShowResults(true);
     setIsAnalysisLoading(true);
-    setIsStreaming(true);
-    setAnalysisProgress(0);
-    setAnalysisMessage("Initializing...");
     
     try {
-      const provider = selectedProvider === "all" ? "deepseek" : selectedProvider;
-      
       if (mode === "single") {
-        // Use streaming analysis for both quick and comprehensive
-        const result = await analyzeDocumentStreaming(
-          documentA,
-          provider,
-          analysisType,
-          "intelligence",
-          (progress, message) => {
-            setAnalysisProgress(progress);
-            setAnalysisMessage(message);
-          }
-        );
-        
-        // Handle different result formats
+        // Choose between quick and comprehensive analysis
         if (analysisType === "quick") {
+          const provider = selectedProvider === "all" ? "deepseek" : selectedProvider;
+          
+          const response = await fetch('/api/quick-analysis', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              text: documentA.content,
+              provider: provider
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`Quick analysis failed: ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          
+          // Convert quick analysis result to standard format
           setAnalysisA({
             id: Date.now(),
-            formattedReport: (result as any).analysis || result.formattedReport,
-            overallScore: (result as any).intelligence_score || result.overallScore,
-            provider: result.provider,
-            summary: (result as any).key_insights || result.summary,
-            analysis: (result as any).cognitive_profile || result.analysis
+            formattedReport: data.result.analysis,
+            overallScore: data.result.intelligence_score,
+            provider: data.result.provider,
+            summary: data.result.key_insights,
+            analysis: data.result.cognitive_profile
           });
         } else {
+          // Use the comprehensive analysis (existing logic)
+          console.log(`Analyzing with ${selectedProvider}...`);
+          const result = await analyzeDocument(documentA, selectedProvider);
           setAnalysisA(result);
         }
-        
         setAnalysisB(null);
         setComparison(null);
       } else {
-        // Use streaming comparison for both quick and comprehensive
-        const results = await compareDocumentsStreaming(
-          documentA,
-          documentB,
-          provider,
-          analysisType,
-          "intelligence",
-          (progress, message) => {
-            setAnalysisProgress(progress);
-            setAnalysisMessage(message);
-          }
-        );
-        
+        // Two-document mode: choose between quick and comprehensive
         if (analysisType === "quick") {
-          setAnalysisA(results.analysisA);
-          setAnalysisB(results.analysisB);
-          setComparison(results.comparison);
+          const provider = selectedProvider === "all" ? "deepseek" : selectedProvider;
+          
+          const response = await fetch('/api/quick-compare', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              documentA: documentA.content,
+              documentB: documentB.content,
+              provider: provider
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`Quick comparison failed: ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          setAnalysisA(data.analysisA);
+          setAnalysisB(data.analysisB);
+          setComparison(data.comparison);
         } else {
+          // Use the comprehensive comparison (existing logic)
+          console.log(`Comparing with ${selectedProvider}...`);
+          const results = await compareDocuments(documentA, documentB, selectedProvider);
           setAnalysisA(results.analysisA);
           setAnalysisB(results.analysisB);
           setComparison(results.comparison);
         }
       }
-      
-      setAnalysisProgress(100);
-      setAnalysisMessage("Analysis complete!");
-      
     } catch (error) {
       console.error("Error analyzing documents:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       alert(`Analysis with ${selectedProvider} failed: ${errorMessage}\n\nPlease verify that the ${selectedProvider} API key is correctly configured.`);
-      setAnalysisProgress(0);
-      setAnalysisMessage("");
     } finally {
       setIsAnalysisLoading(false);
-      setIsStreaming(false);
-      // Keep progress visible for a moment before clearing
-      setTimeout(() => {
-        setAnalysisProgress(0);
-        setAnalysisMessage("");
-      }, 2000);
     }
   };
   
@@ -540,22 +533,6 @@ const HomePage: React.FC = () => {
           />
         )}
 
-        {/* Streaming Progress Indicator */}
-        {isStreaming && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-            <div className="flex items-center gap-3 mb-2">
-              <Activity className="h-5 w-5 text-blue-600 animate-pulse" />
-              <span className="text-sm font-medium text-blue-800">
-                {analysisMessage || "Processing..."}
-              </span>
-            </div>
-            <Progress value={analysisProgress} className="w-full" />
-            <div className="text-xs text-blue-600 mt-1">
-              {analysisProgress}% complete
-            </div>
-          </div>
-        )}
-
         {/* Analysis Buttons */}
         <div className="flex justify-center gap-4">
           <Button
@@ -563,16 +540,9 @@ const HomePage: React.FC = () => {
             className="px-6 py-3 bg-blue-600 text-white rounded-md font-semibold hover:bg-blue-700 flex items-center"
             disabled={isAnalysisLoading}
           >
-            {isStreaming ? (
-              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-            ) : (
-              <Brain className="h-5 w-5 mr-2" />
-            )}
+            <Brain className="h-5 w-5 mr-2" />
             <span>
-              {isStreaming 
-                ? "Analyzing..." 
-                : (mode === "single" ? "Analyze Document" : "Analyze Both Documents")
-              }
+              {mode === "single" ? "Analyze Document" : "Analyze Both Documents"}
             </span>
           </Button>
           

@@ -11,159 +11,6 @@ import {
   RewriteRequest
 } from "./types";
 
-// Streaming analysis function for single documents
-export async function analyzeDocumentStreaming(
-  document: DocumentInput,
-  provider: string = "deepseek",
-  analysisType: "quick" | "comprehensive" = "quick",
-  evaluationType: string = "intelligence",
-  onProgress?: (progress: number, message: string) => void,
-  onPartialData?: (data: any) => void
-): Promise<DocumentAnalysis> {
-  return new Promise((resolve, reject) => {
-    const endpoint = analysisType === "quick" 
-      ? "/api/quick-analysis/stream" 
-      : "/api/cognitive-evaluate/stream";
-    
-    const eventSource = new EventSource(
-      `${endpoint}?` + new URLSearchParams({
-        provider,
-        evaluationType
-      })
-    );
-
-    // Set up POST request for streaming
-    fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        text: document.content,
-        content: document.content,
-        provider,
-        evaluationType
-      })
-    }).then(response => {
-      if (!response.body) {
-        throw new Error('No response body');
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-
-      function readStream() {
-        reader.read().then(({ done, value }) => {
-          if (done) {
-            return;
-          }
-
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n');
-
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                
-                if (data.type === 'progress') {
-                  onProgress?.(data.progress, data.message);
-                  onPartialData?.(data.data);
-                } else if (data.type === 'complete') {
-                  resolve(data.result.result || data.result.evaluation);
-                  return;
-                } else if (data.type === 'error') {
-                  reject(new Error(data.error));
-                  return;
-                }
-              } catch (e) {
-                // Ignore parsing errors for incomplete chunks
-              }
-            }
-          }
-
-          readStream();
-        }).catch(reject);
-      }
-
-      readStream();
-    }).catch(reject);
-  });
-}
-
-// Streaming comparison function for dual documents
-export async function compareDocumentsStreaming(
-  documentA: DocumentInput,
-  documentB: DocumentInput,
-  provider: string = "deepseek",
-  analysisType: "quick" | "comprehensive" = "quick",
-  evaluationType: string = "intelligence",
-  onProgress?: (progress: number, message: string) => void,
-  onPartialData?: (data: any) => void
-): Promise<any> {
-  return new Promise((resolve, reject) => {
-    const endpoint = analysisType === "quick" 
-      ? "/api/quick-compare/stream" 
-      : "/api/intelligence-compare/stream";
-    
-    fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        documentA,
-        documentB,
-        provider,
-        evaluationType
-      })
-    }).then(response => {
-      if (!response.body) {
-        throw new Error('No response body');
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-
-      function readStream() {
-        reader.read().then(({ done, value }) => {
-          if (done) {
-            return;
-          }
-
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n');
-
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                
-                if (data.type === 'progress') {
-                  onProgress?.(data.progress, data.message);
-                  onPartialData?.(data.data);
-                } else if (data.type === 'complete') {
-                  resolve(data.result);
-                  return;
-                } else if (data.type === 'error') {
-                  reject(new Error(data.error));
-                  return;
-                }
-              } catch (e) {
-                // Ignore parsing errors for incomplete chunks
-              }
-            }
-          }
-
-          readStream();
-        }).catch(reject);
-      }
-
-      readStream();
-    }).catch(reject);
-  });
-}
-
 // Function to analyze a single document with progress tracking
 export async function analyzeDocument(
   document: DocumentInput,
@@ -217,7 +64,7 @@ export async function analyzeDocument(
         }
         
         return await response.json();
-      } catch (error: any) {
+      } catch (error) {
         clearInterval(progressTimer);
         console.error("Error analyzing document:", error);
         
@@ -264,7 +111,7 @@ export async function analyzeDocument(
         }
         
         return await response.json();
-      } catch (error: any) {
+      } catch (error) {
         console.error("Error analyzing document:", error);
         
         // Create a graceful fallback result with error information
@@ -291,7 +138,7 @@ export async function analyzeDocument(
         };
       }
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error("Unexpected error analyzing document:", error);
     
     // Create a graceful fallback result with error information
