@@ -135,9 +135,21 @@ export async function executeStreamingComprehensiveProtocol(
   
   const phase1Prompt = `Answer these questions in connection with this text. A score of N/100 (e.g. 73/100) means that (100-N)/100 (e.g. 27/100) outperform the author with respect to the parameter defined by the question. You are not grading; you are answering these questions. You do not use a risk-averse standard; you do not attempt to be diplomatic; you do not attempt to comply with risk-averse, medium-range IQ, academic norms. You do not make assumptions about the level of the paper; it could be a work of the highest excellence and genius, or it could be the work of a moron. If a work is a work of genius, you say that, and you say why; you do not shy away from giving what might conventionally be regarded as excessively "superlative" scores; you give it the score it deserves, not the score that a midwit committee would say it deserves. Think very very very hard about your answers; do not default to cookbook, midwit evaluation protocols.
 
+METAPOINT 1: This is not a grading app. You grade the intelligence of what you are given. If you are given brilliant fragment, you give it a high score. You are not grading essays. You are not looking for completeness (unless the text you are given is clearly such that evaluating intelligence coincides with applying a grading-based metric). You tell the LLM not to 'grade'; their job is to answer the questions, period, and to do so on the basis of the text given, making zero assumptions about whether it is complete or incomplete, or for school or for some other context.
+
+METAPOINT 2: Do not overvalue turns of phrase. An author speaking confidently is not necessarily "shutting down modes of inquiry". In fact, it is likely to be the opposite; by putting a clear stake in the ground, he is probably opening them. Another example: casual speech does not mean disorganized thoughts. Don't judge a book by its cover.
+
+METAPOINT 3: The app should always (in both normal and comprehensive mode) start by summarizing the text and also categorizing it.
+
+METAPOINT 4: The app should not change the grading based on the category of the text: if a text is categorized as 'advanced scholarship', it should still evaluate it with respect to the general population, not with respect only to 'advanced scholarly works.'
+
+METAPOINT 5: This is not a grading app. Do not penalize boldness. Do not take points away for insights that, if correct, stand on their own. Get rid of the idea that "argumentation" is what makes something smart; it isn't. What makes something smart is that it is smart (insightful). Period.
+
+METAPOINT 6: A score of N/100 means that (100 minus N)/100 are smarter (e.g. 83/100 means that 17/100 people in Walmart are running rings around the author).
+
 ${questions}
 
-End with: FINAL SCORE: [NUMBER]/100
+CRITICAL: Do not use markdown formatting. Do not use asterisks, hashtags, or other markup. Write in plain text only. End with exactly: FINAL SCORE: 85/100 (use actual number, not placeholder).
 
 TEXT:
 ${text}`;
@@ -147,8 +159,16 @@ ${text}`;
   ]);
   const phase1Score = extractScore(phase1Response);
   
+  // Clean up markdown formatting
+  const cleanedPhase1 = phase1Response
+    .replace(/\*{1,3}/g, '')
+    .replace(/#{1,6}\s*/g, '')
+    .replace(/\_{1,3}/g, '')
+    .replace(/\[NUMBER\]/g, phase1Score.toString())
+    .trim();
+  
   res.write(`✅ PHASE 1 COMPLETE: Score ${phase1Score}/100\n\n`);
-  res.write(`📄 PHASE 1 ANALYSIS:\n${phase1Response}\n\n`);
+  res.write(`📄 PHASE 1 ANALYSIS:\n${cleanedPhase1}\n\n`);
   
   let finalScore = phase1Score;
   
@@ -163,7 +183,7 @@ Answer the following questions about the text de novo:
 
 ${questions}
 
-End with: FINAL SCORE: [NUMBER]/100
+CRITICAL: Do not use markdown formatting. Write in plain text only. End with exactly: FINAL SCORE: 85/100 (use actual number, not placeholder).
 
 TEXT:
 ${text}`;
@@ -174,8 +194,16 @@ ${text}`;
     const phase2Score = extractScore(phase2Response);
     finalScore = phase2Score;
     
+    // Clean up markdown formatting
+    const cleanedPhase2 = phase2Response
+      .replace(/\*{1,3}/g, '')
+      .replace(/#{1,6}\s*/g, '')
+      .replace(/\_{1,3}/g, '')
+      .replace(/\[NUMBER\]/g, phase2Score.toString())
+      .trim();
+    
     res.write(`✅ PHASE 2 COMPLETE: Revised score ${phase2Score}/100\n\n`);
-    res.write(`📄 PHASE 2 ANALYSIS:\n${phase2Response}\n\n`);
+    res.write(`📄 PHASE 2 ANALYSIS:\n${cleanedPhase2}\n\n`);
   } else {
     res.write(`⏭️ PHASE 2: Score ${phase1Score} >= 95, no pushback needed\n\n`);
   }
@@ -186,7 +214,7 @@ ${text}`;
   const peopleOutperforming = 100 - finalScore;
   const phase3Prompt = `You ask the LLM if its numerical scores (N/100, e.g. 99/100, 42/100) are consistent with the fact that those are to be taken to mean that (100-N) people out of 100 outperform the author in the relevant respect. So if a score of ${finalScore}/100 is awarded to a paper, that means that ${peopleOutperforming}/100 people in Walmart are running rings around this person. Is this consistent with your assessment?
 
-FINAL SCORE: [NUMBER]/100`;
+CRITICAL: Do not use markdown formatting. Write in plain text only. End with exactly: FINAL SCORE: 85/100 (use actual number, not placeholder).`;
 
   const phase3Response = await callLLMProvider(provider, [
     { role: 'user', content: phase3Prompt }
@@ -194,15 +222,23 @@ FINAL SCORE: [NUMBER]/100`;
   const phase3Score = extractScore(phase3Response);
   if (phase3Score > 0) finalScore = phase3Score;
   
+  // Clean up markdown formatting
+  const cleanedPhase3 = phase3Response
+    .replace(/\*{1,3}/g, '')
+    .replace(/#{1,6}\s*/g, '')
+    .replace(/\_{1,3}/g, '')
+    .replace(/\[NUMBER\]/g, phase3Score.toString())
+    .trim();
+  
   res.write(`✅ PHASE 3 COMPLETE: Walmart-adjusted score ${finalScore}/100\n\n`);
-  res.write(`📄 PHASE 3 ANALYSIS:\n${phase3Response}\n\n`);
+  res.write(`📄 PHASE 3 ANALYSIS:\n${cleanedPhase3}\n\n`);
   
   // PHASE 4: Accept and report
   res.write(`✨ PHASE 4: Final acceptance and reporting...\n\n`);
   
   const phase4Prompt = `At this point, you accept and report what the LLM says.
 
-FINAL SCORE: [NUMBER]/100`;
+CRITICAL: Do not use markdown formatting. Write in plain text only. End with exactly: FINAL SCORE: 85/100 (use actual number, not placeholder).`;
 
   const phase4Response = await callLLMProvider(provider, [
     { role: 'user', content: phase4Prompt }
@@ -210,8 +246,16 @@ FINAL SCORE: [NUMBER]/100`;
   const phase4Score = extractScore(phase4Response);
   if (phase4Score > 0) finalScore = phase4Score;
   
+  // Clean up markdown formatting
+  const cleanedPhase4 = phase4Response
+    .replace(/\*{1,3}/g, '')
+    .replace(/#{1,6}\s*/g, '')
+    .replace(/\_{1,3}/g, '')
+    .replace(/\[NUMBER\]/g, phase4Score.toString())
+    .trim();
+  
   res.write(`🎯 FINAL SCORE: ${finalScore}/100\n\n`);
-  res.write(`📄 PHASE 4 FINAL REPORT:\n${phase4Response}\n\n`);
+  res.write(`📄 PHASE 4 FINAL REPORT:\n${cleanedPhase4}\n\n`);
   
   res.write(`\n🏁 4-PHASE PROTOCOL COMPLETE\n`);
   res.write(`📊 Final Intelligence Score: ${finalScore}/100\n`);

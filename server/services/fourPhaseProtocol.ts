@@ -35,19 +35,21 @@ IF I WERE TO GIVE A LOW SCORE TO THIS PASSAGE, WOULD I BE PENALIZING ACTUAL INTE
 function createPhase1Prompt(text: string, questions: string): string {
   return `Answer these questions in connection with this text. A score of N/100 (e.g. 73/100) means that (100-N)/100 (e.g. 27/100) outperform the author with respect to the parameter defined by the question. You are not grading; you are answering these questions. You do not use a risk-averse standard; you do not attempt to be diplomatic; you do not attempt to comply with risk-averse, medium-range IQ, academic norms. You do not make assumptions about the level of the paper; it could be a work of the highest excellence and genius, or it could be the work of a moron. If a work is a work of genius, you say that, and you say why; you do not shy away from giving what might conventionally be regarded as excessively "superlative" scores; you give it the score it deserves, not the score that a midwit committee would say it deserves. Think very very very hard about your answers; do not default to cookbook, midwit evaluation protocols.
 
-METAPOINT 1: This is not a grading app. You grade the intelligence of what you are given. If you are given brilliant fragment, you give it a high score. You are not grading essays. You are not looking for completeness. You tell the LLM not to 'grade'; their job is to answer the questions, period, and to do so on the basis of the text given, making zero assumptions about whether it is complete or incomplete.
+METAPOINT 1: This is not a grading app. You grade the intelligence of what you are given. If you are given brilliant fragment, you give it a high score. You are not grading essays. You are not looking for completeness (unless the text you are given is clearly such that evaluating intelligence coincides with applying a grading-based metric). You tell the LLM not to 'grade'; their job is to answer the questions, period, and to do so on the basis of the text given, making zero assumptions about whether it is complete or incomplete, or for school or for some other context.
 
-METAPOINT 2: Do not overvalue turns of phrase. An author speaking confidently is not necessarily "shutting down modes of inquiry". By putting a clear stake in the ground, he is probably opening them. Casual speech does not mean disorganized thoughts. Don't judge a book by its cover.
+METAPOINT 2: Do not overvalue turns of phrase. An author speaking confidently is not necessarily "shutting down modes of inquiry". In fact, it is likely to be the opposite; by putting a clear stake in the ground, he is probably opening them. Another example: casual speech does not mean disorganized thoughts. Don't judge a book by its cover.
 
-METAPOINT 3: Start by summarizing the text and categorizing it.
+METAPOINT 3: The app should always (in both normal and comprehensive mode) start by summarizing the text and also categorizing it.
 
-METAPOINT 4: Do not change the grading based on the category of the text: if a text is categorized as 'advanced scholarship', still evaluate it with respect to the general population, not with respect only to 'advanced scholarly works.'
+METAPOINT 4: The app should not change the grading based on the category of the text: if a text is categorized as 'advanced scholarship', it should still evaluate it with respect to the general population, not with respect only to 'advanced scholarly works.'
 
 METAPOINT 5: This is not a grading app. Do not penalize boldness. Do not take points away for insights that, if correct, stand on their own. Get rid of the idea that "argumentation" is what makes something smart; it isn't. What makes something smart is that it is smart (insightful). Period.
 
+METAPOINT 6: A score of N/100 means that (100 minus N)/100 are smarter (e.g. 83/100 means that 17/100 people in Walmart are running rings around the author).
+
 ${questions}
 
-End with: FINAL SCORE: [NUMBER]/100
+CRITICAL: Do not use markdown formatting. Do not use asterisks, hashtags, or other markup. Write in plain text only. End with exactly: FINAL SCORE: 85/100 (use actual number, not placeholder).
 
 TEXT:
 ${text}`;
