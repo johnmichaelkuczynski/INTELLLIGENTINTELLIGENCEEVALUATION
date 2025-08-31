@@ -540,7 +540,7 @@ const HomePage: React.FC = () => {
     try {
       // Two-document mode: use existing comparison logic for now
       if (analysisType === "quick") {
-        const provider = selectedProvider === "all" ? "deepseek" : selectedProvider;
+        const provider = selectedProvider === "all" ? "zhi1" : selectedProvider;
         
         const response = await fetch('/api/quick-compare', {
           method: 'POST',

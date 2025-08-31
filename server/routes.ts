@@ -435,7 +435,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
   // Quick analysis API endpoint with evaluation type support
   app.post("/api/quick-analysis", async (req: Request, res: Response) => {
     try {
-      const { text, provider = 'deepseek', evaluationType = 'intelligence' } = req.body;
+      const { text, provider = 'zhi1', evaluationType = 'intelligence' } = req.body;
 
       if (!text || typeof text !== 'string') {
         return res.status(400).json({ 
@@ -470,7 +470,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
   // Quick comparison API endpoint with evaluation type support
   app.post("/api/quick-compare", async (req: Request, res: Response) => {
     try {
-      const { documentA, documentB, provider = 'deepseek', evaluationType = 'intelligence' } = req.body;
+      const { documentA, documentB, provider = 'zhi1', evaluationType = 'intelligence' } = req.body;
 
       if (!documentA || !documentB) {
         return res.status(400).json({ 
@@ -505,7 +505,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
   // COMPREHENSIVE 4-PHASE EVALUATION using exact protocol with evaluation type support
   app.post("/api/cognitive-evaluate", async (req: Request, res: Response) => {
     try {
-      const { content, provider = 'deepseek', evaluationType = 'intelligence' } = req.body;
+      const { content, provider = 'zhi1', evaluationType = 'intelligence' } = req.body;
 
       if (!content || typeof content !== 'string') {
         return res.status(400).json({ 
@@ -929,7 +929,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
   // Intelligent Rewrite with 4-Phase Protocol
   app.post("/api/intelligent-rewrite", async (req: Request, res: Response) => {
     try {
-      const { text, customInstructions, provider = 'deepseek', userEmail } = req.body;
+      const { text, customInstructions, provider = 'zhi1', userEmail } = req.body;
       
       if (!text || typeof text !== 'string') {
         return res.status(400).json({ 
@@ -1360,7 +1360,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
   // ORIGINALITY EVALUATION API endpoint
   app.post("/api/originality-evaluate", async (req: Request, res: Response) => {
     try {
-      const { content, provider = 'deepseek', phase = 'comprehensive' } = req.body;
+      const { content, provider = 'zhi1', phase = 'comprehensive' } = req.body;
 
       if (!content || typeof content !== 'string') {
         return res.status(400).json({ 
@@ -1408,7 +1408,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
   // COGENCY EVALUATION API endpoint
   app.post("/api/cogency-evaluate", async (req: Request, res: Response) => {
     try {
-      const { content, provider = 'deepseek', phase = 'comprehensive' } = req.body;
+      const { content, provider = 'zhi1', phase = 'comprehensive' } = req.body;
 
       if (!content || typeof content !== 'string') {
         return res.status(400).json({ 
@@ -1456,7 +1456,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
   // OVERALL QUALITY EVALUATION API endpoint
   app.post("/api/overall-quality-evaluate", async (req: Request, res: Response) => {
     try {
-      const { content, provider = 'deepseek', phase = 'comprehensive' } = req.body;
+      const { content, provider = 'zhi1', phase = 'comprehensive' } = req.body;
 
       if (!content || typeof content !== 'string') {
         return res.status(400).json({ 

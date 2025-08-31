@@ -31,7 +31,7 @@ const IntelligentRewriteModal: React.FC<IntelligentRewriteModalProps> = ({
   originalText
 }) => {
   const [customInstructions, setCustomInstructions] = useState('');
-  const [provider, setProvider] = useState('deepseek');
+  const [provider, setProvider] = useState('zhi1');
   const [isRewriting, setIsRewriting] = useState(false);
   const [result, setResult] = useState<IntelligentRewriteResult | null>(null);
   const { toast } = useToast();
@@ -139,10 +139,10 @@ const IntelligentRewriteModal: React.FC<IntelligentRewriteModalProps> = ({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="deepseek">DeepSeek (Recommended)</SelectItem>
-                      <SelectItem value="openai">OpenAI GPT-4</SelectItem>
-                      <SelectItem value="anthropic">Anthropic Claude</SelectItem>
-                      <SelectItem value="perplexity">Perplexity AI</SelectItem>
+                      <SelectItem value="zhi1">Zhi 1 (Recommended)</SelectItem>
+                      <SelectItem value="zhi2">Zhi 2</SelectItem>
+                      <SelectItem value="zhi3">Zhi 3</SelectItem>
+                      <SelectItem value="zhi4">Zhi 4</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
