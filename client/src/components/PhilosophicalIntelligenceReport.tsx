@@ -187,6 +187,8 @@ const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportP
   
   // Extract data from the formatted report - CHECK ALL POSSIBLE FIELDS
   const formattedReport = analysis.formattedReport || analysis.content || analysis.analysis || analysis.report || analysis.summary || "";
+  console.log("IMMEDIATE DEBUG - formattedReport length:", formattedReport?.length);
+  console.log("IMMEDIATE DEBUG - formattedReport first 500 chars:", formattedReport?.substring(0, 500));
   const cleanedReport = cleanAIResponse(formattedReport);
   
   // Use ONLY the final score from 4-phase protocol - no text extraction needed
@@ -234,9 +236,17 @@ const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportP
           {/* DIRECT ANALYSIS DISPLAY - NO POPUP */}
           <div className="space-y-6">
             <div className="prose prose-lg dark:prose-invert max-w-none">
-              {formattedReport ? formatEnhancedAnalysis(cleanedReport) : (
+              {formattedReport ? (
+                <div>
+                  <div className="mb-4 p-2 bg-red-100 text-red-800 text-xs">
+                    DEBUG: Report length: {formattedReport.length} chars
+                  </div>
+                  {formatEnhancedAnalysis(cleanedReport)}
+                </div>
+              ) : (
                 <div className="text-center py-8">
-                  <p className="text-gray-500">No analysis content available</p>
+                  <p className="text-gray-500">No analysis content available - formattedReport is empty</p>
+                  <p className="text-xs text-gray-400 mt-2">analysis object keys: {Object.keys(analysis).join(', ')}</p>
                 </div>
               )}
             </div>
