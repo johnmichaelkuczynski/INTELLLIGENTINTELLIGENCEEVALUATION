@@ -47,6 +47,10 @@ const HomePage: React.FC = () => {
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [analysisMessage, setAnalysisMessage] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  
+  // State for streaming content display
+  const [streamingContent, setStreamingContent] = useState("");
+  const [showStreamingArea, setShowStreamingArea] = useState(false);
 
   // State for showing results section
   const [showResults, setShowResults] = useState(false);
@@ -337,6 +341,10 @@ const HomePage: React.FC = () => {
       
       if (mode === "single") {
         // Use streaming analysis for both quick and comprehensive
+        // Reset and show streaming area
+        setStreamingContent("");
+        setShowStreamingArea(true);
+        
         const result = await analyzeDocumentStreaming(
           documentA,
           provider,
@@ -345,6 +353,12 @@ const HomePage: React.FC = () => {
           (progress, message) => {
             setAnalysisProgress(progress);
             setAnalysisMessage(message);
+          },
+          (data) => {
+            // Handle streaming content chunks
+            if (data && data.content) {
+              setStreamingContent(prev => prev + data.content);
+            }
           }
         );
         
@@ -765,6 +779,54 @@ const HomePage: React.FC = () => {
         onClose={() => setShowRewriteModal(false)}
         originalText={documentA.content}
       />
+
+      {/* Real-time Streaming Report Display Area */}
+      {showStreamingArea && (
+        <div className="mt-8 max-w-4xl mx-auto">
+          <div className="bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Activity className="h-4 w-4 text-green-500 animate-pulse" />
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                Real-Time Analysis Report
+              </h3>
+              {isStreaming && (
+                <Badge variant="outline" className="text-green-600 border-green-200">
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  Generating...
+                </Badge>
+              )}
+            </div>
+            
+            <div className="bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-600 p-4 max-h-96 overflow-y-auto">
+              {streamingContent ? (
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <pre className="whitespace-pre-wrap text-sm font-mono leading-relaxed text-slate-700 dark:text-slate-300">
+                    {streamingContent}
+                  </pre>
+                </div>
+              ) : (
+                <div className="text-center text-slate-500 dark:text-slate-400 py-8">
+                  <Activity className="h-8 w-8 mx-auto mb-2 animate-pulse" />
+                  <p>Waiting for analysis to begin...</p>
+                </div>
+              )}
+            </div>
+            
+            {!isStreaming && streamingContent && (
+              <div className="mt-4 flex justify-end">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setShowStreamingArea(false)}
+                >
+                  <Clock className="h-4 w-4 mr-2" />
+                  Hide Report
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Chat Dialog - Always visible below everything */}
       <ChatDialog 
