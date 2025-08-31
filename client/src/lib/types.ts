@@ -98,27 +98,6 @@ export interface DocumentAnalysis {
   // Optional fields for error handling and AI detection
   aiDetection?: AIDetectionResult;
   error?: boolean;
-  
-  // Assessment functions - How Well Does It Make Its Case & Fiction Assessment
-  caseAssessment?: {
-    overallCaseScore: number;
-    proofEffectiveness: number;
-    claimCredibility: number;
-    nonTriviality: number;
-    proofQuality: number;
-    functionalWriting: number;
-    detailedAssessment: string;
-  };
-  
-  fictionAssessment?: {
-    overallFictionScore: number;
-    worldCoherence: number;
-    emotionalPlausibility: number;
-    thematicDepth: number;
-    narrativeStructure: number;
-    proseControl: number;
-    detailedAssessment: string;
-  };
 }
 
 export interface DocumentComparison {

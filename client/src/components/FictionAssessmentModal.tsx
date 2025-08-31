@@ -138,7 +138,7 @@ ${result.detailedAssessment}`;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="fiction-assessment-modal-description">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">Fiction Assessment - {documentTitle}</DialogTitle>
         </DialogHeader>

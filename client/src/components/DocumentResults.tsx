@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { DocumentAnalysis, DocumentInput as DocumentInputType } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
-import { Bot, Share2, ShieldAlert } from "lucide-react";
+import { Bot, Share2, BrainCircuit, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ShareViaEmailModal from "./ShareViaEmailModal";
 import AIDetectionModal from "./AIDetectionModal";
 import ReportDownloadButton from "./ReportDownloadButton";
 import PhilosophicalIntelligenceReport from "./PhilosophicalIntelligenceReport";
+import IntelligentRewriteModal from "./IntelligentRewriteModal";
 import { checkForAI } from "@/lib/analysis";
 import { useToast } from "@/hooks/use-toast";
 
@@ -24,6 +25,7 @@ const DocumentResults: React.FC<DocumentResultsProps> = ({
   analysisMode = "comprehensive"
 }) => {
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showRewriteModal, setShowRewriteModal] = useState(false);
   const [showAIDetectionModal, setShowAIDetectionModal] = useState(false);
   const [isCheckingAI, setIsCheckingAI] = useState(false);
   const [aiDetectionResult, setAIDetectionResult] = useState<any>(null);
@@ -97,7 +99,7 @@ const DocumentResults: React.FC<DocumentResultsProps> = ({
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
-            <Bot className="w-6 h-6 text-white" />
+            <BrainCircuit className="w-6 h-6 text-white" />
           </div>
           <div>
             <h2 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 dark:from-slate-200 dark:to-slate-400 bg-clip-text text-transparent">Document {id} Analysis</h2>
@@ -105,6 +107,16 @@ const DocumentResults: React.FC<DocumentResultsProps> = ({
           </div>
         </div>
         <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="flex items-center gap-2 bg-green-100 text-green-800 hover:bg-green-200"
+            onClick={() => setShowRewriteModal(true)}
+            disabled={!originalDocument?.content}
+          >
+            <BrainCircuit className="h-4 w-4" />
+            Smart Rewrite
+          </Button>
           <Button
             size="sm"
             variant="outline"
@@ -166,6 +178,12 @@ const DocumentResults: React.FC<DocumentResultsProps> = ({
         rewrittenAnalysis={undefined}
       />
       
+      {/* Intelligent Rewrite Modal */}
+      <IntelligentRewriteModal
+        isOpen={showRewriteModal}
+        onClose={() => setShowRewriteModal(false)}
+        originalText={originalDocument?.content || ''}
+      />
       
       {/* AI Detection Modal */}
       <AIDetectionModal

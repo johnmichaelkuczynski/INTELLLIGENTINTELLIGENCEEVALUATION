@@ -22,13 +22,13 @@ interface ChatDialogProps {
   onSendToInput?: (content: string) => void;
 }
 
-type LLMProvider = "zhi1" | "zhi2" | "zhi3" | "zhi4";
+type LLMProvider = "openai" | "anthropic" | "perplexity" | "deepseek";
 
 const AI_PROVIDERS = [
-  { value: "zhi1", label: "Zhi 1" },
-  { value: "zhi2", label: "Zhi 2" },
-  { value: "zhi3", label: "Zhi 3" },
-  { value: "zhi4", label: "Zhi 4" }
+  { value: "openai", label: "OpenAI (GPT-4)" },
+  { value: "anthropic", label: "Anthropic (Claude)" },
+  { value: "perplexity", label: "Perplexity AI" },
+  { value: "deepseek", label: "DeepSeek" }
 ] as const;
 
 export const ChatDialog: React.FC<ChatDialogProps> = ({
@@ -40,7 +40,7 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
   const { toast } = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState<string>("");
-  const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("zhi1");
+  const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("openai");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);

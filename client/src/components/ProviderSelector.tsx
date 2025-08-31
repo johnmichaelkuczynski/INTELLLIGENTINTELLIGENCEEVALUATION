@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { BrainCircuit, Bot, Sparkles, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-export type LLMProvider = "zhi1" | "zhi2" | "zhi3" | "zhi4" | "all";
+export type LLMProvider = "openai" | "anthropic" | "perplexity" | "deepseek" | "all";
 
 interface ProviderSelectorProps {
   selectedProvider: LLMProvider;
@@ -54,46 +54,46 @@ const ProviderSelector: React.FC<ProviderSelectorProps> = ({
         </SelectTrigger>
         <SelectContent>
           <SelectItem 
-            value="zhi1" 
-            className="flex items-center" 
-            disabled={!apiStatus.openai}
-          >
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-green-600" />
-              <span>ZHI 1</span>
-              {!apiStatus.openai && <span className="text-xs text-red-500 ml-2">(Unavailable)</span>}
-            </div>
-          </SelectItem>
-          <SelectItem 
-            value="zhi2" 
+            value="anthropic" 
             className="flex items-center"
             disabled={!apiStatus.anthropic}
           >
             <div className="flex items-center gap-2">
               <BrainCircuit className="h-4 w-4 text-purple-600" />
-              <span>ZHI 2</span>
+              <span>Zhi 1</span>
               {!apiStatus.anthropic && <span className="text-xs text-red-500 ml-2">(Unavailable)</span>}
             </div>
           </SelectItem>
           <SelectItem 
-            value="zhi3" 
+            value="openai" 
+            className="flex items-center" 
+            disabled={!apiStatus.openai}
+          >
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-green-600" />
+              <span>Zhi 2</span>
+              {!apiStatus.openai && <span className="text-xs text-red-500 ml-2">(Unavailable)</span>}
+            </div>
+          </SelectItem>
+          <SelectItem 
+            value="deepseek" 
             className="flex items-center"
             disabled={!apiStatus.deepseek}
           >
             <div className="flex items-center gap-2">
               <BrainCircuit className="h-4 w-4 text-orange-600" />
-              <span>ZHI 3</span>
+              <span>Zhi 3</span>
               {!apiStatus.deepseek && <span className="text-xs text-red-500 ml-2">(Unavailable)</span>}
             </div>
           </SelectItem>
           <SelectItem 
-            value="zhi4" 
+            value="perplexity" 
             className="flex items-center"
             disabled={!apiStatus.perplexity}
           >
             <div className="flex items-center gap-2">
               <Bot className="h-4 w-4 text-blue-600" />
-              <span>ZHI 4</span>
+              <span>Zhi 4</span>
               {!apiStatus.perplexity && <span className="text-xs text-red-500 ml-2">(Unavailable)</span>}
             </div>
           </SelectItem>
