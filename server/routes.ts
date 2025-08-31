@@ -926,10 +926,10 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
   
-  // REAL-TIME STREAMING Intelligent Rewrite with 4-Phase Protocol  
+  // Simple Intelligent Rewrite
   app.post("/api/intelligent-rewrite", async (req: Request, res: Response) => {
     try {
-      const { text, customInstructions, provider = 'zhi1', userEmail } = req.body;
+      const { text, customInstructions, provider = 'zhi1' } = req.body;
       
       if (!text || typeof text !== 'string') {
         return res.status(400).json({ 
@@ -940,34 +940,68 @@ export async function registerRoutes(app: Express): Promise<Express> {
       // Map ZHI provider to actual provider name
       const actualProvider = mapZhiToProvider(provider);
       
-      console.log(`EXECUTING REAL-TIME STREAMING REWRITE WITH ${actualProvider.toUpperCase()}`);
+      console.log(`EXECUTING INTELLIGENT REWRITE WITH ${actualProvider.toUpperCase()}`);
       
-      // Set up Server-Sent Events for real-time streaming
-      res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Cache-Control'
-      });
+      const rewritePrompt = `Rewrite the following text to be more intelligent, sophisticated, and well-reasoned. Make it sound like it was written by someone with deep expertise and brilliant analytical thinking.
 
-      // Import streaming rewrite service
-      const { performStreamingIntelligentRewrite } = await import('./services/streamingIntelligentRewrite');
-      
-      // Execute streaming rewrite
-      await performStreamingIntelligentRewrite({
-        text,
-        customInstructions,
-        provider: actualProvider as any,
-        onChunk: (chunk: string, type: 'originalScore' | 'rewriteChunk' | 'finalScore' | 'complete') => {
-          res.write(`data: ${JSON.stringify({ type, chunk })}\n\n`);
-        }
+${customInstructions ? `Additional instructions: ${customInstructions}\n\n` : ''}
+
+Text to rewrite:
+${text}
+
+Rewritten version:`;
+
+      let rewrittenText = '';
+
+      if (actualProvider === 'openai') {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4',
+            messages: [{ role: 'user', content: rewritePrompt }],
+            temperature: 0.1,
+            max_tokens: 4000
+          }),
+        });
+
+        const data = await response.json();
+        rewrittenText = data.choices[0].message.content;
+      } else if (actualProvider === 'anthropic') {
+        const Anthropic = (await import('@anthropic-ai/sdk')).default;
+        const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+        
+        const response = await anthropic.messages.create({
+          model: "claude-3-5-sonnet-20241022",
+          max_tokens: 4000,
+          messages: [{ role: "user", content: rewritePrompt }],
+          temperature: 0.1
+        });
+
+        rewrittenText = response.content[0].text;
+      } else {
+        throw new Error(`Provider ${actualProvider} not supported for rewrite`);
+      }
+
+      return res.json({
+        originalText: text,
+        rewrittenText,
+        originalScore: 0,
+        rewrittenScore: 0,
+        provider: actualProvider,
+        instructions: customInstructions || 'Default intelligence optimization',
+        rewriteReport: 'Simple rewrite completed'
       });
       
     } catch (error: any) {
-      console.error("Error executing streaming rewrite:", error);
-      res.write(`data: ${JSON.stringify({ type: 'complete', chunk: `ERROR: ${error.message}` })}\n\n`);
-      res.end();
+      console.error("Error executing rewrite:", error);
+      return res.status(500).json({ 
+        error: true, 
+        message: error.message || "Failed to execute rewrite" 
+      });
     }
   });
 
