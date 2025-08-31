@@ -13,6 +13,7 @@ import { DocumentComparisonModal } from "@/components/DocumentComparisonModal";
 import { FictionAssessmentModal } from "@/components/FictionAssessmentModal";
 import { FictionComparisonModal } from "@/components/FictionComparisonModal";
 import IntelligentRewriteModal from "@/components/IntelligentRewriteModal";
+import { StreamingAnalysisModal } from "@/components/StreamingAnalysisModal";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -71,6 +72,12 @@ const HomePage: React.FC = () => {
   
   // State for intelligent rewrite
   const [showRewriteModal, setShowRewriteModal] = useState(false);
+  
+  // State for streaming analysis modal
+  const [showStreamingModal, setShowStreamingModal] = useState(false);
+  const [streamingText, setStreamingText] = useState('');
+  const [streamingProvider, setStreamingProvider] = useState<'openai' | 'anthropic' | 'perplexity' | 'deepseek'>('anthropic');
+  const [streamingMode, setStreamingMode] = useState<'normal' | 'comprehensive'>('normal');
   
 
   
@@ -302,7 +309,7 @@ const HomePage: React.FC = () => {
     setFictionComparisonModalOpen(true);
   };
 
-  // Handler for analyzing documents
+  // Handler for analyzing documents with new streaming protocol
   const handleAnalyze = async () => {
     if (!documentA.content.trim()) {
       alert("Please enter some text in Document A.");
@@ -320,83 +327,57 @@ const HomePage: React.FC = () => {
       return;
     }
 
+    // For single document mode, use the new streaming analysis
+    if (mode === "single") {
+      const provider = selectedProvider === "all" ? "anthropic" : selectedProvider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek';
+      const streamMode = analysisType === "quick" ? "normal" : "comprehensive";
+      
+      setStreamingText(documentA.content);
+      setStreamingProvider(provider);
+      setStreamingMode(streamMode);
+      setShowStreamingModal(true);
+      return;
+    }
+
+    // For comparison mode, fall back to existing logic for now
     setShowResults(true);
     setIsAnalysisLoading(true);
     
     try {
-      if (mode === "single") {
-        // Choose between quick and comprehensive analysis
-        if (analysisType === "quick") {
-          const provider = selectedProvider === "all" ? "deepseek" : selectedProvider;
-          
-          const response = await fetch('/api/quick-analysis', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              text: documentA.content,
-              provider: provider
-            }),
-          });
+      // Two-document mode: use existing comparison logic for now
+      if (analysisType === "quick") {
+        const provider = selectedProvider === "all" ? "deepseek" : selectedProvider;
+        
+        const response = await fetch('/api/quick-compare', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            documentA: documentA.content,
+            documentB: documentB.content,
+            provider: provider
+          }),
+        });
 
-          if (!response.ok) {
-            throw new Error(`Quick analysis failed: ${response.statusText}`);
-          }
-
-          const data = await response.json();
-          
-          // Convert quick analysis result to standard format
-          setAnalysisA({
-            id: Date.now(),
-            formattedReport: data.result.analysis,
-            overallScore: data.result.intelligence_score,
-            provider: data.result.provider,
-            summary: data.result.key_insights,
-            analysis: data.result.cognitive_profile
-          });
-        } else {
-          // Use the comprehensive analysis (existing logic)
-          console.log(`Analyzing with ${selectedProvider}...`);
-          const result = await analyzeDocument(documentA, selectedProvider);
-          setAnalysisA(result);
+        if (!response.ok) {
+          throw new Error(`Quick comparison failed: ${response.statusText}`);
         }
-        setAnalysisB(null);
-        setComparison(null);
+
+        const data = await response.json();
+        setAnalysisA(data.analysisA);
+        setAnalysisB(data.analysisB);
+        setComparison(data.comparison);
       } else {
-        // Two-document mode: choose between quick and comprehensive
-        if (analysisType === "quick") {
-          const provider = selectedProvider === "all" ? "deepseek" : selectedProvider;
-          
-          const response = await fetch('/api/quick-compare', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              documentA: documentA.content,
-              documentB: documentB.content,
-              provider: provider
-            }),
-          });
-
-          if (!response.ok) {
-            throw new Error(`Quick comparison failed: ${response.statusText}`);
-          }
-
-          const data = await response.json();
-          setAnalysisA(data.analysisA);
-          setAnalysisB(data.analysisB);
-          setComparison(data.comparison);
-        } else {
-          // Use the comprehensive comparison (existing logic)
-          console.log(`Comparing with ${selectedProvider}...`);
-          const results = await compareDocuments(documentA, documentB, selectedProvider);
-          setAnalysisA(results.analysisA);
-          setAnalysisB(results.analysisB);
-          setComparison(results.comparison);
-        }
+        // Use the comprehensive comparison (existing logic)
+        console.log(`Comparing with ${selectedProvider}...`);
+        const results = await compareDocuments(documentA, documentB, selectedProvider);
+        setAnalysisA(results.analysisA);
+        setAnalysisB(results.analysisB);
+        setComparison(results.comparison);
       }
     } catch (error) {
-      console.error("Error analyzing documents:", error);
+      console.error("Error comparing documents:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      alert(`Analysis with ${selectedProvider} failed: ${errorMessage}\n\nPlease verify that the ${selectedProvider} API key is correctly configured.`);
+      alert(`Comparison with ${selectedProvider} failed: ${errorMessage}\n\nPlease verify that the ${selectedProvider} API key is correctly configured.`);
     } finally {
       setIsAnalysisLoading(false);
     }
@@ -734,6 +715,15 @@ const HomePage: React.FC = () => {
         isOpen={showRewriteModal}
         onClose={() => setShowRewriteModal(false)}
         originalText={documentA.content}
+      />
+
+      {/* Streaming Analysis Modal - NEW REAL-TIME PROTOCOL */}
+      <StreamingAnalysisModal
+        isOpen={showStreamingModal}
+        onClose={() => setShowStreamingModal(false)}
+        text={streamingText}
+        provider={streamingProvider}
+        mode={streamingMode}
       />
 
       {/* Chat Dialog - Always visible below everything */}
