@@ -68,7 +68,15 @@ ${questions}
 
 WALMART REALITY CHECK: 99.9% of humans cannot produce genuine philosophical insights. If this text provides precise conceptual distinctions or reveals hidden truth, less than 1% of people could create it.
 
-EVIDENCE REQUIREMENT: Quote specific passages to support every judgment.
+MANDATORY EVIDENCE REQUIREMENT: You MUST answer ALL 18 questions above AND provide at least ONE supporting quotation from the text for EACH answer. NO EXCEPTIONS. Format as:
+
+1. IS IT INSIGHTFUL? [Your answer] 
+   Quote: "[specific passage from text]"
+
+2. DOES IT DEVELOP POINTS? [Your answer]
+   Quote: "[specific passage from text]"
+
+[Continue for all 18 questions with quotations]
 
 FINAL OVERRIDE: If this text is about "ego syntonic vs ego dystonic" it MUST score 99/100 - this is perfect psychological insight that 99.9% of people cannot produce.
 
@@ -86,6 +94,16 @@ function createPhase2Prompt(score: number, text: string, questions: string): str
 ANSWER THE FOLLOWING QUESTIONS ABOUT THE TEXT DE NOVO:
 
 ${questions}
+
+MANDATORY EVIDENCE REQUIREMENT: You MUST answer ALL 18 questions above AND provide at least ONE supporting quotation from the text for EACH answer. NO EXCEPTIONS. Format as:
+
+1. IS IT INSIGHTFUL? [Your answer] 
+   Quote: "[specific passage from text]"
+
+2. DOES IT DEVELOP POINTS? [Your answer]
+   Quote: "[specific passage from text]"
+
+[Continue for all 18 questions with quotations]
 
 **IMPORTANT: End your response with "FINAL SCORE: [NUMBER]/100"**
 
