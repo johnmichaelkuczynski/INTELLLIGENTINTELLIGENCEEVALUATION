@@ -1202,6 +1202,45 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
+  // Comprehensive cognitive analysis endpoint (4-phase protocol)
+  app.post("/api/analyze", async (req: Request, res: Response) => {
+    try {
+      const { text, provider = "zhi1" } = req.body;
+      
+      if (!text || typeof text !== 'string') {
+        return res.status(400).json({ error: "Document content is required" });
+      }
+      
+      console.log(`Starting comprehensive cognitive analysis with ${provider} for text of length: ${text.length}`);
+      
+      const { executeComprehensiveProtocol } = await import('./services/fourPhaseProtocol');
+      const actualProvider = mapZhiToProvider(provider);
+      const result = await executeComprehensiveProtocol(text, actualProvider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek');
+      
+      console.log(`COMPREHENSIVE ANALYSIS RESULT PREVIEW: "${(result.analysis || '').substring(0, 200)}..."`);
+      console.log(`COMPREHENSIVE ANALYSIS RESULT LENGTH: ${(result.analysis || '').length} characters`);
+      
+      res.json({
+        success: true,
+        analysis: {
+          id: Date.now(),
+          content: result.analysis,
+          overallScore: result.overallScore,
+          provider: result.provider,
+          evaluationType: result.evaluationType,
+          phases: result.phases,
+          formattedReport: result.formattedReport
+        }
+      });
+    } catch (error: any) {
+      console.error("Error in comprehensive cognitive analysis:", error);
+      res.status(500).json({ 
+        error: true, 
+        message: error.message || "Comprehensive analysis failed" 
+      });
+    }
+  });
+
   // MISSING ENDPOINT: Quick Cognitive Analysis  
   app.post("/api/cognitive-quick", async (req: Request, res: Response) => {
     try {
