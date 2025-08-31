@@ -14,7 +14,7 @@ import {
 // Streaming analysis function for single documents
 export async function analyzeDocumentStreaming(
   document: DocumentInput,
-  provider: string = "deepseek",
+  provider: string = "anthropic",
   analysisType: "quick" | "comprehensive" = "quick",
   evaluationType: string = "intelligence",
   onProgress?: (progress: number, message: string) => void,
@@ -97,7 +97,7 @@ export async function analyzeDocumentStreaming(
 export async function compareDocumentsStreaming(
   documentA: DocumentInput,
   documentB: DocumentInput,
-  provider: string = "deepseek",
+  provider: string = "anthropic",
   analysisType: "quick" | "comprehensive" = "quick",
   evaluationType: string = "intelligence",
   onProgress?: (progress: number, message: string) => void,

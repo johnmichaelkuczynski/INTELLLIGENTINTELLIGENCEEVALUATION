@@ -25,10 +25,10 @@ interface ChatDialogProps {
 type LLMProvider = "openai" | "anthropic" | "perplexity" | "deepseek";
 
 const AI_PROVIDERS = [
-  { value: "openai", label: "OpenAI (GPT-4)" },
-  { value: "anthropic", label: "Anthropic (Claude)" },
-  { value: "perplexity", label: "Perplexity AI" },
-  { value: "deepseek", label: "DeepSeek" }
+  { value: "anthropic", label: "Zhi 1" },
+  { value: "openai", label: "Zhi 2" },
+  { value: "deepseek", label: "Zhi 3" },
+  { value: "perplexity", label: "Zhi 4" }
 ] as const;
 
 export const ChatDialog: React.FC<ChatDialogProps> = ({
@@ -40,7 +40,7 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
   const { toast } = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState<string>("");
-  const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("openai");
+  const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("anthropic");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -102,6 +102,18 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
     setInputMessage("");
     setIsLoading(true);
 
+    // Create streaming assistant message
+    const assistantMessageId = `assistant-${Date.now()}`;
+    const assistantMessage: ChatMessage = {
+      id: assistantMessageId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(),
+      type: 'text'
+    };
+
+    setMessages(prev => [...prev, assistantMessage]);
+
     try {
       // Prepare context with current document and analysis
       let contextualMessage = inputMessage;
@@ -115,7 +127,8 @@ User Question: ${inputMessage}
         `.trim();
       }
 
-      const response = await fetch('/api/direct-model-request', {
+      // Use streaming chat endpoint
+      const response = await fetch('/api/chat/stream', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -130,29 +143,67 @@ User Question: ${inputMessage}
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
-      const assistantContent = data.content || data.response || "No response received";
+      if (!response.body) {
+        throw new Error('No response body');
+      }
 
-      const assistantMessage: ChatMessage = {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        content: assistantContent,
-        timestamp: new Date(),
-        type: 'text'
-      };
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
 
-      setMessages(prev => [...prev, assistantMessage]);
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        
+        // Process complete lines, keep the last incomplete line in buffer
+        for (let i = 0; i < lines.length - 1; i++) {
+          const line = lines[i].trim();
+          
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              
+              if (data.type === 'word') {
+                // Update the assistant message with new word
+                setMessages(prev => prev.map(msg => 
+                  msg.id === assistantMessageId 
+                    ? { ...msg, content: data.fullText }
+                    : msg
+                ));
+              } else if (data.type === 'complete') {
+                // Final update with complete response
+                setMessages(prev => prev.map(msg => 
+                  msg.id === assistantMessageId 
+                    ? { ...msg, content: data.fullText }
+                    : msg
+                ));
+                break;
+              } else if (data.type === 'error') {
+                throw new Error(data.error);
+              }
+            } catch (e) {
+              console.warn('Failed to parse SSE data:', line);
+            }
+          }
+        }
+        
+        // Keep the last line in buffer (might be incomplete)
+        buffer = lines[lines.length - 1];
+      }
 
     } catch (error) {
-      console.error("Chat error:", error);
-      const errorMessage: ChatMessage = {
-        id: `error-${Date.now()}`,
-        role: 'assistant',
-        content: "Sorry, I encountered an error. Please try again.",
-        timestamp: new Date(),
-        type: 'text'
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      console.error("Chat streaming error:", error);
+      
+      // Update the assistant message with error
+      setMessages(prev => prev.map(msg => 
+        msg.id === assistantMessageId 
+          ? { ...msg, content: "Sorry, I encountered an error. Please try again." }
+          : msg
+      ));
     } finally {
       setIsLoading(false);
     }

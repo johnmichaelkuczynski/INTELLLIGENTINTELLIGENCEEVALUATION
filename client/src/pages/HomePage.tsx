@@ -81,7 +81,7 @@ const HomePage: React.FC = () => {
 
   
   // State for LLM provider
-  const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("deepseek");
+  const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("anthropic");
   const [apiStatus, setApiStatus] = useState<{
     openai: boolean;
     anthropic: boolean;
@@ -268,7 +268,7 @@ const HomePage: React.FC = () => {
     setFictionAssessmentResult(null);
 
     try {
-      const provider = selectedProvider === "all" ? "deepseek" : selectedProvider;
+      const provider = selectedProvider === "all" ? "anthropic" : selectedProvider;
       
       const response = await fetch('/api/fiction-assessment', {
         method: 'POST',
@@ -333,7 +333,7 @@ const HomePage: React.FC = () => {
     setAnalysisMessage("Initializing...");
     
     try {
-      const provider = selectedProvider === "all" ? "deepseek" : selectedProvider;
+      const provider = selectedProvider === "all" ? "anthropic" : selectedProvider;
       
       if (mode === "single") {
         // Use streaming analysis for both quick and comprehensive
@@ -742,7 +742,7 @@ const HomePage: React.FC = () => {
         documentContent={currentFictionDocument === "A" ? documentA.content : documentB.content}
         documentTitle={currentFictionDocument === "A" ? (documentA.filename || "Document A") : (documentB.filename || "Document B")}
         result={fictionAssessmentResult}
-        selectedProvider={selectedProvider === "all" ? "deepseek" : selectedProvider}
+        selectedProvider={selectedProvider === "all" ? "anthropic" : selectedProvider}
       />
 
       {/* Fiction Comparison Modal */}
