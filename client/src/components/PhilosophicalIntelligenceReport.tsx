@@ -241,9 +241,6 @@ const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportP
             <div className="prose prose-lg dark:prose-invert max-w-none">
               {formattedReport ? (
                 <div>
-                  <div className="mb-4 p-2 bg-red-100 text-red-800 text-xs">
-                    DEBUG: Report length: {formattedReport.length} chars
-                  </div>
                   {/* DIRECT RAW DISPLAY - NO FORMATTING FUNCTION */}
                   <div className="space-y-4">
                     {formattedReport.split('\n').map((line: string, index: number) => {
