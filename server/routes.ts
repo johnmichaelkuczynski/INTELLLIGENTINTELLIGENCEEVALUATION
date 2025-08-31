@@ -1219,7 +1219,16 @@ export async function registerRoutes(app: Express): Promise<Express> {
       
       res.json({
         success: true,
-        analysis: result,
+        analysis: {
+          id: Date.now(),
+          formattedReport: result.analysis,
+          overallScore: result.intelligence_score,
+          provider: provider,
+          summary: result.analysis,
+          analysis: result.analysis,
+          cognitiveProfile: result.cognitive_profile,
+          keyInsights: result.key_insights
+        },
         provider: provider,
         metadata: {
           contentLength: text.length,
@@ -1253,7 +1262,14 @@ export async function registerRoutes(app: Express): Promise<Express> {
       
       res.json({
         success: true,
-        analysis: result.analysis,
+        analysis: {
+          id: Date.now(),
+          formattedReport: result.analysis,
+          overallScore: result.overallScore || 0,
+          provider: provider,
+          summary: result.analysis,
+          analysis: result.analysis
+        },
         provider: provider,
         metadata: {
           contentLength: text.length,
