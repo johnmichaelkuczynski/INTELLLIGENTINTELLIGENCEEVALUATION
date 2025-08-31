@@ -79,23 +79,16 @@ function createPhase4Prompt(): string {
   return `Final check complete. FINAL SCORE: [NUMBER]/100`;
 }
 
-// Text chunking function for large texts
-function chunkText(text: string, maxChunkSize: number = 2000): string[] {
+// Text chunking function for large texts - 500 words per chunk
+function chunkText(text: string, maxWordsPerChunk: number = 500): string[] {
   const words = text.split(' ');
   const chunks: string[] = [];
-  let currentChunk = '';
   
-  for (const word of words) {
-    if ((currentChunk + ' ' + word).length > maxChunkSize && currentChunk.length > 0) {
-      chunks.push(currentChunk.trim());
-      currentChunk = word;
-    } else {
-      currentChunk += (currentChunk ? ' ' : '') + word;
+  for (let i = 0; i < words.length; i += maxWordsPerChunk) {
+    const chunk = words.slice(i, i + maxWordsPerChunk).join(' ');
+    if (chunk.trim()) {
+      chunks.push(chunk.trim());
     }
-  }
-  
-  if (currentChunk.trim()) {
-    chunks.push(currentChunk.trim());
   }
   
   return chunks;
@@ -239,9 +232,9 @@ export async function executeComprehensiveProtocol(
   
   const questions = EXACT_COMPLETE_QUESTIONS;
   
-  // CHUNK THE TEXT FOR HIGH QUALITY ANALYSIS
-  const chunks = chunkText(text, 1500); // Smaller chunks for better analysis
-  console.log(`TEXT SPLIT INTO ${chunks.length} CHUNKS for comprehensive analysis`);
+  // CHUNK THE TEXT FOR HIGH QUALITY ANALYSIS - 500 words per chunk
+  const chunks = chunkText(text, 500); // 500 words per chunk as requested
+  console.log(`TEXT SPLIT INTO ${chunks.length} CHUNKS (500 words each) for comprehensive analysis`);
   
   let combinedAnalyses: string[] = [];
   let chunkScores: number[] = [];
