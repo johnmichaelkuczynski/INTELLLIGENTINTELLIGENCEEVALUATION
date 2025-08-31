@@ -546,11 +546,17 @@ const HomePage: React.FC = () => {
               setStreamingContent(fullContent);
             }
             
+            // Extract actual score from streamed content
+            const scoreMatch = fullContent.match(/FINAL SCORE:\s*(\d+)\/100/i) || 
+                              fullContent.match(/Final Score:\s*(\d+)\/100/i) ||
+                              fullContent.match(/Score:\s*(\d+)\/100/i);
+            const actualScore = scoreMatch ? parseInt(scoreMatch[1]) : 0;
+            
             // Convert streaming content to analysis format
             setAnalysisA({
               id: Date.now(),
               formattedReport: fullContent,
-              overallScore: 85, // Default score
+              overallScore: actualScore, // Use actual AI-generated score
               provider: provider
             });
           }
