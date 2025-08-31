@@ -7,7 +7,6 @@ import { DocumentAnalysis } from '@/lib/types';
 import { MultiProviderResults } from './MultiProviderResults';
 import { cleanAIResponse } from '@/lib/textUtils';
 import { Brain, TrendingUp, Target, Zap, Eye, Lightbulb, Maximize2 } from 'lucide-react';
-import IntelligenceReportModal from './IntelligenceReportModal';
 
 // Provider name mapping
 const getProviderDisplayName = (provider: string): string => {
@@ -177,7 +176,6 @@ function formatEnhancedAnalysis(text: string) {
 }
 
 const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportProps> = ({ analysis, analysisMode = "comprehensive" }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
   
   // Check if the analysis contains multiple provider results
   const hasMultipleProviders = analysis.analysisResults && Array.isArray(analysis.analysisResults) && analysis.analysisResults.length > 0;
@@ -189,8 +187,6 @@ const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportP
   
   // Extract data from the formatted report - CHECK ALL POSSIBLE FIELDS
   const formattedReport = analysis.formattedReport || analysis.content || analysis.analysis || analysis.report || analysis.summary || "";
-  console.log("DEBUGGING - Analysis object:", analysis);
-  console.log("DEBUGGING - Formatted report content:", formattedReport?.substring(0, 200) + "...");
   const cleanedReport = cleanAIResponse(formattedReport);
   
   // Use ONLY the final score from 4-phase protocol - no text extraction needed
@@ -231,37 +227,20 @@ const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportP
                   <div className="text-blue-100 text-sm">4-Phase Protocol Final Score</div>
                 </div>
               )}
-              <Button 
-                onClick={() => setIsModalOpen(true)}
-                variant="outline"
-                className="bg-white/10 hover:bg-white/20 border-white/30 text-white backdrop-blur-sm"
-              >
-                <Maximize2 className="w-4 h-4 mr-2" />
-                Full Report
-              </Button>
             </div>
           </div>
         </CardHeader>
         <CardContent className="p-8">
-          {/* Enhanced Content Display */}
-          {!hasStructuredContent ? (
-            <div className="space-y-6">
-              <div className="prose prose-lg dark:prose-invert max-w-none">
-                {formatEnhancedAnalysis(cleanedReport)}
-              </div>
-            </div>
-          ) : executiveSummary ? (
+          {/* DIRECT ANALYSIS DISPLAY - NO POPUP */}
+          <div className="space-y-6">
             <div className="prose prose-lg dark:prose-invert max-w-none">
-              {executiveSummary.split('\n').map((paragraph, index) => {
-                if (!paragraph.trim()) return null;
-                return (
-                  <p key={index} className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
-                    {paragraph}
-                  </p>
-                );
-              })}
+              {formattedReport ? formatEnhancedAnalysis(cleanedReport) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No analysis content available</p>
+                </div>
+              )}
             </div>
-          ) : null}
+          </div>
         </CardContent>
       </Card>
 
@@ -421,13 +400,6 @@ const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportP
         </div>
       </div>
 
-      {/* Intelligence Report Modal */}
-      <IntelligenceReportModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        analysis={analysis}
-        analysisMode={analysisMode}
-      />
     </div>
   );
 };
