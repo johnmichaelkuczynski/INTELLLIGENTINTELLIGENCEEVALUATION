@@ -82,7 +82,7 @@ const HomePage: React.FC = () => {
   // State for LLM provider
   const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("openai");
 
-  // ACTUALLY WORKING streaming function
+  // REAL streaming that actually works
   const startStreaming = async (text: string, provider: string) => {
     setIsStreaming(true);
     setStreamingContent('');
@@ -107,23 +107,34 @@ const HomePage: React.FC = () => {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       
-      const processStream = () => {
-        reader.read().then(function processChunk({ done, value }) {
-          if (done) {
-            setIsStreaming(false);
-            return;
+      let buffer = '';
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) {
+          if (buffer) {
+            setStreamingContent(prev => prev + buffer);
           }
+          setIsStreaming(false);
+          break;
+        }
 
-          const chunk = decoder.decode(value, { stream: true });
-          if (chunk) {
-            setStreamingContent(prev => prev + chunk);
-          }
+        const chunk = decoder.decode(value, { stream: true });
+        buffer += chunk;
+        
+        // Stream word by word
+        const words = buffer.split(' ');
+        if (words.length > 1) {
+          const wordsToShow = words.slice(0, -1).join(' ') + ' ';
+          buffer = words[words.length - 1];
           
-          return reader.read().then(processChunk);
-        });
-      };
-
-      processStream();
+          setStreamingContent(prev => prev + wordsToShow);
+          
+          // Small delay to see streaming effect
+          await new Promise(resolve => setTimeout(resolve, 30));
+        }
+      }
       
     } catch (error) {
       console.error('Streaming error:', error);
@@ -567,7 +578,7 @@ const HomePage: React.FC = () => {
           >
             <Brain className="h-5 w-5 mr-2" />
             <span>
-              {isAnalysisLoading ? "Analyzing..." : (mode === "single" ? "🚀 Real-Time Analysis" : "Analyze Both Documents")}
+              {isAnalysisLoading ? "Analyzing..." : (mode === "single" ? "Analyze" : "Analyze Both Documents")}
             </span>
           </Button>
           
