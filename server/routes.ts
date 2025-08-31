@@ -1205,9 +1205,14 @@ export async function registerRoutes(app: Express): Promise<Express> {
   // Comprehensive cognitive analysis endpoint (4-phase protocol)
   app.post("/api/analyze", async (req: Request, res: Response) => {
     try {
+      console.log("COMPREHENSIVE ANALYSIS DEBUG - req.body:", JSON.stringify(req.body, null, 2));
+      console.log("COMPREHENSIVE ANALYSIS DEBUG - text type:", typeof req.body.text);
+      console.log("COMPREHENSIVE ANALYSIS DEBUG - text value:", req.body.text?.substring(0, 100));
+      
       const { text, provider = "zhi1" } = req.body;
       
       if (!text || typeof text !== 'string') {
+        console.log("COMPREHENSIVE ANALYSIS ERROR - text validation failed:", { text: typeof text, hasText: !!text });
         return res.status(400).json({ error: "Document content is required" });
       }
       
