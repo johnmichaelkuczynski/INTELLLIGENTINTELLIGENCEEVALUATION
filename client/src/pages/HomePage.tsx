@@ -217,8 +217,15 @@ const HomePage: React.FC = () => {
       return;
     }
 
-    // Check if the selected provider is available
-    if (selectedProvider !== "all" && !apiStatus[selectedProvider as keyof typeof apiStatus]) {
+    // Check if the selected provider is available (map ZHI names to original API names)
+    const apiKeyMapping: Record<string, string> = {
+      'zhi1': 'openai',
+      'zhi2': 'anthropic', 
+      'zhi3': 'deepseek',
+      'zhi4': 'perplexity'
+    };
+    const actualApiKey = apiKeyMapping[selectedProvider] || selectedProvider;
+    if (selectedProvider !== "all" && !apiStatus[actualApiKey as keyof typeof apiStatus]) {
       alert(`The ${selectedProvider} API key is not configured or is invalid. Please select a different provider or ensure the API key is properly set.`);
       return;
     }
@@ -227,7 +234,7 @@ const HomePage: React.FC = () => {
     setCaseAssessmentResult(null);
 
     try {
-      const provider = selectedProvider === "all" ? "openai" : selectedProvider;
+      const provider = selectedProvider === "all" ? "zhi1" : selectedProvider;
       
       const response = await fetch('/api/case-assessment', {
         method: 'POST',
@@ -263,8 +270,15 @@ const HomePage: React.FC = () => {
       return;
     }
 
-    // Check if the selected provider is available
-    if (selectedProvider !== "all" && !apiStatus[selectedProvider as keyof typeof apiStatus]) {
+    // Check if the selected provider is available (map ZHI names to original API names)
+    const apiKeyMapping: Record<string, string> = {
+      'zhi1': 'openai',
+      'zhi2': 'anthropic', 
+      'zhi3': 'deepseek',
+      'zhi4': 'perplexity'
+    };
+    const actualApiKey = apiKeyMapping[selectedProvider] || selectedProvider;
+    if (selectedProvider !== "all" && !apiStatus[actualApiKey as keyof typeof apiStatus]) {
       alert(`The ${selectedProvider} API key is not configured or is invalid. Please select a different provider or ensure the API key is properly set.`);
       return;
     }
@@ -273,7 +287,7 @@ const HomePage: React.FC = () => {
     setComparisonResult(null);
 
     try {
-      const provider = selectedProvider === "all" ? "openai" : selectedProvider;
+      const provider = selectedProvider === "all" ? "zhi1" : selectedProvider;
       
       const response = await fetch('/api/compare', {
         method: 'POST',
@@ -311,8 +325,15 @@ const HomePage: React.FC = () => {
       return;
     }
 
-    // Check if the selected provider is available
-    if (selectedProvider !== "all" && !apiStatus[selectedProvider as keyof typeof apiStatus]) {
+    // Check if the selected provider is available (map ZHI names to original API names)
+    const apiKeyMapping: Record<string, string> = {
+      'zhi1': 'openai',
+      'zhi2': 'anthropic', 
+      'zhi3': 'deepseek',
+      'zhi4': 'perplexity'
+    };
+    const actualApiKey = apiKeyMapping[selectedProvider] || selectedProvider;
+    if (selectedProvider !== "all" && !apiStatus[actualApiKey as keyof typeof apiStatus]) {
       alert(`The ${selectedProvider} API key is not configured or is invalid. Please select a different provider or ensure the API key is properly set.`);
       return;
     }
@@ -373,8 +394,15 @@ const HomePage: React.FC = () => {
       return;
     }
     
-    // Check if the selected provider is available
-    if (selectedProvider !== "all" && !apiStatus[selectedProvider as keyof typeof apiStatus]) {
+    // Check if the selected provider is available (map ZHI names to original API names)
+    const apiKeyMapping: Record<string, string> = {
+      'zhi1': 'openai',
+      'zhi2': 'anthropic', 
+      'zhi3': 'deepseek',
+      'zhi4': 'perplexity'
+    };
+    const actualApiKey = apiKeyMapping[selectedProvider] || selectedProvider;
+    if (selectedProvider !== "all" && !apiStatus[actualApiKey as keyof typeof apiStatus]) {
       alert(`The ${selectedProvider} API key is not configured or is invalid. Please select a different provider or ensure the API key is properly set.`);
       return;
     }
