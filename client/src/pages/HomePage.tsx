@@ -82,7 +82,7 @@ const HomePage: React.FC = () => {
   // State for LLM provider
   const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("openai");
 
-  // Streaming function
+  // Streaming function - REAL streaming word by word
   const startStreaming = async (text: string, provider: string) => {
     setIsStreaming(true);
     setStreamingContent('');
@@ -96,6 +96,10 @@ const HomePage: React.FC = () => {
         body: JSON.stringify({ text, provider }),
       });
 
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
       if (!response.body) {
         throw new Error('No response body');
       }
@@ -103,13 +107,38 @@ const HomePage: React.FC = () => {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+      let buffer = '';
+      
+      const processStream = async () => {
+        while (true) {
+          const { done, value } = await reader.read();
+          
+          if (done) {
+            if (buffer) {
+              setStreamingContent(prev => prev + buffer);
+            }
+            break;
+          }
 
-        const chunk = decoder.decode(value, { stream: true });
-        setStreamingContent(prev => prev + chunk);
-      }
+          const chunk = decoder.decode(value, { stream: true });
+          buffer += chunk;
+          
+          // Process complete words from buffer
+          const words = buffer.split(' ');
+          if (words.length > 1) {
+            const completeWords = words.slice(0, -1).join(' ') + ' ';
+            buffer = words[words.length - 1]; // Keep the last incomplete word
+            
+            setStreamingContent(prev => prev + completeWords);
+            
+            // Small delay to make streaming visible
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }
+        }
+      };
+
+      await processStream();
+      
     } catch (error) {
       console.error('Streaming error:', error);
       setStreamingContent('Error: ' + (error instanceof Error ? error.message : 'Unknown error'));

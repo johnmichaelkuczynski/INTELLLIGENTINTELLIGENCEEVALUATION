@@ -1045,6 +1045,8 @@ export async function registerRoutes(app: Express): Promise<Express> {
       res.setHeader('Content-Type', 'text/plain');
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
+      res.setHeader('Transfer-Encoding', 'chunked');
+      res.setHeader('Access-Control-Allow-Origin', '*');
 
       const prompt = `
 You are conducting a Phase 1 intelligence assessment with anti-diplomatic evaluation standards.
@@ -1141,6 +1143,8 @@ PROVIDE A FINAL VALIDATED SCORE OUT OF 100 IN THE FORMAT: SCORE: X/100
                 const content = parsed.choices?.[0]?.delta?.content || '';
                 if (content) {
                   res.write(content);
+                  // Force immediate send for real streaming
+                  if (res.flush) res.flush();
                 }
               } catch (e) {
                 // Skip invalid JSON
