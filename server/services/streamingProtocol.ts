@@ -37,6 +37,8 @@ async function callLLMProvider(
   messages: Array<{role: string, content: string}>
 ): Promise<string> {
   try {
+    console.log(`CALLING ${provider.toUpperCase()} with prompt length: ${messages[0]?.content?.length || 0}`);
+    
     if (provider === 'openai') {
       const OpenAI = (await import('openai')).default;
       const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -44,10 +46,14 @@ async function callLLMProvider(
       const completion = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: messages as any,
-        temperature: 0.1
+        temperature: 0.1,
+        max_tokens: 4000
       });
       
-      return completion.choices?.[0]?.message?.content || '';
+      const result = completion.choices?.[0]?.message?.content || '';
+      console.log(`${provider.toUpperCase()} RESPONSE LENGTH: ${result.length}`);
+      console.log(`${provider.toUpperCase()} RESPONSE PREVIEW: "${result.substring(0, 200)}..."`);
+      return result;
     } else if (provider === 'anthropic') {
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -64,8 +70,17 @@ async function callLLMProvider(
         })
       });
       
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`ANTHROPIC API ERROR: ${response.status} - ${errorText}`);
+        return '';
+      }
+      
       const data = await response.json();
-      return data.content?.[0]?.text || '';
+      const result = data.content?.[0]?.text || '';
+      console.log(`${provider.toUpperCase()} RESPONSE LENGTH: ${result.length}`);
+      console.log(`${provider.toUpperCase()} RESPONSE PREVIEW: "${result.substring(0, 200)}..."`);
+      return result;
     } else if (provider === 'perplexity') {
       const response = await fetch('https://api.perplexity.ai/chat/completions', {
         method: 'POST',
@@ -76,12 +91,22 @@ async function callLLMProvider(
         body: JSON.stringify({
           model: "sonar",
           messages: messages,
-          temperature: 0.1
+          temperature: 0.1,
+          max_tokens: 4000
         })
       });
       
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`PERPLEXITY API ERROR: ${response.status} - ${errorText}`);
+        return '';
+      }
+      
       const data = await response.json();
-      return data.choices?.[0]?.message?.content || '';
+      const result = data.choices?.[0]?.message?.content || '';
+      console.log(`${provider.toUpperCase()} RESPONSE LENGTH: ${result.length}`);
+      console.log(`${provider.toUpperCase()} RESPONSE PREVIEW: "${result.substring(0, 200)}..."`);
+      return result;
     } else if (provider === 'deepseek') {
       const response = await fetch('https://api.deepseek.com/chat/completions', {
         method: 'POST',
@@ -92,34 +117,52 @@ async function callLLMProvider(
         body: JSON.stringify({
           model: "deepseek-chat",
           messages: messages,
-          temperature: 0.1
+          temperature: 0.1,
+          max_tokens: 4000
         })
       });
       
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`DEEPSEEK API ERROR: ${response.status} - ${errorText}`);
+        return '';
+      }
+      
       const data = await response.json();
-      return data.choices?.[0]?.message?.content || '';
+      const result = data.choices?.[0]?.message?.content || '';
+      console.log(`${provider.toUpperCase()} RESPONSE LENGTH: ${result.length}`);
+      console.log(`${provider.toUpperCase()} RESPONSE PREVIEW: "${result.substring(0, 200)}..."`);
+      return result;
     }
     
     return '';
   } catch (error) {
-    console.error(`Error calling ${provider}:`, error);
+    console.error(`ERROR CALLING ${provider.toUpperCase()}:`, error);
     return '';
   }
 }
 
 // Score extraction function
 function extractScore(text: string): number {
+  console.log(`EXTRACTING SCORE FROM TEXT LENGTH: ${text.length}`);
+  console.log(`SCORE EXTRACTION PREVIEW: "${text.substring(0, 300)}..."`);
+  
   const finalScoreMatch = text.match(/FINAL SCORE:\s*(\d+)\/100/i);
   if (finalScoreMatch) {
-    return parseInt(finalScoreMatch[1]);
+    const score = parseInt(finalScoreMatch[1]);
+    console.log(`FOUND FINAL SCORE: ${score}/100`);
+    return score;
   }
   
   const explicitMatch = text.match(/(\d+)\/100/g);
   if (explicitMatch && explicitMatch.length > 0) {
     const lastMatch = explicitMatch[explicitMatch.length - 1];
-    return parseInt(lastMatch.split('/')[0]);
+    const score = parseInt(lastMatch.split('/')[0]);
+    console.log(`FOUND SCORE FROM PATTERN: ${score}/100`);
+    return score;
   }
   
+  console.log(`NO SCORE FOUND - RETURNING 0`);
   return 0;
 }
 
