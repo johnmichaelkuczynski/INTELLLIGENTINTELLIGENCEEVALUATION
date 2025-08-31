@@ -241,12 +241,43 @@ const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportP
                   <div className="mb-4 p-2 bg-red-100 text-red-800 text-xs">
                     DEBUG: Report length: {formattedReport.length} chars
                   </div>
-                  {formatEnhancedAnalysis(cleanedReport)}
+                  {/* DIRECT RAW DISPLAY - NO FORMATTING FUNCTION */}
+                  <div className="space-y-4">
+                    {formattedReport.split('\n').map((line, index) => {
+                      if (!line.trim()) return null;
+                      
+                      // Questions ending with ?
+                      if (line.trim().endsWith('?')) {
+                        return (
+                          <div key={index} className="bg-blue-50 border-l-4 border-blue-500 p-4 my-4 rounded-r-lg">
+                            <h4 className="font-semibold text-blue-800 text-lg">{line.trim()}</h4>
+                          </div>
+                        );
+                      }
+                      
+                      // Lines with quotes
+                      if (line.includes('"')) {
+                        return (
+                          <blockquote key={index} className="border-l-4 border-amber-400 bg-amber-50 p-6 my-6 rounded-r-lg shadow-sm">
+                            <div className="text-amber-800 font-medium text-lg italic">
+                              {line.trim()}
+                            </div>
+                          </blockquote>
+                        );
+                      }
+                      
+                      // Regular lines
+                      return (
+                        <p key={index} className="mb-3 text-slate-700 leading-relaxed text-base">
+                          {line.trim()}
+                        </p>
+                      );
+                    })}
+                  </div>
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-gray-500">No analysis content available - formattedReport is empty</p>
-                  <p className="text-xs text-gray-400 mt-2">analysis object keys: {Object.keys(analysis).join(', ')}</p>
+                  <p className="text-gray-500">No analysis content available</p>
                 </div>
               )}
             </div>
