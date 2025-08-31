@@ -10,9 +10,9 @@ import { cleanAIResponse } from '@/lib/textUtils';
 // Provider name mapping
 const getProviderDisplayName = (provider: string): string => {
   const providerMap: { [key: string]: string } = {
+    'openai': 'Zhi 1',
+    'anthropic': 'Zhi 2', 
     'deepseek': 'Zhi 3',
-    'openai': 'Zhi 2', 
-    'anthropic': 'Zhi 1',
     'perplexity': 'Zhi 4'
   };
   return providerMap[provider.toLowerCase()] || provider;
