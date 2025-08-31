@@ -420,9 +420,36 @@ const HomePage: React.FC = () => {
         setStreamingContent(fullResponse); // Show each token as it arrives
       }
 
-      setFictionAssessmentResult(fullResponse);
+      // Parse the fiction assessment response to extract scores
+      const parseFictionScores = (text: string) => {
+        const extractScore = (pattern: string): number => {
+          const regex = new RegExp(`${pattern}[:\\s]*(\\d+)(?:/100)?`, 'i');
+          const match = text.match(regex);
+          return match ? parseInt(match[1]) : 0;
+        };
+
+        return {
+          worldCoherence: extractScore('WORLD COHERENCE'),
+          emotionalPlausibility: extractScore('EMOTIONAL PLAUSIBILITY'),
+          thematicDepth: extractScore('THEMATIC DEPTH'),
+          narrativeStructure: extractScore('NARRATIVE STRUCTURE'),
+          proseControl: extractScore('PROSE CONTROL'),
+          overallFictionScore: extractScore('OVERALL FICTION SCORE'),
+          detailedAssessment: fullResponse
+        };
+      };
+
+      const fictionAssessmentData = parseFictionScores(fullResponse);
+      setFictionAssessmentResult(fictionAssessmentData);
       setCurrentFictionDocument(documentId);
-      setFictionAssessmentModalOpen(true);
+      
+      // INTEGRATE FICTION ASSESSMENT INTO MAIN ANALYSIS
+      if (analysisA) {
+        setAnalysisA({
+          ...analysisA,
+          fictionAssessment: fictionAssessmentData
+        });
+      }
       
     } catch (error) {
       console.error("Error performing fiction assessment:", error);
