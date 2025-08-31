@@ -743,7 +743,7 @@ const HomePage: React.FC = () => {
             disabled={isAnalysisLoading}
           >
             <Trash2 className="h-5 w-5 mr-2" />
-            <span>Reset Everything</span>
+            <span>New Analysis / Clear All</span>
           </Button>
         </div>
       </div>
