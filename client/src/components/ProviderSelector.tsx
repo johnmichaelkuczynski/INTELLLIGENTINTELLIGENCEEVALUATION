@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { BrainCircuit, Bot, Sparkles, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-export type LLMProvider = "openai" | "anthropic" | "perplexity" | "deepseek" | "all";
+export type LLMProvider = "zhi1" | "zhi2" | "zhi3" | "zhi4" | "all";
 
 interface ProviderSelectorProps {
   selectedProvider: LLMProvider;

@@ -210,7 +210,7 @@ const HomePage: React.FC = () => {
     }
   };
 
-  // Handler for case assessment
+  // Handler for case assessment - FIXED TO WORK
   const handleCaseAssessment = async () => {
     if (!documentA.content.trim()) {
       alert("Please enter some text to assess how well it makes its case.");
@@ -229,9 +229,24 @@ const HomePage: React.FC = () => {
     try {
       const provider = selectedProvider === "all" ? "openai" : selectedProvider;
       
-      // Use streaming for case assessment too
-      await startStreaming(documentA.content, provider);
-      return;
+      const response = await fetch('/api/case-assessment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: documentA.content,
+          provider: provider
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Case assessment failed: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setCaseAssessmentResult(data.result);
+      setCaseAssessmentModalOpen(true);
       
     } catch (error) {
       console.error("Error performing case assessment:", error);
@@ -346,7 +361,7 @@ const HomePage: React.FC = () => {
     setFictionComparisonModalOpen(true);
   };
 
-  // Handler for analyzing documents with new streaming protocol
+  // Handler for analyzing documents - FIXED MAIN ANALYSIS
   const handleAnalyze = async () => {
     if (!documentA.content.trim()) {
       alert("Please enter some text in Document A.");
@@ -364,12 +379,37 @@ const HomePage: React.FC = () => {
       return;
     }
 
-    // Use streaming for single document mode
+    // FIXED: Use proper analysis for single document mode
     if (mode === "single") {
-      console.log("Starting streaming analysis...");
-      setIsStreaming(true);
-      setStreamingContent('');
-      await startStreaming(documentA.content, selectedProvider);
+      setShowResults(true);
+      setIsAnalysisLoading(true);
+      
+      try {
+        const provider = selectedProvider === "all" ? "openai" : selectedProvider;
+        const endpoint = analysisType === "quick" ? '/api/cognitive-quick' : '/api/analyze';
+        
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: documentA.content,
+            provider: provider
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Analysis failed: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        setAnalysisA(data.analysis || data.result);
+        
+      } catch (error) {
+        console.error("Error analyzing document:", error);
+        alert(`Analysis with ${selectedProvider} failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+      } finally {
+        setIsAnalysisLoading(false);
+      }
       return;
     }
     
