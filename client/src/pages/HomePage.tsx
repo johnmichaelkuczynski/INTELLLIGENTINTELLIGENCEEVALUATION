@@ -72,11 +72,51 @@ const HomePage: React.FC = () => {
   // State for intelligent rewrite
   const [showRewriteModal, setShowRewriteModal] = useState(false);
   
+  // State for inline streaming
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingContent, setStreamingContent] = useState('');
+  
   
 
   
   // State for LLM provider
   const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("openai");
+
+  // Streaming function
+  const startStreaming = async (text: string, provider: string) => {
+    setIsStreaming(true);
+    setStreamingContent('');
+    
+    try {
+      const response = await fetch('/api/stream-analysis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text, provider }),
+      });
+
+      if (!response.body) {
+        throw new Error('No response body');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        setStreamingContent(prev => prev + chunk);
+      }
+    } catch (error) {
+      console.error('Streaming error:', error);
+      setStreamingContent('Error: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    } finally {
+      setIsStreaming(false);
+    }
+  };
   const [apiStatus, setApiStatus] = useState<{
     openai: boolean;
     anthropic: boolean;
@@ -321,7 +361,13 @@ const HomePage: React.FC = () => {
       return;
     }
 
-    // Regular analysis logic
+    // Use streaming for single document mode
+    if (mode === "single") {
+      await startStreaming(documentA.content, selectedProvider);
+      return;
+    }
+    
+    // Regular analysis logic for comparison mode
     setShowResults(true);
     setIsAnalysisLoading(true);
     
@@ -699,6 +745,39 @@ const HomePage: React.FC = () => {
         originalText={documentA.content}
       />
 
+
+      {/* Inline Streaming Results Area */}
+      {(isStreaming || streamingContent) && (
+        <div className="mx-4 mb-6">
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Brain className="h-5 w-5 text-blue-600" />
+              <h3 className="text-lg font-semibold text-blue-900">
+                🎯 Real-Time Intelligence Analysis
+                {isStreaming && <span className="ml-2 text-sm font-normal text-blue-600">Streaming...</span>}
+              </h3>
+            </div>
+            <div className="bg-white rounded-md p-4 border border-blue-100 min-h-[200px]">
+              <div className="prose prose-sm max-w-none text-gray-800 whitespace-pre-wrap font-mono text-sm leading-relaxed">
+                {streamingContent}
+                {isStreaming && <span className="inline-block w-2 h-4 bg-blue-500 animate-pulse ml-1">|</span>}
+              </div>
+            </div>
+            {streamingContent && !isStreaming && (
+              <div className="mt-4 flex justify-end">
+                <Button 
+                  onClick={() => setStreamingContent('')}
+                  variant="outline"
+                  size="sm"
+                  className="text-gray-600 hover:text-gray-800"
+                >
+                  Clear Analysis
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Chat Dialog - Always visible below everything */}
       <ChatDialog 
