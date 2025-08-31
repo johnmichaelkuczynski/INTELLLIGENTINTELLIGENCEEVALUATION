@@ -13,7 +13,6 @@ import { DocumentComparisonModal } from "@/components/DocumentComparisonModal";
 import { FictionAssessmentModal } from "@/components/FictionAssessmentModal";
 import { FictionComparisonModal } from "@/components/FictionComparisonModal";
 import IntelligentRewriteModal from "@/components/IntelligentRewriteModal";
-import { StreamingAnalysisModal } from "@/components/StreamingAnalysisModal";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -73,11 +72,6 @@ const HomePage: React.FC = () => {
   // State for intelligent rewrite
   const [showRewriteModal, setShowRewriteModal] = useState(false);
   
-  // State for streaming analysis modal
-  const [showStreamingModal, setShowStreamingModal] = useState(false);
-  const [streamingText, setStreamingText] = useState('');
-  const [streamingProvider, setStreamingProvider] = useState<'openai' | 'anthropic' | 'perplexity' | 'deepseek'>('anthropic');
-  const [streamingMode, setStreamingMode] = useState<'normal' | 'comprehensive'>('normal');
   
 
   
@@ -327,19 +321,7 @@ const HomePage: React.FC = () => {
       return;
     }
 
-    // For single document mode, use the new streaming analysis
-    if (mode === "single") {
-      const provider = selectedProvider === "all" ? "anthropic" : selectedProvider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek';
-      const streamMode = analysisType === "quick" ? "normal" : "comprehensive";
-      
-      setStreamingText(documentA.content);
-      setStreamingProvider(provider);
-      setStreamingMode(streamMode);
-      setShowStreamingModal(true);
-      return;
-    }
-
-    // For comparison mode, fall back to existing logic for now
+    // Regular analysis logic
     setShowResults(true);
     setIsAnalysisLoading(true);
     
@@ -717,14 +699,6 @@ const HomePage: React.FC = () => {
         originalText={documentA.content}
       />
 
-      {/* Streaming Analysis Modal - NEW REAL-TIME PROTOCOL */}
-      <StreamingAnalysisModal
-        isOpen={showStreamingModal}
-        onClose={() => setShowStreamingModal(false)}
-        text={streamingText}
-        provider={streamingProvider}
-        mode={streamingMode}
-      />
 
       {/* Chat Dialog - Always visible below everything */}
       <ChatDialog 

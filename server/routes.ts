@@ -5,7 +5,6 @@ import path from "path";
 import { extractTextFromFile } from "./api/documentParser";
 import { sendSimpleEmail } from "./api/simpleEmailService";
 import { upload as speechUpload, processSpeechToText } from "./api/simpleSpeechToText";
-import streamingRoutes from "./routes/streamingRoutes";
 
 
 // Configure multer for file uploads
@@ -1032,8 +1031,6 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
-  // Add streaming routes
-  app.use('/api', streamingRoutes);
 
   return app;
 }
