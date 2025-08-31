@@ -65,6 +65,8 @@ ENHANCE: Logical rigor, conceptual precision, inferential transparency`;
 ORIGINAL TEXT:
 ${text}
 
+CRITICAL: Output ONLY the rewritten text. NO commentary, NO explanations, NO preamble like "Here's a rewrite..." Just the pure rewritten text starting immediately.
+
 REWRITTEN TEXT:`;
 
   let rewrittenText: string;
@@ -81,6 +83,16 @@ REWRITTEN TEXT:`;
       });
       
       rewrittenText = completion.choices[0]?.message?.content || '';
+      
+      // Strip out AI commentary bullshit  
+      rewrittenText = rewrittenText
+        .replace(/^Here's.*?rewrite.*?:/i, '')
+        .replace(/^This.*?version.*?:/i, '')
+        .replace(/^The following.*?:/i, '')
+        .replace(/^Below.*?:/i, '')
+        .replace(/^\*\*.*?\*\*:?/gm, '')
+        .replace(/^--+/gm, '')
+        .trim();
     } else if (provider === 'anthropic') {
       const Anthropic = (await import('@anthropic-ai/sdk')).default;
       const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -93,6 +105,16 @@ REWRITTEN TEXT:`;
       });
       
       rewrittenText = completion.content[0]?.type === 'text' ? completion.content[0].text : '';
+      
+      // Strip out AI commentary bullshit
+      rewrittenText = rewrittenText
+        .replace(/^Here's.*?rewrite.*?:/i, '')
+        .replace(/^This.*?version.*?:/i, '')
+        .replace(/^The following.*?:/i, '')
+        .replace(/^Below.*?:/i, '')
+        .replace(/^\*\*.*?\*\*:?/gm, '')
+        .replace(/^--+/gm, '')
+        .trim();
     } else if (provider === 'perplexity') {
       const response = await fetch('https://api.perplexity.ai/chat/completions', {
         method: 'POST',
