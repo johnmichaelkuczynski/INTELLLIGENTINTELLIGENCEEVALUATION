@@ -108,30 +108,13 @@ export async function registerRoutes(app: Express): Promise<Express> {
       try {
         sendProgress(10, `Starting ${evaluationType} analysis with ${provider}...`);
         
-        const { performQuickAnalysisStreaming } = await import('./services/quickAnalysisStreaming');
+        const { performQuickAnalysis } = await import('./services/quickAnalysis');
         
-        sendProgress(20, `Preparing Phase 1 evaluation...`);
+        sendProgress(30, `Analyzing text content...`);
+        const result = await performQuickAnalysis(text, provider, evaluationType);
         
-        await performQuickAnalysisStreaming(
-          text, 
-          provider, 
-          evaluationType,
-          // Progress callback
-          (progress: number, message: string) => {
-            sendProgress(progress, message);
-          },
-          // Content streaming callback - this streams the actual report text
-          (contentChunk: string) => {
-            res.write(`data: ${JSON.stringify({ 
-              type: 'content',
-              content: contentChunk
-            })}\n\n`);
-          },
-          // Results callback
-          (result: any) => {
-            sendComplete({ success: true, result });
-          }
-        );
+        sendProgress(90, `Finalizing analysis...`);
+        sendComplete({ success: true, result });
         
       } catch (error: any) {
         console.error("Streaming quick analysis error:", error);
