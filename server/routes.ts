@@ -1032,7 +1032,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
   });
 
 
-  // Simple streaming analysis endpoint
+  // Real streaming analysis endpoint
   app.post('/api/stream-analysis', async (req: Request, res: Response) => {
     try {
       const { text, provider = 'openai' } = req.body;
@@ -1041,13 +1041,13 @@ export async function registerRoutes(app: Express): Promise<Express> {
         return res.status(400).json({ error: 'Text is required' });
       }
 
-      // Set headers for Server-Sent Events streaming
-      res.setHeader('Content-Type', 'text/event-stream');
+      // Set headers for streaming plain text
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
       res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Access-Control-Allow-Headers', 'Cache-Control');
-
+      res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
+      
       const prompt = `
 You are conducting a Phase 1 intelligence assessment with anti-diplomatic evaluation standards.
 
@@ -1142,7 +1142,8 @@ PROVIDE A FINAL VALIDATED SCORE OUT OF 100 IN THE FORMAT: SCORE: X/100
                 const parsed = JSON.parse(data);
                 const content = parsed.choices?.[0]?.delta?.content || '';
                 if (content) {
-                  res.write(`data: ${JSON.stringify({content})}\n\n`);
+                  // Stream the raw content immediately
+                  res.write(content);
                 }
               } catch (e) {
                 // Skip invalid JSON
@@ -1152,7 +1153,6 @@ PROVIDE A FINAL VALIDATED SCORE OUT OF 100 IN THE FORMAT: SCORE: X/100
         }
       }
       
-      res.write('data: [DONE]\n\n');
       res.end();
       
     } catch (error) {

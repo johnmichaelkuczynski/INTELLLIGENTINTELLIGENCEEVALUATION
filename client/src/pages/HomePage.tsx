@@ -82,23 +82,26 @@ const HomePage: React.FC = () => {
   // State for LLM provider
   const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("openai");
 
-  // Real-time streaming using Server-Sent Events
+  // FIXED streaming function
   const startStreaming = async (text: string, provider: string) => {
     setIsStreaming(true);
     setStreamingContent('');
     
     try {
+      console.log('Starting stream for:', text.slice(0, 50) + '...');
+      
       const response = await fetch('/api/stream-analysis', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'text/event-stream',
         },
         body: JSON.stringify({ text, provider }),
       });
 
+      console.log('Response status:', response.status);
+
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
       if (!response.body) {
@@ -107,34 +110,31 @@ const HomePage: React.FC = () => {
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
+      let totalContent = '';
       
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          
+          if (done) {
+            console.log('Stream completed. Total length:', totalContent.length);
+            break;
+          }
 
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
-            
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed.content) {
-                setStreamingContent(prev => prev + parsed.content);
-              }
-            } catch (e) {
-              // Skip invalid JSON
-            }
+          const chunk = decoder.decode(value, { stream: true });
+          if (chunk) {
+            totalContent += chunk;
+            console.log('Received chunk:', chunk.length, 'chars');
+            setStreamingContent(totalContent);
           }
         }
+      } finally {
+        reader.releaseLock();
       }
       
     } catch (error) {
       console.error('Streaming error:', error);
-      setStreamingContent('Error: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      setStreamingContent('ERROR: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setIsStreaming(false);
     }
@@ -775,7 +775,7 @@ const HomePage: React.FC = () => {
             <div className="flex items-center gap-2 mb-4">
               <Brain className="h-5 w-5 text-blue-600" />
               <h3 className="text-lg font-semibold text-blue-900">
-                🎯 Real-Time Intelligence Analysis
+                🎯 Intelligence Analysis
                 {isStreaming && <span className="ml-2 text-sm font-normal text-blue-600">Streaming...</span>}
               </h3>
             </div>
