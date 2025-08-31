@@ -242,12 +242,17 @@ export async function executeNormalProtocol(
   
   console.log(`PHASE 1 COMPLETE: Score ${finalScore}/100`);
   
+  const cleanedResponse = phase1Response.replace(/\*{1,3}/g, '').replace(/#{1,6}\s*/g, '').trim();
+  console.log(`PHASE 1 RESPONSE PREVIEW: "${cleanedResponse.substring(0, 200)}..."`);
+  console.log(`PHASE 1 FULL RESPONSE LENGTH: ${cleanedResponse.length} characters`);
+  
   return {
     provider,
     overallScore: finalScore,
-    analysis: phase1Response.replace(/\*{1,3}/g, '').replace(/#{1,6}\s*/g, '').trim(),
+    analysis: cleanedResponse,
     evaluationType: 'intelligence',
-    formattedReport: phase1Response.replace(/\*{1,3}/g, '').replace(/#{1,6}\s*/g, '').trim()
+    formattedReport: cleanedResponse,
+    rawResponse: phase1Response // DEBUG: Include raw response
   };
 }
 

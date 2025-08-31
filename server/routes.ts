@@ -1217,6 +1217,9 @@ export async function registerRoutes(app: Express): Promise<Express> {
       const actualProvider = mapZhiToProvider(provider);
       const result = await performQuickAnalysis(text, actualProvider as 'openai' | 'anthropic' | 'perplexity' | 'deepseek');
       
+      console.log(`ANALYSIS RESULT PREVIEW: "${(result.analysis || '').substring(0, 200)}..."`);
+      console.log(`ANALYSIS RESULT LENGTH: ${(result.analysis || '').length} characters`);
+      
       res.json({
         success: true,
         analysis: {
