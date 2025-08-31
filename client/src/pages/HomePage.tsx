@@ -298,6 +298,8 @@ const HomePage: React.FC = () => {
         });
       }
       
+      // NO POPUP - Results are now in main report only
+      
     } catch (error) {
       console.error("Error performing case assessment:", error);
       alert("Failed to assess document case. Please try again.");
@@ -450,6 +452,8 @@ const HomePage: React.FC = () => {
           fictionAssessment: fictionAssessmentData
         });
       }
+      
+      // NO POPUP - Results are now in main report only
       
     } catch (error) {
       console.error("Error performing fiction assessment:", error);
@@ -853,14 +857,7 @@ const HomePage: React.FC = () => {
 
 
 
-      {/* Case Assessment Modal */}
-      <CaseAssessmentModal
-        isOpen={caseAssessmentModalOpen}
-        onClose={() => setCaseAssessmentModalOpen(false)}
-        result={caseAssessmentResult}
-        provider={selectedProvider === "all" ? "OpenAI" : selectedProvider}
-        documentTitle={documentA.filename || "Document"}
-      />
+      {/* Case Assessment Modal - REMOVED: Results now show in main report only */}
 
       {/* Document Comparison Modal */}
       <DocumentComparisonModal
@@ -878,15 +875,7 @@ const HomePage: React.FC = () => {
         isLoading={isAICheckLoading}
       />
 
-      {/* Fiction Assessment Modal */}
-      <FictionAssessmentModal
-        isOpen={fictionAssessmentModalOpen}
-        onClose={() => setFictionAssessmentModalOpen(false)}
-        documentContent={currentFictionDocument === "A" ? documentA.content : documentB.content}
-        documentTitle={currentFictionDocument === "A" ? (documentA.filename || "Document A") : (documentB.filename || "Document B")}
-        result={fictionAssessmentResult}
-        selectedProvider={selectedProvider === "all" ? "deepseek" : selectedProvider}
-      />
+      {/* Fiction Assessment Modal - REMOVED: Results now show in main report only */}
 
       {/* Fiction Comparison Modal */}
       <FictionComparisonModal

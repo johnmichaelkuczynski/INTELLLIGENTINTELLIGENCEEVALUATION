@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -186,7 +186,7 @@ const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportP
   }
   
   // Extract data from the formatted report - CHECK ALL POSSIBLE FIELDS
-  const formattedReport = analysis.formattedReport || analysis.content || analysis.analysis || analysis.report || analysis.summary || "";
+  const formattedReport = analysis.formattedReport || analysis.analysis || analysis.report || analysis.summary || "";
   console.log("IMMEDIATE DEBUG - formattedReport length:", formattedReport?.length);
   console.log("IMMEDIATE DEBUG - formattedReport first 500 chars:", formattedReport?.substring(0, 500));
   const cleanedReport = cleanAIResponse(formattedReport);
@@ -246,7 +246,7 @@ const PhilosophicalIntelligenceReport: React.FC<PhilosophicalIntelligenceReportP
                   </div>
                   {/* DIRECT RAW DISPLAY - NO FORMATTING FUNCTION */}
                   <div className="space-y-4">
-                    {formattedReport.split('\n').map((line, index) => {
+                    {formattedReport.split('\n').map((line: string, index: number) => {
                       if (!line.trim()) return null;
                       
                       // Questions ending with ?
