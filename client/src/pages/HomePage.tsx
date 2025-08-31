@@ -446,7 +446,9 @@ const HomePage: React.FC = () => {
     setAnalysisB(null);
     setComparison(null);
     
-
+    // Clear streaming content
+    setIsStreaming(false);
+    setStreamingContent("");
     
     // Reset UI states
     setShowResults(false);
@@ -793,7 +795,7 @@ const HomePage: React.FC = () => {
                   size="sm"
                   className="text-gray-600 hover:text-gray-800"
                 >
-                  Clear Analysis
+                  New Analysis
                 </Button>
               </div>
             )}

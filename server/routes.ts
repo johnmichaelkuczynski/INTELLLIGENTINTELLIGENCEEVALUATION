@@ -1098,7 +1098,7 @@ In this dissertation, I critically examine the philosophy of transcendental empi
 
 This shows: 1. DOCTRINES ARE LABELLED, BUT NEVER DEFINED; AND THEIR MEANINGS CANNOT BE INFERRED FROM CONTEXT 2. THIS PASSAGE CONTAINS FREE VARIABLES. FOR EXAMPLE, "among other things" QUALIFICATION IS NEVER CLARIFIED 3. THE AUTHOR NEVER IDENTIFIES THE "EPISTEMOLOGICAL DILEMMA" IN QUESTION.
 
-START WITH SUMMARY AND CATEGORY, then answer questions with quotes. Each analysis should include quotes. End with conclusion with quotes.
+START WITH SUMMARY AND CATEGORY, then answer questions. End with conclusion.
 
 PROVIDE A FINAL VALIDATED SCORE OUT OF 100 IN THE FORMAT: SCORE: X/100
 `.trim();
